@@ -1,0 +1,9 @@
+Flask==2.2.2
+Flask-Cors==3.0.10
+Flask-PyMongo==2.3.0
+pandas==1.4.3
+numpy==1.22.3
+scikit-learn==1.1.1
+Flask-Bcrypt==1.0.1
+Flask-Mail==0.9.1
+python-dotenv==0.21.0
