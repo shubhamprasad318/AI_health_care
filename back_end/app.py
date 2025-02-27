@@ -11,14 +11,16 @@ from sklearn.ensemble import RandomForestClassifier
 from flask_bcrypt import Bcrypt 
 from flask_mail import Mail, Message
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
 app = Flask(__name__)
 
 # ------------------ Email Configuration ------------------ #
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USERNAME'] = 'zerowood70@gmail.com'
-app.config['MAIL_PASSWORD'] = 'yourpassword'  # Replace with your actual password or use environment variables
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'yourpassword')  # Use env variable for email password
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 
@@ -34,8 +36,16 @@ if not os.path.exists(UPLOAD_FOLDER):
 app.secret_key = "helloAI"
 
 # ------------------ MongoDB Configuration ------------------ #
-app.config["MONGO_URI"] = "mongodb://localhost:27017/helloai"
+# If your MONGO_URI does not include a database name, you can set one via MONGO_DBNAME.
+app.config["MONGO_URI"] = os.environ.get("MONGO_URI", "mongodb://localhost:27017/helloai")
+app.config["MONGO_DBNAME"] = os.environ.get("MONGO_DBNAME", "helloai")
 mongo = PyMongo(app)
+
+# Helper function to get the correct DB object
+def get_db():
+    # If mongo.db is not set because the URI lacks a database name,
+    # use mongo.cx to get the database using MONGO_DBNAME.
+    return mongo.db if mongo.db is not None else mongo.cx[app.config["MONGO_DBNAME"]]
 
 # ------------------ Suppress Warnings ------------------ #
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -68,8 +78,9 @@ def login():
     password = data.get('password')
     print(f"Login attempt for: {email}")
 
+    db = get_db()
     # Find the user document in the "store" collection by email
-    user = mongo.db.store.find_one({"email": email})
+    user = db.store.find_one({"email": email})
     print("User from DB:", user)
 
     # Check if user exists and verify password
@@ -115,8 +126,9 @@ def signup():
         "address": address
     }
 
+    db = get_db()
     # Insert into the "store" collection
-    mongo.db.store.insert_one(user_data)
+    db.store.insert_one(user_data)
     return jsonify({"success": True, "message": "Registration successful"})
 
 
@@ -184,8 +196,6 @@ def predictDisease():
         print("Error: No valid symptoms provided.")
 
     # ---- PATCH: Fix for missing attribute in DecisionTreeClassifier ----
-    # The following patch sets the missing attribute 'monotonic_cst' to None
-    # for each estimator in the random forest if it is missing.
     for estimator in rf_model.estimators_:
         if not hasattr(estimator, 'monotonic_cst'):
             estimator.monotonic_cst = None
@@ -245,7 +255,7 @@ def predictDisease():
     # Recommend a doctor specialization based on the prediction
     if prediction in specialization:
         specialize = specialization[prediction]
-        print(f"For {prediction}, recommend consulting a {specialization[prediction]}.")
+        print(f"For {prediction}, recommend consulting a {specialize}.")
     else:
         specialize = "No specific recommendation"
         print(f"No specific recommendation found for {prediction}.")
@@ -267,8 +277,9 @@ def profile():
     email = user.get('email')
     print("Email for profile:", email)
 
+    db = get_db()
     # Find the user document by email
-    user_data = mongo.db.store.find_one({"email": email})
+    user_data = db.store.find_one({"email": email})
     print("User data from DB:", user_data)
 
     if user_data:
