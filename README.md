@@ -9,7 +9,7 @@ The **AI Health Care** project is a health application designed to predict disea
 * **Disease Prediction**: Predicts diseases based on user-provided symptoms using machine learning models.  
 * **Doctor Recommendation System**: Recommends doctors based on the predicted disease.  
 * **Real-Time Chatbot**: A chatbot powered by AI to assist users with basic medical queries.  
-* **Medical Record Management**: MySQL database integration to store and retrieve patient records.  
+* **Medical Record Management**: MySQL database/Mongodb integration to store and retrieve patient records.  
 * **Responsive Frontend**: User-friendly interface built using React.js that works across devices.
 
 ## **Technologies Used**
@@ -17,7 +17,7 @@ The **AI Health Care** project is a health application designed to predict disea
 * **Frontend**: React.js, CSS, HTML, JavaScript  
 * **Backend**: Python, Flask  
 * **Machine Learning**: Scikit-learn (Random Forest, Naive Bayes, SVM)  
-* **Database**: MySQL  
+* **Database**: MySQL,Mongodb  
 * **Chatbot**: AI-powered chatbot using predefined responses and Natural Language Processing  
 * **Other Libraries**: Flask-MySQLdb, Flask-SocketIO
 
