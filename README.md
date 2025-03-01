@@ -2,7 +2,7 @@
 
 ## **Project Overview**
 
-The **AI Health Care** project is a health application designed to predict diseases based on symptoms. Using machine learning models like **Random Forest**, **Naive Bayes**, and **SVM**, the app identifies potential diseases and offers recommendations. It also integrates a real-time chatbot to assist users, provides a doctor recommendation system, and features a responsive frontend built with **React.js**. The backend is built with **Flask** and connects to a **MySQL database** for managing medical records.
+The **AI Health Care** project is a health application designed to predict diseases based on symptoms. Using machine learning models like **Random Forest**, **Naive Bayes**, and **SVM**, the app identifies potential diseases and offers recommendations. It also integrates a real-time chatbot to assist users, provides a doctor recommendation system, and features a responsive frontend built with **React.js**. The backend is built with **Flask** and connects to a **MySQL database/ Mongodb** for managing medical records.
 
 ## **Features**
 
