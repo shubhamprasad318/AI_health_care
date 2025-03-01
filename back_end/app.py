@@ -33,7 +33,7 @@ UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-app.secret_key = "helloAI"
+app.secret_key = os.environ.get("SECRET_KEY", "helloAI")
 
 # ------------------ MongoDB Configuration ------------------ #
 # If your MONGO_URI does not include a database name, you can set one via MONGO_DBNAME.
@@ -364,6 +364,7 @@ def upload():
 
 
 # ------------------ Main ------------------ #
-
 if __name__ == '__main__':
-    app.run()
+    # Use Render's PORT environment variable and bind to 0.0.0.0 for external access
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
