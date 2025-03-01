@@ -26,7 +26,8 @@ app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 
 bcrypt = Bcrypt(app)
-CORS(app)
+#CORS(app)
+CORS(app, origins=["https://ai-health-care-frontend.vercel.app"])
 mail = Mail(app)
 
 # ------------------ File Upload Configuration ------------------ #
