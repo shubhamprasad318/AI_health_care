@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 from flask_pymongo import PyMongo  # Using MongoDB instead of MySQL
+from tensorflow.keras.models import Sequential
 import pandas as pd
 import numpy as np
 import pickle
