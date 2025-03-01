@@ -3,6 +3,7 @@ import { useState } from "react";
 import { FaLocationDot } from "react-icons/fa6";
 import { PiMedalDuotone } from "react-icons/pi";
 import { toast } from "react-toastify";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 function DoctorCard({
   name,
@@ -34,7 +35,7 @@ function DoctorCard({
 
   const handleBookAppointment = async () => {
     try {
-      const response = await fetch("http://localhost:5000/appoint", {
+      const response = await fetch(`${API_BASE_URL}/appoint`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

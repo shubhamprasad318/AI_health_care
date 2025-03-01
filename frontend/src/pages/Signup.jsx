@@ -4,6 +4,8 @@ import { useFormik } from "formik";
 import { signupSchema } from "../schema";
 import { toast } from "react-toastify";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 function Signup() {
   const initialValues = {
     first_name: "",

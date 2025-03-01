@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import emailjs from "emailjs-com";
 import { toast } from "react-toastify";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -37,7 +38,7 @@ const Contact = () => {
       );
 
     // Sending data to localhost:5000
-    fetch("http://localhost:5000/contact", {
+    fetch(`${API_BASE_URL}/contact`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

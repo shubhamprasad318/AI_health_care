@@ -3,6 +3,7 @@ import { MdClose } from "react-icons/md";
 import Select from "react-select";
 import { BsArrowDown } from "react-icons/bs";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 function PredictDisease() {
   const symptoms = [
     "Itching",
@@ -155,7 +156,7 @@ function PredictDisease() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const handlePredict = async () => {
     try {
-      const response = await fetch("http://localhost:5000/diseasepredict", {
+      const response = await fetch(`${API_BASE_URL}/diseasepredict`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

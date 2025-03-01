@@ -5,6 +5,7 @@ import { loginSchema } from "../schema";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 function Login() {
   const initialValues = {
     email: "",
