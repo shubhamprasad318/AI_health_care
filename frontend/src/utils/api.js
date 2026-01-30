@@ -1,7 +1,7 @@
 /**
  * API Utility Functions
  * Centralized API calls for the application
- * UPDATED: All endpoints match backend routes with proper error handling
+ * UPDATED: All endpoints match backend routes with proper error handling + JWT Auth
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -11,26 +11,29 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
  */
 async function apiRequest(endpoint, options = {}) {
   try {
-    // Don't set Content-Type for FormData, let browser set it with boundary
     const isFormData = options.body instanceof FormData;
+    const token = localStorage.getItem('token');
     
-    const defaultOptions = {
-      credentials: "include", // Always include cookies for session management
-      headers: isFormData
-        ? {} // Let browser set Content-Type for FormData
-        : {
-            "Content-Type": "application/json",
-            ...options.headers,
-          },
-    };
-
+    // Build headers
+    const headers = {};
+    
+    // Add Content-Type if not FormData
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json';
+    }
+    
+    // Add Authorization token if available
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    // Merge with custom headers
+    Object.assign(headers, options.headers);
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...defaultOptions,
       ...options,
-      headers: {
-        ...defaultOptions.headers,
-        ...options.headers,
-      },
+      credentials: "include",
+      headers,
     });
 
     // Handle different response types
@@ -61,26 +64,45 @@ async function apiRequest(endpoint, options = {}) {
  */
 export const authAPI = {
   login: async (email, password) => {
-    return apiRequest("/auth/login", {
+    const response = await apiRequest("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
+    
+    // Save token after successful login
+    if (response.success && response.data?.access_token) {
+      localStorage.setItem('token', response.data.access_token);
+    }
+    
+    return response;
   },
 
   signup: async (userData) => {
-    return apiRequest("/auth/signup", {
+    const response = await apiRequest("/auth/signup", {
       method: "POST",
       body: JSON.stringify(userData),
     });
+    
+    // Save token after signup
+    if (response.success && response.data?.access_token) {
+      localStorage.setItem('token', response.data.access_token);
+    }
+    
+    return response;
   },
 
   logout: async () => {
-    return apiRequest("/auth/logout", {
+    const response = await apiRequest("/auth/logout", {
       method: "POST",
     });
+    
+    // Clear token on logout
+    localStorage.removeItem('token');
+    
+    return response;
   },
 
-  // ✅ NEW: Check authentication status
+  // Check authentication status
   checkAuth: async () => {
     return apiRequest("/auth/status", {
       method: "GET",
@@ -105,7 +127,7 @@ export const profileAPI = {
     });
   },
 
-  // ✅ NEW: Update profile picture
+  // Update profile picture
   updateProfilePicture: async (file) => {
     const formData = new FormData();
     formData.append("profile_picture", file);
@@ -147,7 +169,7 @@ export const predictionAPI = {
     });
   },
 
-  // ✅ NEW: Delete prediction from history
+  // Delete prediction from history
   deletePrediction: async (predictionId) => {
     return apiRequest(`/predictions/${predictionId}`, {
       method: "DELETE",
@@ -217,14 +239,14 @@ export const appointmentAPI = {
     });
   },
 
-  // ✅ NEW: Cancel appointment
+  // Cancel appointment
   cancelAppointment: async (appointmentId) => {
     return apiRequest(`/appointments/${appointmentId}/cancel`, {
       method: "POST",
     });
   },
 
-  // ✅ NEW: Reschedule appointment
+  // Reschedule appointment
   rescheduleAppointment: async (appointmentId, newDate, newTime) => {
     return apiRequest(`/appointments/${appointmentId}/reschedule`, {
       method: "PATCH",
@@ -232,7 +254,7 @@ export const appointmentAPI = {
     });
   },
 
-  // ✅ NEW: Get appointment by ID
+  // Get appointment by ID
   getAppointment: async (appointmentId) => {
     return apiRequest(`/appointments/${appointmentId}`, {
       method: "GET",
@@ -266,14 +288,14 @@ export const fileAPI = {
     });
   },
 
-  // ✅ NEW: Get file by ID (returns download URL)
+  // Get file by ID (returns download URL)
   getFile: async (fileId) => {
     return apiRequest(`/files/${fileId}`, {
       method: "GET",
     });
   },
 
-  // ✅ NEW: Analyze medical report with AI
+  // Analyze medical report with AI
   analyzeReport: async (fileId) => {
     return apiRequest(`/files/${fileId}/analysis`, {
       method: "GET",
@@ -292,7 +314,7 @@ export const contactAPI = {
     });
   },
 
-  // ✅ NEW: Get contact submissions (admin only)
+  // Get contact submissions (admin only)
   getSubmissions: async () => {
     return apiRequest("/contact/submissions", {
       method: "GET",
@@ -316,7 +338,7 @@ export const healthAPI = {
     });
   },
 
-  // ✅ NEW: Get health metrics only
+  // Get health metrics only
   getMetrics: async () => {
     return apiRequest("/health/metrics", {
       method: "GET",
@@ -364,8 +386,16 @@ export const checkAuthentication = async () => {
  */
 export const downloadFile = async (fileId, filename) => {
   try {
+    const token = localStorage.getItem('token');
+    const headers = {};
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const response = await fetch(`${API_BASE_URL}/files/${fileId}`, {
       credentials: "include",
+      headers,
     });
     
     if (!response.ok) throw new Error("Download failed");
@@ -388,7 +418,7 @@ export const downloadFile = async (fileId, filename) => {
 // Export the base apiRequest function for custom calls
 export { apiRequest, API_BASE_URL };
 
-// ✅ DEFAULT EXPORT: All APIs in one object
+// DEFAULT EXPORT: All APIs in one object
 export default {
   auth: authAPI,
   profile: profileAPI,
