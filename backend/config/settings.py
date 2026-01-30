@@ -22,6 +22,8 @@ SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 # MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD', '')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
 
+allow_origin = os.getenv("ALLOWED_ORIGINS")
+
 # Gemini API (2026 SDK)
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
@@ -39,3 +41,4 @@ LOG_FILE = 'app.log'
 # Application Settings
 APP_VERSION = "2.1.0"
 APP_NAME = "AI Health Care Platform"
+
