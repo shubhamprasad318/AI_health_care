@@ -160,21 +160,12 @@ if __name__ == "__main__":
     import uvicorn
     import os
     
-    port = int(os.environ.get('PORT', 8000))
+    port = int(os.getenv("PORT", 8000))
+    
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=port,
-        reload=True,
-        reload_excludes=[
-            "*.log",           # Exclude all log files
-            "app.log",         # Explicit log file
-            "*.pkl",           # ML model files
-            "*.csv",           # CSV data files
-            "uploads/*",       # Uploads directory
-            "__pycache__/*",   # Python cache
-            ".venv/*",         # Virtual environment
-            "*.pyc",           # Compiled Python files
-        ],
         log_level="info"
     )
+
