@@ -18,14 +18,14 @@ from services.ml_service import load_models, are_models_loaded
 from routes.gemini import router as gemini_router
 from routes.auth import router as auth_router
 from routes.prediction import router as prediction_router
-from routes.profile import router as profile_router              # ✅ NEW
-from routes.appointments import router as appointments_router    # ✅ NEW
-from routes.predictions_history import router as history_router  # ✅ NEW
-from routes.files import router as files_router                  # ✅ NEW
-from routes.contact import router as contact_router              # ✅ NEW
-from routes.dashboard import router as dashboard_router          # ✅ NEW
+from routes.profile import router as profile_router              
+from routes.appointments import router as appointments_router    
+from routes.predictions_history import router as history_router  
+from routes.files import router as files_router                  
+from routes.contact import router as contact_router              
+from routes.dashboard import router as dashboard_router          
 
-# ✅ FIX: UTF-8 Logging Handler for Windows
+#  FIX: UTF-8 Logging Handler for Windows
 class UTF8StreamHandler(logging.StreamHandler):
     """Custom handler to ensure UTF-8 encoding on Windows"""
     def __init__(self):
@@ -97,12 +97,12 @@ app.add_middleware(
 app.include_router(auth_router)                 # Authentication
 app.include_router(gemini_router)               # Gemini AI
 app.include_router(prediction_router)           # Disease predictions
-app.include_router(profile_router)              # ✅ User profile
-app.include_router(appointments_router)         # ✅ Appointments
-app.include_router(history_router)              # ✅ Prediction history
-app.include_router(files_router)                # ✅ File uploads
-app.include_router(contact_router)              # ✅ Contact form
-app.include_router(dashboard_router)            # ✅ Health dashboard
+app.include_router(profile_router)              # User profile
+app.include_router(appointments_router)         #  Appointments
+app.include_router(history_router)              # Prediction history
+app.include_router(files_router)                #  File uploads
+app.include_router(contact_router)              #  Contact form
+app.include_router(dashboard_router)            #  Health dashboard
 
 
 @app.get("/", tags=["General"])
@@ -168,4 +168,5 @@ if __name__ == "__main__":
         port=port,
         log_level="info"
     )
+
 
