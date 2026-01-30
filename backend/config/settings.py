@@ -16,13 +16,19 @@ MONGO_DBNAME = os.environ.get("MONGO_DBNAME", "helloai")
 SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 
 # Email Configuration
-# MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
-# MAIL_PORT = int(os.environ.get('MAIL_PORT', 465))
-# MAIL_USERNAME = os.environ.get('MAIL_USERNAME', '')
-# MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD', '')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
 
-allow_origin = os.getenv("ALLOWED_ORIGINS")
+# --- CORS CONFIGURATION FIX ---
+# 1. Get the string from .env
+_origins_str = os.getenv("ALLOWED_ORIGINS", "")
+
+# 2. Split by comma and strip whitespace to create a clean list
+# This prevents the "unpacking string" error
+if _origins_str:
+    allow_origin = [origin.strip() for origin in _origins_str.split(",")]
+else:
+    allow_origin = []
+# ------------------------------
 
 # Gemini API (2026 SDK)
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -41,4 +47,3 @@ LOG_FILE = 'app.log'
 # Application Settings
 APP_VERSION = "2.1.0"
 APP_NAME = "AI Health Care Platform"
-
