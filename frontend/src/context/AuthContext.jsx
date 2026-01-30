@@ -3,11 +3,8 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext();
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
-
-export function AuthProvider({ children }) {
+// ✅ FIX: Export AuthProvider as default
+export default function AuthProvider({ children }) {
   const [loggedIn, setLoggedIn] = useState(() => {
     return localStorage.getItem("loggedIn") === "true";
   });
@@ -24,14 +21,24 @@ export function AuthProvider({ children }) {
     localStorage.setItem("email", email);
   }, [email]);
 
-  const login = (email) => {
-    setEmail(email);
+  const login = (userEmail) => {
+    setEmail(userEmail);
     setLoggedIn(true);
   };
 
-  const logout = () => {
-    setEmail("");
-    setLoggedIn(false);
+  const logout = async () => {
+    try {
+      const { authAPI } = await import("../utils/api");
+      await authAPI.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setEmail("");
+      setLoggedIn(false);
+      // Clear all auth-related localStorage
+      localStorage.removeItem("loggedIn");
+      localStorage.removeItem("email");
+    }
   };
 
   return (
@@ -39,4 +46,13 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
+}
+
+// ✅ FIX: Export useAuth as named export (after the component)
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 }

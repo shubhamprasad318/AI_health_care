@@ -4,15 +4,23 @@ import { fadeIn } from "../variants";
 
 function About() {
   return (
-    <div className="md:mx-10 mx-5">
+    <div className="md:mx-10 mx-5 -mt-8 relative z-20">
       <motion.div
-        // variants={fadeIn("down", 0.1)}
-        // initial="hidden"
-        // whileInView="show"
-        // viewport={{ once: false, amount: 0.6 }}
-        className="bg-btn1 my-2 rounded shadow-md shadow-gray-400"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="bg-gradient-to-r from-btn1 via-btn1/95 to-btn1 rounded-2xl shadow-xl shadow-gray-400/50 hover:shadow-2xl transition-all duration-300 overflow-hidden relative"
       >
-        <motion.p className=" px-4 font-sans  text-justify flex justify-center items-center py-5 text-gray-900 dark:text-dark_text text-xs md:text-sm font-text  ">
+        {/* Decorative gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none"></div>
+        
+        {/* Animated border effect */}
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-btn2/20 via-transparent to-btn2/20 opacity-0 hover:opacity-100 transition-opacity duration-500"></div>
+        
+        <motion.p 
+          className="relative px-6 md:px-8 font-sans text-justify flex justify-center items-center py-6 md:py-8 text-gray-900 dark:text-dark_text text-sm md:text-base font-text leading-relaxed"
+        >
           Welcome to our AI Health Engine, a revolutionary platform integrating
           cutting-edge artificial intelligence with healthcare expertise. Our
           system seamlessly predicts diseases, recommends specialized doctors,

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import emailjs from "emailjs-com";
 import { toast } from "react-toastify";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { contactAPI } from "../utils/api";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -18,50 +17,52 @@ const Contact = () => {
   const sendEmail = (e) => {
     e.preventDefault();
 
-    // Sending email using emailjs
-    emailjs
-      .sendForm(
-        "service_r2al8yc",
-        "template_xcl5fwg",
-        e.target,
-        "-NVl8nEcxsB-UMHHZ"
-      )
-      .then(
-        (result) => {
-          console.log(result.text);
-          toast.success("Mail sent successfully");
-        },
-        (error) => {
-          console.log(error.text);
-          toast.error("Failed to send mail. Please try again.");
-        }
-      );
+    // Validate form data before sending
+    if (!formData.name || formData.name.trim().length === 0) {
+      toast.error("Please enter your name");
+      return;
+    }
 
-    // Sending data to localhost:5000
-    fetch(`${API_BASE_URL}/contact`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    })
-      .then((response) => response.json())
+    if (!formData.email || !formData.email.includes("@")) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    if (!formData.details || formData.details.trim().length < 10) {
+      toast.error("Please enter at least 10 characters in the message field");
+      return;
+    }
+
+    // Prepare data for backend (trim whitespace)
+    const submitData = {
+      name: formData.name.trim(),
+      email: formData.email.trim().toLowerCase(),
+      phone: formData.phone ? formData.phone.trim() : null,
+      details: formData.details.trim(),
+    };
+
+    // Sending data to backend (handles email sending)
+    contactAPI
+      .submit(submitData)
       .then((data) => {
-        console.log("Success:", data);
-        toast.success("Mail sent to backend successfully");
+        if (data.success) {
+          toast.success(data.message || "Message sent successfully!");
+          // Reset form only on success
+          setFormData({
+            name: "",
+            email: "",
+            phone: "",
+            details: "",
+          });
+        } else {
+          toast.error(data.message || "Failed to send message");
+        }
       })
       .catch((error) => {
         console.error("Error:", error);
-        toast.error("Failed to send data to backend. Please try again.");
+        const errorMessage = error.message || "Failed to send data to backend. Please try again.";
+        toast.error(errorMessage);
       });
-
-    // Resetting form data
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      details: "",
-    });
   };
 
   return (
@@ -94,7 +95,7 @@ const Contact = () => {
               <div className="mb-8 flex w-full max-w-[370px]">
                 <div className="mr-6 flex h-[60px] w-full max-w-[60px] items-center justify-center overflow-hidden rounded sm:h-[70px] sm:max-w-[70px]">
                   <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <g clip-path="url(#clip0_941_17577)">
+                    <g clipPath="url(#clip0_941_17577)">
                       <path
                         d="M24.3 31.1499C22.95 31.1499 21.4 30.7999 19.7 30.1499C16.3 28.7999 12.55 26.1999 9.19997 22.8499C5.84997 19.4999 3.24997 15.7499 1.89997 12.2999C0.39997 8.59994 0.54997 5.54994 2.29997 3.84994C2.34997 3.79994 2.44997 3.74994 2.49997 3.69994L6.69997 1.19994C7.74997 0.599942 9.09997 0.899942 9.79997 1.89994L12.75 6.29994C13.45 7.34994 13.15 8.74994 12.15 9.44994L10.35 10.6999C11.65 12.7999 15.35 17.9499 21.25 21.6499L22.35 20.0499C23.2 18.8499 24.55 18.4999 25.65 19.2499L30.05 22.1999C31.05 22.8999 31.35 24.2499 30.75 25.2999L28.25 29.4999C28.2 29.5999 28.15 29.6499 28.1 29.6999C27.2 30.6499 25.9 31.1499 24.3 31.1499ZM3.79997 5.54994C2.84997 6.59994 2.89997 8.74994 3.99997 11.4999C5.24997 14.6499 7.64997 18.0999 10.8 21.2499C13.9 24.3499 17.4 26.7499 20.5 27.9999C23.25 29.0999 25.4 29.1499 26.45 28.1999L28.75 24.4999L24.5 21.7499L22.95 23.9499C22.6 24.4999 21.9 24.6499 21.25 24.2999C14.55 20.4499 10.05 14.3999 8.24997 11.1999C7.89997 10.5499 8.04997 9.79994 8.59997 9.44994L10.8 7.89994L8.04997 3.64994L3.79997 5.54994Z"
                         fill="currentColor"
@@ -163,9 +164,8 @@ const Contact = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    placeholder="Phone"
+                    placeholder="Phone (Optional)"
                     className="w-full rounded border border-gray-300 py-3 px-4 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus-visible:shadow-none"
-                    required
                   />
                 </div>
                 <div className="mb-6">
