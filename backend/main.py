@@ -9,7 +9,7 @@ import logging
 import sys
 from datetime import datetime
 
-from config.settings import GEMINI_API_KEY, LOG_LEVEL, LOG_FILE, APP_NAME, APP_VERSION
+from config.settings import GEMINI_API_KEY, LOG_LEVEL, LOG_FILE, APP_NAME, APP_VERSION, allow_origin
 from database.connection import db, create_indexes, close_connection
 from services.gemini_service import initialize_gemini
 from services.ml_service import load_models, are_models_loaded
@@ -86,7 +86,8 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:3000",
         "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000"
+        "http://127.0.0.1:3000",
+        *allow_origin
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -168,5 +169,6 @@ if __name__ == "__main__":
         port=port,
         log_level="info"
     )
+
 
 
