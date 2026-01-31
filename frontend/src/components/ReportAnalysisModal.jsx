@@ -130,25 +130,33 @@ const ReportAnalysisModal = ({ analysis, onClose }) => {
             </div>
           )}
 
-          {/* Health Metrics */}
-          {analysis.health_metrics && Object.keys(analysis.health_metrics).length > 0 && (
-            <div>
-              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                <FaHeartbeat className="text-red-600" />
-                Health Metrics
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                {Object.entries(analysis.health_metrics).map(([key, value]) => (
+         {/* Health Metrics */}
+        {analysis.health_metrics && Object.keys(analysis.health_metrics).length > 0 && (
+          <div>
+            <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+              <FaHeartbeat className="text-red-600" />
+              Health Metrics
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {Object.entries(analysis.health_metrics).map(([key, value]) => {
+                // ✅ SAFE RENDERING: Check if value is an object
+                const displayValue = typeof value === 'object' && value !== null
+                  ? (value.value || JSON.stringify(value)) // If nested object, extract .value or stringify
+                  : String(value); // Otherwise convert to string
+                
+                return (
                   <div key={key} className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200 hover:shadow-md transition-all">
                     <p className="text-sm text-gray-600 font-semibold capitalize mb-1">
                       {key.replace(/_/g, " ")}
                     </p>
-                    <p className="text-lg font-bold text-gray-800">{value}</p>
+                    <p className="text-lg font-bold text-gray-800">{displayValue}</p>
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          )}
+          </div>
+        )}
+
 
           {/* Recommendations */}
           {analysis.recommendations?.length > 0 && (
@@ -192,3 +200,4 @@ const ReportAnalysisModal = ({ analysis, onClose }) => {
 };
 
 export default ReportAnalysisModal;
+
