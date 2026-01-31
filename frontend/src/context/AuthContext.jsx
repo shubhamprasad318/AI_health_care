@@ -1,6 +1,7 @@
 // context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { authAPI } from "../services/api";
+import { authAPI } from "../utils/api";  
+
 
 const AuthContext = createContext();
 
@@ -116,3 +117,4 @@ export function useAuth() {
   }
   return context;
 }
+
