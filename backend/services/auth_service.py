@@ -3,27 +3,56 @@ Authentication Service
 File Path: services/auth_service.py
 """
 import logging
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 import os
 
-# ✅ NEW IMPORTS for Dependency Injection
+# FastAPI & Security Imports
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 
+# App Imports
 from database.connection import db
 from utils.security import hash_password, verify_password
 
 logger = logging.getLogger(__name__)
 
-# ✅ JWT CONFIGURATION (Must match utils/security.py)
+# ✅ CONFIGURATION
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_DAYS = 7
 
-# This tells FastAPI: "If a route needs a token, look in the Authorization: Bearer header"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+
+# ==========================================
+# 🛠️ HELPER: Fix MongoDB Objects
+# ==========================================
+def serialize_user_data(user: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Converts MongoDB ObjectId and datetime objects to strings 
+    so they don't crash the JSON response.
+    Also removes the password hash for security.
+    """
+    if not user:
+        return None
+        
+    # Create a copy so we don't modify the original db object
+    user_clean = user.copy()
+    
+    # Convert _id to string (Fixes TypeError: Object of type ObjectId...)
+    if "_id" in user_clean:
+        user_clean["_id"] = str(user_clean["_id"])
+        
+    # Convert datetime to ISO string (Fixes TypeError: Object of type datetime...)
+    if "created_at" in user_clean and isinstance(user_clean["created_at"], datetime):
+        user_clean["created_at"] = user_clean["created_at"].isoformat()
+
+    # Remove sensitive password data
+    user_clean.pop("password", None)
+    
+    return user_clean
 
 
 def create_access_token(email: str) -> str:
@@ -48,7 +77,12 @@ async def register_user(user_data: Dict) -> Dict:
         user_data["password"] = hash_password(user_data["password"])
         user_data["created_at"] = datetime.utcnow()
         
-        await db.store.insert_one(user_data)
+        # Insert user (MongoDB adds _id to user_data automatically here)
+        new_user = await db.store.insert_one(user_data)
+        
+        # Explicitly ensure _id is handled if not added in-place
+        if "_id" not in user_data:
+             user_data["_id"] = new_user.inserted_id
         
         token = create_access_token(user_data["email"])
         
@@ -58,7 +92,8 @@ async def register_user(user_data: Dict) -> Dict:
             "success": True,
             "message": "Registration successful",
             "token": token,
-            "user": user_data
+            # ✅ FIX: Clean the data before returning
+            "user": serialize_user_data(user_data)
         }
     except Exception as e:
         logger.error(f"Registration error: {e}")
@@ -84,7 +119,8 @@ async def authenticate_user(email: str, password: str) -> Dict:
             "success": True,
             "message": "Login successful",
             "token": token,
-            "user": user
+            # ✅ FIX: Clean the data before returning
+            "user": serialize_user_data(user)
         }
     except Exception as e:
         logger.error(f"Authentication error: {e}")
@@ -92,13 +128,11 @@ async def authenticate_user(email: str, password: str) -> Dict:
 
 
 # ========================================================
-# ✅ NEW: Add this function for the /status route
-# This allows routes/auth.py to verify the token automatically
+# ✅ TOKEN VERIFICATION DEPENDENCY
 # ========================================================
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """
     Validates the JWT token from the Authorization header.
-    Used by routes/auth.py for the check_auth_status endpoint.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -118,12 +152,5 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     if user is None:
         raise credentials_exception
 
-    # Return safe user data
-    return {
-        "email": user["email"],
-        "name": user.get("name"),
-        "first_name": user.get("first_name"),
-        "last_name": user.get("last_name"),
-        "age": user.get("age"),
-        "gender": user.get("gender")
-    }
+    # ✅ FIX: Return clean data here too
+    return serialize_user_data(user)
