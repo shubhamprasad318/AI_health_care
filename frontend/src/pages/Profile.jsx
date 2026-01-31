@@ -411,8 +411,8 @@ function Profile() {
                   </div>
                   
                   <div className="flex gap-2 flex-wrap">
-                    <button
-                      onClick={() => window.open(`${API_BASE_URL}/files/${file._id || file.file_id}`, "_blank")}
+                   <button
+                      onClick={() => handleViewFile(file._id || file.file_id)}
                       className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-xl font-bold hover:from-blue-600 hover:to-blue-500 transition-all shadow-md hover:shadow-lg flex items-center gap-2 hover:scale-105 transform"
                       title="View file"
                     >
@@ -808,4 +808,5 @@ const renderHealthSection = () => {
 }
 
 export default Profile;
+
 
