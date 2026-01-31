@@ -1,10 +1,11 @@
 """
 Authentication Routes
 """
-from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Request, BackgroundTasks, Depends
 from fastapi.responses import JSONResponse
 from database.models import LoginRequest, SignupRequest
-from services.auth_service import register_user, authenticate_user
+# ✅ Make sure get_current_user is imported here
+from services.auth_service import register_user, authenticate_user, get_current_user
 from services.email_service import send_welcome_email
 from database.connection import delete_session
 from utils.helpers import standard_response
@@ -13,6 +14,22 @@ import logging
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+# ==========================================
+# ✅ NEW: AUTH STATUS ENDPOINT (Fixes Refresh Issue)
+# ==========================================
+@router.get("/status")
+async def check_auth_status(current_user: dict = Depends(get_current_user)):
+    """
+    Verifies the JWT token and restores session on page refresh.
+    The 'current_user' is automatically injected if the token is valid.
+    If invalid, FastAPI raises a 401 error automatically.
+    """
+    return standard_response(
+        message="User is authenticated",
+        data={"user": current_user, "success": True}
+    )
 
 
 @router.post("/signup")
@@ -49,7 +66,7 @@ async def signup(user: SignupRequest, background_tasks: BackgroundTasks):
     )
     logger.info(f"📧 Welcome email queued for {user.email}")
     
-    # ✅ FIX: Include token in response body
+    # Include token in response body
     response_data = standard_response(
         message=result["message"],
         data={
@@ -81,7 +98,7 @@ async def login(credentials: LoginRequest):
     if not result["success"]:
         raise HTTPException(status_code=401, detail=result["message"])
     
-    # ✅ FIX: Include token in response body
+    # Include token in response body
     response_data = standard_response(
         message=result["message"],
         data={
