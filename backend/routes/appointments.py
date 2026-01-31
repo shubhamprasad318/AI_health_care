@@ -1,80 +1,91 @@
 """
 Appointments Routes
+File Path: routes/appointments.py
 """
-from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
-from database.models import AppointmentRequest, StandardResponse
+from fastapi import APIRouter, HTTPException, Request, BackgroundTasks, Depends
+from database.models import AppointmentRequest
 from database.connection import db
-from utils.security import require_auth, get_current_user
+# ✅ FIX: Use the new Auth system
+from services.auth_service import get_current_user
 from utils.helpers import standard_response
+# ✅ FIX: Import email service safely
 from services.email_service import send_appointment_confirmation, send_email
 from datetime import datetime
 import logging
 
-
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/appointments", tags=["Appointments"])
 
-
 @router.post("/book")
 async def book_appointment(
-    request: Request, 
     appointment: AppointmentRequest,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user)  # ✅ FIX: New Auth
 ):
     """Book a new appointment with email confirmation"""
     try:
-        email = await require_auth(request)
-        
-        # Create appointment document
+        # ✅ CRITICAL FIX: Safely get doctor name to prevent 500 Crash
+        # If missing, it defaults to "General Physician"
+        doctor_name = getattr(appointment, "doctor_name", "General Physician")
+        doctor_location = getattr(appointment, "doctor_location", "Online/Clinic")
+
+        # Prepare data
         appointment_data = appointment.dict()
-        appointment_data["user_email"] = email
+        appointment_data["user_email"] = current_user["email"]
+        appointment_data["user_name"] = current_user.get("name", "Patient")
+        appointment_data["doctor_name"] = doctor_name 
+        appointment_data["doctor_location"] = doctor_location
         appointment_data["status"] = "pending"
         appointment_data["created_at"] = datetime.utcnow()
         
-        # Insert into database
-        result = await db.appointments.insert_one(appointment_data)
+        # ✅ FIX: Correct Database Access
+        # We access the 'appointments' collection directly from the DB connection
+        result = await db.store.db["appointments"].insert_one(appointment_data)
         appointment_id = str(result.inserted_id)
         
-        # Send confirmation email in background (non-blocking)
-        background_tasks.add_task(
-            send_appointment_confirmation,
-            email,
-            appointment_data
-        )
-        logger.info(f"📧 Appointment confirmation queued for {email}")
+        # ✅ FIX: Safe Email Sending (Wrapped in try/except)
+        try:
+            background_tasks.add_task(
+                send_appointment_confirmation,
+                current_user["email"],
+                appointment_data
+            )
+            logger.info(f"📧 Appointment confirmation queued for {current_user['email']}")
+        except Exception as e:
+            logger.warning(f"Email failed to queue (ignoring to keep booking valid): {e}")
         
         return standard_response(
-            message="Appointment booked successfully! Confirmation email sent.",
+            message="Appointment booked successfully!",
             data={
                 "appointment_id": appointment_id,
                 "status": "pending",
                 "date": appointment.date,
                 "time": appointment.time,
-                "doctor": appointment.doctor_name,
-                "location": appointment.doctor_location
+                "doctor": doctor_name,
+                "location": doctor_location
             }
         )
         
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Book appointment error: {e}")
+        # Return a clean error instead of crashing
         raise HTTPException(status_code=500, detail="Failed to book appointment")
 
 
 @router.get("")
-async def get_appointments(request: Request):
+async def get_appointments(current_user: dict = Depends(get_current_user)):
     """Get user's appointments"""
     try:
-        email = await require_auth(request)
-        
-        # Get all appointments for user
-        cursor = db.appointments.find({"user_email": email}).sort("created_at", -1)
+        # ✅ FIX: Correct DB Query
+        cursor = db.store.db["appointments"].find({"user_email": current_user["email"]}).sort("created_at", -1)
         appointments = await cursor.to_list(length=100)
         
-        # Convert ObjectId to string
+        # Convert ObjectId to string for Frontend
         for apt in appointments:
             apt["_id"] = str(apt["_id"])
+            # Fix dates if they exist
+            if "created_at" in apt and isinstance(apt["created_at"], datetime):
+                apt["created_at"] = apt["created_at"].isoformat()
         
         return standard_response(
             message="Appointments retrieved successfully",
@@ -84,8 +95,6 @@ async def get_appointments(request: Request):
             }
         )
         
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Get appointments error: {e}")
         raise HTTPException(status_code=500, detail="Failed to get appointments")
@@ -93,44 +102,38 @@ async def get_appointments(request: Request):
 
 @router.delete("/{appointment_id}")
 async def cancel_appointment(
-    request: Request, 
     appointment_id: str,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user)
 ):
-    """Cancel an appointment with email notification"""
+    """Cancel an appointment"""
     try:
-        email = await require_auth(request)
-        
         from bson import ObjectId
         
-        # Find appointment first (to get details for email)
-        appointment = await db.appointments.find_one({
+        query = {
             "_id": ObjectId(appointment_id),
-            "user_email": email
-        })
+            "user_email": current_user["email"]
+        }
+        
+        # Find and delete
+        appointment = await db.store.db["appointments"].find_one_and_delete(query)
         
         if not appointment:
             raise HTTPException(status_code=404, detail="Appointment not found")
         
-        # Delete appointment
-        result = await db.appointments.delete_one({
-            "_id": ObjectId(appointment_id),
-            "user_email": email
-        })
-        
-        if result.deleted_count == 0:
-            raise HTTPException(status_code=404, detail="Appointment not found")
-        
-        # Send cancellation email in background
-        background_tasks.add_task(
-            send_appointment_cancellation,
-            email,
-            appointment
-        )
-        logger.info(f"📧 Cancellation email queued for {email}")
+        # Send cancellation email (using internal function below)
+        try:
+            background_tasks.add_task(
+                send_appointment_cancellation,
+                current_user["email"],
+                appointment
+            )
+            logger.info(f"📧 Cancellation email queued for {current_user['email']}")
+        except Exception:
+            pass # Ignore email errors on cancel
         
         return standard_response(
-            message="Appointment cancelled successfully. Confirmation email sent."
+            message="Appointment cancelled successfully."
         )
         
     except HTTPException:
@@ -139,61 +142,30 @@ async def cancel_appointment(
         logger.error(f"Cancel appointment error: {e}")
         raise HTTPException(status_code=500, detail="Failed to cancel appointment")
 
-
+# Internal helper for cancellation emails
 async def send_appointment_cancellation(email: str, appointment_data: dict):
     """Send appointment cancellation email"""
     subject = "❌ Appointment Cancelled - AI Health Care"
+    
+    # Safe .get() calls to prevent crashes
+    doctor = appointment_data.get('doctor_name', 'N/A')
+    date = appointment_data.get('date', 'N/A')
+    time = appointment_data.get('time', 'N/A')
+    location = appointment_data.get('doctor_location', 'N/A')
     
     body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; border-radius: 10px;">
             <h2 style="color: #dc2626;">Appointment Cancelled</h2>
-            
-            <p>Hello {appointment_data.get('name', 'there')},</p>
-            
             <p>Your appointment has been <strong>cancelled</strong> as per your request.</p>
-            
             <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h3 style="color: #333; margin-top: 0;">Cancelled Appointment Details</h3>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>Doctor:</strong></td>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #eee;">{appointment_data.get('doctor_name', 'N/A')}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>Date:</strong></td>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #eee;">{appointment_data.get('date', 'N/A')}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>Time:</strong></td>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #eee;">{appointment_data.get('time', 'N/A')}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px 0;"><strong>Location:</strong></td>
-                        <td style="padding: 10px 0;">{appointment_data.get('doctor_location', 'N/A')}</td>
-                    </tr>
-                </table>
+                <p><strong>Doctor:</strong> {doctor}</p>
+                <p><strong>Date:</strong> {date} at {time}</p>
+                <p><strong>Location:</strong> {location}</p>
             </div>
-            
-            <p style="background-color: #fee2e2; padding: 15px; border-radius: 5px; border-left: 4px solid #dc2626;">
-                ❌ This appointment has been cancelled and removed from our system.
-            </p>
-            
-            <p>If you'd like to reschedule or book a new appointment, please visit our platform.</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="http://localhost:5173/appointments" 
-                   style="background-color: #4f46e5; color: white; padding: 12px 30px; 
-                          text-decoration: none; border-radius: 5px; display: inline-block;">
-                    Book New Appointment
-                </a>
-            </div>
-            
-            <p style="margin-top: 30px;">
-                Best regards,<br>
-                <strong>AI Health Care Team</strong>
-            </p>
+            <p>Best regards,<br><strong>AI Health Care Team</strong></p>
         </div>
     </body>
     </html>
