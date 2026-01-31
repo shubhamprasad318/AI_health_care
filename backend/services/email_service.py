@@ -1,5 +1,6 @@
 """
 Email Service - Mailtrap Integration
+File Path: services/email_service.py
 """
 import os
 import asyncio
@@ -20,7 +21,8 @@ client = MailtrapClient(token=MAILTRAP_TOKEN) if MAILTRAP_TOKEN else None
 async def send_email(to_email: str, subject: str, body: str, html: bool = True):
     """Send email using Mailtrap SDK"""
     if not client:
-        logger.error("❌ Mailtrap not configured (MAILTRAP_API_TOKEN missing)")
+        # Prevent crash in local development if token is missing
+        logger.warning("⚠️ Mailtrap token missing. Email skipped (Safe for local dev)")
         return False
     
     try:
@@ -32,7 +34,7 @@ async def send_email(to_email: str, subject: str, body: str, html: bool = True):
             text=body if not html else None,
         )
         
-        # Run synchronous Mailtrap send in thread pool
+        # Run synchronous Mailtrap send in thread pool to avoid blocking FastAPI
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, client.send, mail)
         
@@ -48,12 +50,20 @@ async def send_appointment_confirmation(email: str, appointment_data: dict):
     """Send appointment confirmation email"""
     subject = "🩺 Appointment Confirmation - AI Health Care"
     
+    # ✅ FIX: Use .get() and snake_case to match Database Schema
+    user_name = appointment_data.get('user_name', 'Patient')
+    doctor_name = appointment_data.get('doctor_name', 'General Physician')
+    doctor_spec = appointment_data.get('doctor_specialization', 'Specialist')
+    appt_date = appointment_data.get('date', 'Upcoming')
+    appt_time = appointment_data.get('time', '--:--')
+    location = appointment_data.get('doctor_location', 'Online / Clinic')
+
     # HTML email body
     body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; border-radius: 10px;">
-            <h2 style="color: #4f46e5;">Hello {appointment_data['name']},</h2>
+            <h2 style="color: #4f46e5;">Hello {user_name},</h2>
             
             <p>Your appointment has been <strong>confirmed</strong>! ✅</p>
             
@@ -62,23 +72,23 @@ async def send_appointment_confirmation(email: str, appointment_data: dict):
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>
                         <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>Doctor:</strong></td>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #eee;">{appointment_data['doctorName']}</td>
+                        <td style="padding: 10px 0; border-bottom: 1px solid #eee;">{doctor_name}</td>
                     </tr>
                     <tr>
                         <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>Specialization:</strong></td>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #eee;">{appointment_data['doctorSpecialization']}</td>
+                        <td style="padding: 10px 0; border-bottom: 1px solid #eee;">{doctor_spec}</td>
                     </tr>
                     <tr>
                         <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>Date:</strong></td>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #eee;">{appointment_data['date']}</td>
+                        <td style="padding: 10px 0; border-bottom: 1px solid #eee;">{appt_date}</td>
                     </tr>
                     <tr>
                         <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>Time:</strong></td>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #eee;">{appointment_data['time']}</td>
+                        <td style="padding: 10px 0; border-bottom: 1px solid #eee;">{appt_time}</td>
                     </tr>
                     <tr>
                         <td style="padding: 10px 0;"><strong>Location:</strong></td>
-                        <td style="padding: 10px 0;">{appointment_data['doctorLocation']}</td>
+                        <td style="padding: 10px 0;">{location}</td>
                     </tr>
                 </table>
             </div>
