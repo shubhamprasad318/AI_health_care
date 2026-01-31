@@ -1,6 +1,7 @@
 """
 Gemini AI Integration Service - 2026 SDK
 Uses the new google.genai Client-based architecture
+WITH INTELLIGENT MODEL FALLBACK & CENTRALIZED VISION API
 """
 import logging
 from typing import Dict, List, Optional, Any
@@ -47,16 +48,25 @@ def is_gemini_available() -> bool:
 
 
 # ============================================
-# 🔄 CORE API CALL
+# 🔄 CORE API CALL WITH FALLBACK
 # ============================================
 
 async def call_gemini(prompt: str, config: Optional[Dict] = None) -> str:
     """
-    Simplified Gemini API call
-    Uses new SDK client.models.generate_content pattern
+    Gemini API call with automatic model fallback
+    Tries multiple models if one is overloaded
     """
     if not gemini_client:
         raise Exception("Gemini client not initialized")
+    
+    # ✅ Model priority list (best → fallback)
+    MODELS = [              
+        'gemini-2.5-flash-lite-preview-09-2025', 
+        'gemini-3-flash-preview',
+        'gemini-2.5-flash-preview-09-2025',
+        'gemini-2.0-flash-lite',
+        'gemini-2.0-flash',
+    ]
     
     try:
         from google.genai import types
@@ -69,25 +79,149 @@ async def call_gemini(prompt: str, config: Optional[Dict] = None) -> str:
             max_output_tokens=2048,
         )
         
-        # New SDK call pattern
-        response = gemini_client.models.generate_content(
-            model='gemini-3-flash-preview',  # ✅ Updated model
-            contents=prompt,
-            config=generation_config
-        )
+        last_error = None
         
-        return response.text if response and response.text else ""
+        # ✅ Try each model in order
+        for model_name in MODELS:
+            try:
+                logger.info(f"🔄 Trying model: {model_name}")
+                
+                response = gemini_client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=generation_config
+                )
+                
+                if response and response.text:
+                    logger.info(f"✅ Success with: {model_name}")
+                    return response.text
+                    
+            except Exception as e:
+                error_str = str(e)
+                last_error = e
+                
+                # Check if it's a temporary error (503, 429)
+                if any(code in error_str for code in ["503", "429", "overloaded", "quota"]):
+                    logger.warning(f"⚠️ {model_name} unavailable: {error_str[:100]}")
+                    continue  # Try next model
+                else:
+                    # For other errors, log and try next anyway
+                    logger.error(f"❌ {model_name} failed: {error_str[:100]}")
+                    continue
+        
+        # If all models failed
+        logger.error(f"❌ All models failed. Last error: {last_error}")
+        raise Exception("All Gemini models temporarily unavailable")
         
     except Exception as e:
-        error_str = str(e)
-        
-        # Handle quota errors gracefully
-        if "429" in error_str or "quota" in error_str.lower():
-            logger.warning("⚠️ Gemini quota exceeded")
-            return ""
-        
         logger.error(f"Gemini API error: {e}")
         raise
+
+
+# ============================================
+# 🔄 CENTRALIZED VISION API CALL WITH FALLBACK
+# ============================================
+
+async def call_gemini_vision(
+    file_path: str,
+    prompt: str,
+    mime_type: str
+) -> Dict[str, Any]:
+    """
+    Centralized Gemini Vision API call with model fallback
+    Used by both PDF and Image analyzers
+    """
+    if not gemini_client:
+        return {"success": False, "error": "Gemini service not available"}
+    
+    # ✅ Vision-capable models (shared by all vision functions)
+    VISION_MODELS = [
+        'gemini-1.5-flash',
+        'gemini-2.0-flash-exp',
+        'gemini-2.5-flash-lite-preview-09-2025',
+        'gemini-1.5-pro',
+    ]
+    
+    try:
+        from google.genai import types
+        
+        filepath = Path(file_path)
+        
+        # ✅ Try each vision model
+        for model_name in VISION_MODELS:
+            try:
+                logger.info(f"🔄 Analyzing with: {model_name}")
+                
+                response = gemini_client.models.generate_content(
+                    model=model_name,
+                    contents=[
+                        types.Part.from_bytes(
+                            data=filepath.read_bytes(),
+                            mime_type=mime_type,
+                        ),
+                        prompt
+                    ]
+                )
+                
+                # Extract text from response
+                response_text = ""
+                
+                if hasattr(response, 'text'):
+                    text_value = response.text
+                    if isinstance(text_value, list):
+                        response_text = "".join(str(item) for item in text_value)
+                    else:
+                        response_text = str(text_value)
+                elif hasattr(response, 'candidates') and response.candidates:
+                    for candidate in response.candidates:
+                        if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                            for part in candidate.content.parts:
+                                if hasattr(part, 'text'):
+                                    response_text += str(part.text)
+                
+                response_text = response_text.strip()
+                
+                if response_text:
+                    logger.info(f"✅ Analysis successful with: {model_name}")
+                    
+                    # Clean JSON markdown
+                    if "```json" in response_text:
+                        response_text = response_text.split("```json").split("```").strip()[1]
+                    elif response_text.count("```") >= 2:
+                        response_text = response_text.split("```")[1].strip()
+                    
+                    try:
+                        analysis = json.loads(response_text)
+                        return {
+                            "success": True,
+                            "analysis": analysis,
+                            "model_used": model_name
+                        }
+                    except json.JSONDecodeError as je:
+                        logger.warning(f"JSON parse failed with {model_name}: {str(je)[:100]}")
+                        continue  # Try next model
+                
+            except Exception as e:
+                error_str = str(e)
+                if any(code in error_str for code in ["503", "429", "overloaded", "quota"]):
+                    logger.warning(f"⚠️ {model_name} unavailable: {error_str[:100]}")
+                    continue
+                else:
+                    logger.error(f"❌ {model_name} failed: {str(e)[:100]}")
+                    continue
+        
+        # All models failed
+        return {
+            "success": False,
+            "error": "All AI models temporarily unavailable"
+        }
+        
+    except Exception as e:
+        logger.error(f"Vision API error: {e}", exc_info=True)
+        return {
+            "success": False,
+            "error": str(e)
+        }
 
 
 # ============================================
@@ -220,10 +354,16 @@ Provide accurate, empathetic medical information in simple language. Always reco
 
 
 async def gemini_chat_stream(message: str, context: Optional[Dict] = None):
-    """Streaming chat response - NEW 2026 SDK feature"""
+    """Streaming chat response with model fallback"""
     if not gemini_client:
         yield "Gemini AI unavailable"
         return
+    
+    MODELS = [
+        'gemini-1.5-flash',
+        'gemini-2.0-flash-exp',
+        'gemini-1.5-pro',
+    ]
     
     try:
         from google.genai import types
@@ -239,15 +379,35 @@ Patient Question: {message}
 
 Provide helpful medical information in simple language."""
 
-        # New SDK streaming pattern
-        for chunk in gemini_client.models.generate_content_stream(
-            model='gemini-3-flash-preview',
-            contents=prompt,
-            config=types.GenerateContentConfig(temperature=0.7)
-        ):
-            if chunk.text:
-                yield chunk.text
+        # ✅ Try each model
+        for model_name in MODELS:
+            try:
+                logger.info(f"🔄 Streaming with: {model_name}")
                 
+                for chunk in gemini_client.models.generate_content_stream(
+                    model=model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(temperature=0.7)
+                ):
+                    if chunk.text:
+                        yield chunk.text
+                
+                # If we get here, streaming succeeded
+                logger.info(f"✅ Streaming success: {model_name}")
+                return
+                
+            except Exception as e:
+                error_str = str(e)
+                if any(code in error_str for code in ["503", "429", "overloaded"]):
+                    logger.warning(f"⚠️ {model_name} unavailable, trying next...")
+                    continue
+                else:
+                    logger.error(f"❌ {model_name} failed: {str(e)[:100]}")
+                    continue
+        
+        # All failed
+        yield "All AI models temporarily unavailable. Please try again in a moment."
+        
     except Exception as e:
         logger.error(f"Streaming error: {e}")
         yield "Error generating response"
@@ -406,17 +566,11 @@ Make it practical and achievable."""
 # ============================================
 # 📄 REPORT ANALYSIS - PDF
 # ============================================
+
 async def analyze_pdf_report(file_path: str) -> Dict[str, Any]:
-    """Analyze PDF medical report directly using Gemini"""
-    if not gemini_client:
-        return {"success": False, "error": "Gemini service not available"}
+    """Analyze PDF medical report using centralized vision function"""
     
-    try:
-        from google.genai import types
-        
-        filepath = Path(file_path)
-        
-        prompt = """
+    prompt = """
 You are a medical report analyzer. Analyze this medical report PDF and extract key information.
 
 Please provide:
@@ -444,93 +598,19 @@ Format as JSON:
   "summary": "Brief summary"
 }
 """
-        
-        # Read PDF and send to Gemini
-        response = gemini_client.models.generate_content(
-            model='gemini-2.5-flash-lite-preview-09-2025',
-            contents=[
-                types.Part.from_bytes(
-                    data=filepath.read_bytes(),
-                    mime_type='application/pdf',
-                ),
-                prompt
-            ]
-        )
-        
-        # ✅ Extract text from response
-        try:
-            response_text = ""
-            
-            # New SDK returns response.text as property
-            if hasattr(response, 'text'):
-                text_value = response.text
-                # Handle if it's a list
-                if isinstance(text_value, list):
-                    response_text = "".join(str(item) for item in text_value)
-                else:
-                    response_text = str(text_value)
-            # Fallback to candidates
-            elif hasattr(response, 'candidates') and response.candidates:
-                for candidate in response.candidates:
-                    if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
-                        for part in candidate.content.parts:
-                            if hasattr(part, 'text'):
-                                response_text += str(part.text)
-            
-            response_text = response_text.strip()
-            
-            if not response_text:
-                logger.error(f"Empty response from Gemini")
-                return {"success": False, "error": "Empty response from AI"}
-            
-            logger.info(f"Response received, length: {len(response_text)}")
-            
-            # ✅ Clean up markdown code blocks
-            if "```json" in response_text:
-                parts = response_text.split("```json")
-                if len(parts) > 1:
-                    response_text = parts[1].split("```")[0].strip()  # ✅ FIXED
-            elif response_text.count("```") >= 2:
-                parts = response_text.split("```")
-                if len(parts) >= 3:
-                    response_text = parts[1].strip()  # ✅ FIXED[1]
-            
-            # Parse JSON
-            analysis = json.loads(response_text)
-            
-            logger.info(f"✅ PDF report analyzed successfully")
-            return {
-                "success": True,
-                "analysis": analysis
-            }
-            
-        except json.JSONDecodeError as je:
-            logger.error(f"JSON parse error: {je}")
-            logger.error(f"Response text (first 500 chars): {response_text[:500]}")
-            return {
-                "success": False,
-                "error": "Failed to parse AI response as JSON"
-            }
-        
-    except Exception as e:
-        logger.error(f"PDF analysis error: {e}", exc_info=True)
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    
+    # ✅ Use centralized vision function
+    return await call_gemini_vision(
+        file_path=file_path,
+        prompt=prompt,
+        mime_type='application/pdf'
+    )
 
 
 async def analyze_image_report(file_path: str) -> Dict[str, Any]:
-    """Analyze image medical report using Gemini Vision"""
-    if not gemini_client:
-        return {"success": False, "error": "Gemini service not available"}
+    """Analyze image medical report using centralized vision function"""
     
-    try:
-        from google.genai import types
-        
-        filepath = Path(file_path)
-        
-        prompt = """
+    prompt = """
 You are a medical report analyzer. Analyze this medical report image and extract key information.
 
 Please provide:
@@ -557,91 +637,25 @@ Format as JSON:
   "summary": "Brief summary"
 }
 """
-        
-        # Determine MIME type
-        suffix = filepath.suffix.lower()
-        mime_types = {
-            '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg',
-            '.png': 'image/png',
-            '.gif': 'image/gif',
-            '.webp': 'image/webp'
-        }
-        mime_type = mime_types.get(suffix, 'image/jpeg')
-        
-        # Read image and send to Gemini
-        response = gemini_client.models.generate_content(
-            model='gemini-2.5-flash-lite-preview-09-2025',
-            contents=[
-                types.Part.from_bytes(
-                    data=filepath.read_bytes(),
-                    mime_type=mime_type,
-                ),
-                prompt
-            ]
-        )
-        
-        # ✅ Extract text from response
-        try:
-            response_text = ""
-            
-            # New SDK returns response.text as property
-            if hasattr(response, 'text'):
-                text_value = response.text
-                # Handle if it's a list
-                if isinstance(text_value, list):
-                    response_text = "".join(str(item) for item in text_value)
-                else:
-                    response_text = str(text_value)
-            # Fallback to candidates
-            elif hasattr(response, 'candidates') and response.candidates:
-                for candidate in response.candidates:
-                    if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
-                        for part in candidate.content.parts:
-                            if hasattr(part, 'text'):
-                                response_text += str(part.text)
-            
-            response_text = response_text.strip()
-            
-            if not response_text:
-                logger.error(f"Empty response from Gemini")
-                return {"success": False, "error": "Empty response from AI"}
-            
-            logger.info(f"Response received, length: {len(response_text)}")
-            
-            # ✅ Clean up markdown code blocks
-            if "```json" in response_text:
-                parts = response_text.split("```json")
-                if len(parts) > 1:
-                    response_text = parts[1].split("```")[0].strip()  # ✅ FIXED
-            elif response_text.count("```") >= 2:
-                parts = response_text.split("```")
-                if len(parts) >= 3:
-                    response_text = parts[1].strip()  # ✅ FIXED
-            
-            # Parse JSON
-            analysis = json.loads(response_text)
-            
-            logger.info(f"✅ Image report analyzed successfully")
-            return {
-                "success": True,
-                "analysis": analysis
-            }
-            
-        except json.JSONDecodeError as je:
-            logger.error(f"JSON parse error: {je}")
-            logger.error(f"Response text (first 500 chars): {response_text[:500]}")
-            return {
-                "success": False,
-                "error": "Failed to parse AI response as JSON"
-            }
-        
-    except Exception as e:
-        logger.error(f"Image analysis error: {e}", exc_info=True)
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    
+    # Determine MIME type
+    filepath = Path(file_path)
+    suffix = filepath.suffix.lower()
+    mime_types = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp'
+    }
+    mime_type = mime_types.get(suffix, 'image/jpeg')
+    
+    # ✅ Use centralized vision function
+    return await call_gemini_vision(
+        file_path=file_path,
+        prompt=prompt,
+        mime_type=mime_type
+    )
 
 
 # ============================================
