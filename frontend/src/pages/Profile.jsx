@@ -212,31 +212,29 @@ function Profile() {
     }
   };
 
-  const handleAnalyzeReport = async (fileId) => {
-    try {
-      setAnalyzingFileId(fileId);
-      toast.info("🔍 Analyzing report...");
-      
-      const response = await fetch(`${API_BASE_URL}/files/${fileId}/analysis`, {
-        credentials: "include"
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setAnalysisData(data.data.analysis);
-        setShowAnalysisModal(true);
-        toast.success("✅ Analysis complete!");
-      } else {
-        toast.error(data.message || "Failed to analyze report");
-      }
-    } catch (error) {
-      console.error("Analysis error:", error);
-      toast.error("Failed to analyze report");
-    } finally {
-      setAnalyzingFileId(null);
+ const handleAnalyzeReport = async (fileId) => {
+  try {
+    setAnalyzingFileId(fileId);
+    toast.info("🔍 Analyzing report...");
+    
+   
+    const data = await fileAPI.analyzeReport(fileId);
+    
+    if (data.success) {
+      setAnalysisData(data.data.analysis);
+      setShowAnalysisModal(true);
+      toast.success("✅ Analysis complete!");
+    } else {
+      toast.error(data.message || "Failed to analyze report");
     }
-  };
+  } catch (error) {
+    console.error("Analysis error:", error);
+    toast.error("Failed to analyze report");
+  } finally {
+    setAnalyzingFileId(null);
+  }
+};
+
 
   const renderAboutSection = () => (
     <div className="p-4 animate-slideUp">
@@ -810,3 +808,4 @@ const renderHealthSection = () => {
 }
 
 export default Profile;
+
