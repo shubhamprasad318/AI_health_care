@@ -49,12 +49,19 @@ async def signup(user: SignupRequest, background_tasks: BackgroundTasks):
     )
     logger.info(f"📧 Welcome email queued for {user.email}")
     
-    response = JSONResponse(
-        content=standard_response(
-            message=result["message"],
-            data=result["user"]
-        )
+    # ✅ FIX: Include token in response body
+    response_data = standard_response(
+        message=result["message"],
+        data={
+            "user": result["user"],
+            "access_token": result["token"],
+            "token_type": "bearer"
+        }
     )
+    
+    response = JSONResponse(content=response_data)
+    
+    # Keep cookie for additional security (dual auth)
     response.set_cookie(
         key="session_token",
         value=result["token"],
@@ -74,12 +81,19 @@ async def login(credentials: LoginRequest):
     if not result["success"]:
         raise HTTPException(status_code=401, detail=result["message"])
     
-    response = JSONResponse(
-        content=standard_response(
-            message=result["message"],
-            data=result["user"]
-        )
+    # ✅ FIX: Include token in response body
+    response_data = standard_response(
+        message=result["message"],
+        data={
+            "user": result["user"],
+            "access_token": result["token"],
+            "token_type": "bearer"
+        }
     )
+    
+    response = JSONResponse(content=response_data)
+    
+    # Keep cookie for additional security (dual auth)
     response.set_cookie(
         key="session_token",
         value=result["token"],
