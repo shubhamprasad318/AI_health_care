@@ -235,6 +235,16 @@ function Profile() {
   }
 };
 
+  const handleViewFile = async (fileId) => {
+  try {
+    await fileAPI.viewFile(fileId);
+  } catch (error) {
+    console.error('View file error:', error);
+    toast.error('Failed to view file');
+  }
+};
+
+
 
   const renderAboutSection = () => (
     <div className="p-4 animate-slideUp">
@@ -808,5 +818,6 @@ const renderHealthSection = () => {
 }
 
 export default Profile;
+
 
 
