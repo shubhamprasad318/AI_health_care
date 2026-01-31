@@ -11,35 +11,34 @@ const SymptomAnalyzer = () => {
   const [analysis, setAnalysis] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleAnalyze = async () => {
-    if (!symptomsText.trim()) {
-      toast.error("Please enter your symptoms");
-      return;
-    }
+ const handleAnalyze = async () => {
+  if (!symptomsText.trim()) {
+    toast.error("Please enter your symptoms");
+    return;
+  }
 
-    setIsLoading(true);
-    try {
-      // ✅ FIX: Send as object, not string
-      const response = await geminiAPI.analyzeSymptoms({ 
-        symptoms: symptomsText.trim() 
-      });
-      
-      console.log("Symptom analysis response:", response);
-      
-      if (response.success && response.data) {
-        setAnalysis(response.data);
-        toast.success("Analysis complete!");
-      } else {
-        throw new Error(response.message || "Failed to analyze symptoms");
-      }
-    } catch (error) {
-      console.error("Error analyzing symptoms:", error);
-      toast.error("Failed to analyze symptoms");
-      setAnalysis({ error: "Unable to analyze symptoms at this time." });
-    } finally {
-      setIsLoading(false);
+  setIsLoading(true);
+  try {
+    // ✅ PASS STRING DIRECTLY - No object wrapper
+    const response = await geminiAPI.analyzeSymptoms(symptomsText.trim());
+    
+    console.log("Symptom analysis response:", response);
+    
+    if (response.success && response.data) {
+      setAnalysis(response.data);
+      toast.success("Analysis complete!");
+    } else {
+      throw new Error(response.message || "Failed to analyze symptoms");
     }
-  };
+  } catch (error) {
+    console.error("Error analyzing symptoms:", error);
+    toast.error("Failed to analyze symptoms");
+    setAnalysis({ error: "Unable to analyze symptoms at this time." });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <>
@@ -167,3 +166,4 @@ const SymptomAnalyzer = () => {
 };
 
 export default SymptomAnalyzer;
+
