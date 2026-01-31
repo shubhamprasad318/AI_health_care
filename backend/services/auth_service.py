@@ -3,11 +3,30 @@ Authentication Service
 """
 import logging
 from typing import Optional, Dict
-from datetime import datetime
-from database.connection import db, create_session_token
+from datetime import datetime, timedelta
+from database.connection import db
 from utils.security import hash_password, verify_password
+from jose import jwt
+import os
 
 logger = logging.getLogger(__name__)
+
+# ✅ JWT Configuration
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
+ALGORITHM = "HS256"
+TOKEN_EXPIRE_DAYS = 7
+
+
+def create_access_token(email: str) -> str:
+    """Create JWT access token"""
+    expire = datetime.utcnow() + timedelta(days=TOKEN_EXPIRE_DAYS)
+    to_encode = {
+        "sub": email,  # Subject (user identifier)
+        "exp": expire,  # Expiration time
+        "iat": datetime.utcnow()  # Issued at
+    }
+    token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return token
 
 
 async def register_user(user_data: Dict) -> Dict:
@@ -25,8 +44,8 @@ async def register_user(user_data: Dict) -> Dict:
         # Insert user
         await db.store.insert_one(user_data)
         
-        # Create session
-        token = create_session_token(user_data["email"])
+        # ✅ Create JWT token instead of session token
+        token = create_access_token(user_data["email"])
         
         logger.info(f"✅ User registered: {user_data['email']}")
         
@@ -36,7 +55,11 @@ async def register_user(user_data: Dict) -> Dict:
             "token": token,
             "user": {
                 "email": user_data["email"],
-                "name": user_data.get("name")
+                "name": user_data.get("name"),
+                "first_name": user_data.get("first_name"),
+                "last_name": user_data.get("last_name"),
+                "age": user_data.get("age"),
+                "gender": user_data.get("gender")
             }
         }
         
@@ -56,8 +79,8 @@ async def authenticate_user(email: str, password: str) -> Dict:
         if not verify_password(password, user["password"]):
             return {"success": False, "message": "Invalid credentials"}
         
-        # Create session
-        token = create_session_token(email)
+        # ✅ Create JWT token instead of session token
+        token = create_access_token(email)
         
         logger.info(f"✅ User authenticated: {email}")
         
@@ -68,6 +91,8 @@ async def authenticate_user(email: str, password: str) -> Dict:
             "user": {
                 "email": user["email"],
                 "name": user.get("name"),
+                "first_name": user.get("first_name"),
+                "last_name": user.get("last_name"),
                 "age": user.get("age"),
                 "gender": user.get("gender")
             }
