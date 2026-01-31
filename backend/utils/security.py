@@ -6,8 +6,14 @@ from fastapi import HTTPException, Request
 import logging
 from typing import Optional
 from database.connection import get_session
+from jose import jwt, JWTError
+import os
 
 logger = logging.getLogger(__name__)
+
+# ✅ ADD JWT CONFIGURATION
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this")
+ALGORITHM = "HS256"
 
 
 def hash_password(password: str) -> str:
@@ -47,16 +53,60 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 async def get_current_user(request: Request) -> Optional[str]:
-    """Get current user from session token"""
-    token = request.cookies.get("session_token")
-    if token:
-        return get_session(token)
-    return None
+    """
+    Get current user from JWT token (Authorization header or cookie)
+    Returns email if authenticated, None otherwise
+    """
+    # ✅ FIX: Check Authorization header first (Bearer token)
+    auth_header = request.headers.get("Authorization")
+    token = None
+    
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.replace("Bearer ", "")
+        logger.info(f"🔑 Token from Authorization header: {token[:20]}...")
+    else:
+        # Fallback to cookie
+        token = request.cookies.get("session_token")
+        if token:
+            logger.info(f"🍪 Token from cookie: {token[:20]}...")
+    
+    if not token:
+        logger.warning("❌ No token found in Authorization header or cookies")
+        return None
+    
+    try:
+        # ✅ FIX: Decode JWT token
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("sub")
+        
+        if not email:
+            logger.error("❌ No 'sub' (email) in token payload")
+            return None
+        
+        logger.info(f"✅ Token validated for user: {email}")
+        return email
+        
+    except JWTError as e:
+        logger.error(f"❌ JWT validation error: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"❌ Token validation error: {e}")
+        return None
 
 
 async def require_auth(request: Request) -> str:
-    """Require authentication"""
+    """
+    Require authentication (JWT token validation)
+    Raises 401 if not authenticated
+    Returns email if valid
+    """
     email = await get_current_user(request)
+    
     if not email:
-        raise HTTPException(status_code=401, detail="Authentication required")
+        logger.warning("❌ Authentication required but no valid token found")
+        raise HTTPException(
+            status_code=401, 
+            detail="Authentication required. Please login."
+        )
+    
     return email
