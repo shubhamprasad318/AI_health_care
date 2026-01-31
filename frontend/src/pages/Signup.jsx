@@ -4,6 +4,7 @@ import { useFormik } from "formik";
 import { signupSchema } from "../schema";
 import { toast } from "react-toastify";
 import { authAPI } from "../utils/api";
+import { useAuth } from "../context/AuthContext"; //  ADD THIS
 
 function Signup() {
   const initialValues = {
@@ -20,16 +21,19 @@ function Signup() {
   };
 
   const navigate = useNavigate();
+  const { login } = useAuth(); // ✅ ADD THIS
   const [signup, setSignup] = useState(false);
   const [error, setError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // ✅ ADD THIS
 
-  // distructuring the values.
   const { values, errors, touched, handleBlur, handleChange, handleSubmit } =
     useFormik({
       initialValues: initialValues,
       validationSchema: signupSchema,
       onSubmit: async (values) => {
         try {
+          setIsLoading(true); // ✅ ADD THIS
+          
           // Validate and transform data to match backend requirements
           if (!values.first_name?.trim() || !values.last_name?.trim()) {
             toast.error("Please enter your first and last name");
@@ -72,24 +76,27 @@ function Signup() {
           const data = await authAPI.signup(signupData);
 
           if (data.success) {
-            // Show success message with email confirmation info
+            // ✅ FIX: Auto-login user after signup
+            login(data.data.user || data.data, data.data.access_token);
+            
             toast.success(
-              `🎉 ${data.message || "Registration successful!"}\n📧 Check your email (${values.email}) for welcome message!`,
+              `🎉 ${data.message || "Registration successful!"}`,
               {
                 position: "top-center",
-                autoClose: 5000,
+                autoClose: 3000,
                 hideProgressBar: false,
                 closeOnClick: true,
                 pauseOnHover: true,
                 draggable: true,
               }
             );
+            
             setSignup(true);
             
-            // Redirect after 2 seconds to let user see the toast
+            // ✅ FIX: Redirect to dashboard instead of login
             setTimeout(() => {
-              navigate("/login");
-            }, 2000);
+              navigate("/dashboard");
+            }, 1000);
           } else {
             setError(data.message || "Registration failed");
             toast.error(data.message || "Registration Failed!");
@@ -98,13 +105,12 @@ function Signup() {
           console.error("Error during signup:", error);
           setError(error.message || "An error occurred during signup");
           toast.error(error.message || "Registration Failed!");
+        } finally {
+          setIsLoading(false); // ✅ ADD THIS
         }
       },
     });
 
-  // Don't redirect immediately - let toast show first
-  // Redirect is now handled with setTimeout in onSubmit
-  
   return (
     <div className="relative flex flex-col justify-center items-center w-full md:h-[600px] font-text h-[700px] mt-20 md:mt-0">
       <div className="rounded shadow-md shadow-gray-400 mx-10">
@@ -131,6 +137,7 @@ function Signup() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   autoComplete="off"
+                  disabled={isLoading}
                   className="bg-transparent shadow-sm focus:outline-none shadow-gray-400 font-medium px-4 py-2"
                 />
                 {errors.first_name && touched.first_name ? (
@@ -147,6 +154,7 @@ function Signup() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   autoComplete="off"
+                  disabled={isLoading}
                   className="bg-transparent shadow-sm focus:outline-none shadow-gray-400 font-medium px-4 py-2"
                 />
                 {errors.last_name && touched.last_name ? (
@@ -165,6 +173,7 @@ function Signup() {
                 onChange={handleChange}
                 onBlur={handleBlur}
                 autoComplete="off"
+                disabled={isLoading}
               />
               {errors.phone_number && touched.phone_number ? (
                 <p className="text-sm text-red-700">{errors.phone_number}</p>
@@ -181,6 +190,7 @@ function Signup() {
                 onChange={handleChange}
                 onBlur={handleBlur}
                 autoComplete="off"
+                disabled={isLoading}
               />
               {errors.email && touched.email ? (
                 <p className="text-sm text-red-700">{errors.email}</p>
@@ -198,6 +208,7 @@ function Signup() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   autoComplete="off"
+                  disabled={isLoading}
                 />
                 {errors.age && touched.age ? (
                   <p className="text-sm text-red-700">{errors.age}</p>
@@ -211,6 +222,7 @@ function Signup() {
                   value={values.gender}
                   onChange={handleChange}
                   onBlur={handleBlur}
+                  disabled={isLoading}
                 >
                   <option value="">Select Gender</option>
                   <option value="Male">Male</option>
@@ -234,6 +246,7 @@ function Signup() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   autoComplete="off"
+                  disabled={isLoading}
                 />
                 {errors.city && touched.city ? (
                   <p className="text-sm text-red-700">{errors.city}</p>
@@ -250,6 +263,7 @@ function Signup() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   autoComplete="off"
+                  disabled={isLoading}
                 />
                 {errors.state && touched.state ? (
                   <p className="text-sm text-red-700">{errors.state}</p>
@@ -268,6 +282,7 @@ function Signup() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   autoComplete="off"
+                  disabled={isLoading}
                 />
                 {errors.password && touched.password ? (
                   <p className="text-sm text-red-700">{errors.password}</p>
@@ -284,6 +299,7 @@ function Signup() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   autoComplete="off"
+                  disabled={isLoading}
                 />
                 {errors.confirm_password && touched.confirm_password ? (
                   <p className="text-sm text-red-700">
@@ -306,9 +322,12 @@ function Signup() {
           <div className="flex justify-center p-4">
             <button
               type="submit"
-              className="capitalize bg-button font-semibold text-white bg-btn2 px-8 py-2 rounded hover:opacity-90 transition-opacity"
+              disabled={isLoading}
+              className={`capitalize font-semibold text-white bg-btn2 px-8 py-2 rounded transition-opacity ${
+                isLoading ? "opacity-70 cursor-not-allowed" : "hover:opacity-90"
+              }`}
             >
-              register
+              {isLoading ? "Registering..." : "Register"}
             </button>
           </div>
         </form>
