@@ -30,8 +30,8 @@ function Login() {
           const data = await authAPI.login(values.email, values.password);
 
           if (data.success) {
-            const userEmail = data.data?.email || values.email;
-            login(userEmail);
+            // ✅ FIX: Pass user data AND token to context
+            login(data.data.user || data.data, data.data.access_token);
             
             toast.success(`🎉 ${data.message || "Login successful!"}`, {
               position: "top-center",
@@ -43,7 +43,7 @@ function Login() {
             
             // Redirect after short delay
             setTimeout(() => {
-              navigate("/predict");
+              navigate("/dashboard");
             }, 1000);
           } else {
             setError(data.message || "Login failed");
