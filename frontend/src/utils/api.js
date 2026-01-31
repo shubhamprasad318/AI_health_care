@@ -269,7 +269,6 @@ export const fileAPI = {
   upload: async (file) => {
     const formData = new FormData();
     formData.append("file", file);
-
     return apiRequest("/files/upload", {
       method: "POST",
       body: formData,
@@ -288,19 +287,42 @@ export const fileAPI = {
     });
   },
 
-  // Get file by ID (returns download URL)
   getFile: async (fileId) => {
     return apiRequest(`/files/${fileId}`, {
       method: "GET",
     });
   },
 
-  // Analyze medical report with AI
   analyzeReport: async (fileId) => {
     return apiRequest(`/files/${fileId}/analysis`, {
       method: "GET",
     });
   },
+
+  // ✅ NEW: View file with JWT authentication
+  viewFile: async (fileId) => {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/files/${fileId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      credentials: 'include'
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to load file');
+    }
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => window.URL.revokeObjectURL(url), 100);
+  }
 };
 
 /**
