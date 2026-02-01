@@ -3,28 +3,25 @@ Authentication Routes
 """
 from fastapi import APIRouter, HTTPException, Request, BackgroundTasks, Depends
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder  # <--- ✅ IMPORT ADDED
 from database.models import LoginRequest, SignupRequest
-# ✅ Make sure get_current_user is imported here
 from services.auth_service import register_user, authenticate_user, get_current_user
 from services.email_service import send_welcome_email
 from database.connection import delete_session
 from utils.helpers import standard_response
 import logging
 
-
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 # ==========================================
-# ✅ NEW: AUTH STATUS ENDPOINT (Fixes Refresh Issue)
+# AUTH STATUS ENDPOINT
 # ==========================================
 @router.get("/status")
 async def check_auth_status(current_user: dict = Depends(get_current_user)):
     """
     Verifies the JWT token and restores session on page refresh.
-    The 'current_user' is automatically injected if the token is valid.
-    If invalid, FastAPI raises a 401 error automatically.
     """
     return standard_response(
         message="User is authenticated",
@@ -58,7 +55,7 @@ async def signup(user: SignupRequest, background_tasks: BackgroundTasks):
     if not result["success"]:
         raise HTTPException(status_code=409, detail=result["message"])
     
-    # Send welcome email in background (non-blocking)
+    # Send welcome email in background
     background_tasks.add_task(
         send_welcome_email,
         user.email,
@@ -66,7 +63,7 @@ async def signup(user: SignupRequest, background_tasks: BackgroundTasks):
     )
     logger.info(f"📧 Welcome email queued for {user.email}")
     
-    # Include token in response body
+    # Prepare response data
     response_data = standard_response(
         message=result["message"],
         data={
@@ -76,9 +73,10 @@ async def signup(user: SignupRequest, background_tasks: BackgroundTasks):
         }
     )
     
-    response = JSONResponse(content=response_data)
+    # ✅ FIX: Use jsonable_encoder to safely convert dates/ObjectIds to strings
+    response = JSONResponse(content=jsonable_encoder(response_data))
     
-    # Keep cookie for additional security (dual auth)
+    # Keep cookie for additional security
     response.set_cookie(
         key="session_token",
         value=result["token"],
@@ -98,7 +96,7 @@ async def login(credentials: LoginRequest):
     if not result["success"]:
         raise HTTPException(status_code=401, detail=result["message"])
     
-    # Include token in response body
+    # Prepare response data
     response_data = standard_response(
         message=result["message"],
         data={
@@ -108,9 +106,11 @@ async def login(credentials: LoginRequest):
         }
     )
     
-    response = JSONResponse(content=response_data)
+    # ✅ FIX: Use jsonable_encoder to safely convert dates/ObjectIds to strings
+    # This prevents "TypeError: Object of type datetime is not JSON serializable"
+    response = JSONResponse(content=jsonable_encoder(response_data))
     
-    # Keep cookie for additional security (dual auth)
+    # Keep cookie for additional security
     response.set_cookie(
         key="session_token",
         value=result["token"],
