@@ -149,41 +149,67 @@ async def check_drug_interactions(drug_request: DrugInteractionRequest):
     )
 
 
+# In routes/gemini.py
+
 @router.post("/health/personalized-plan")
 async def generate_health_plan(request: Request):
-    """Generate health plan"""
+    """Generate Hybrid Health Plan (Prediction + Reports)"""
     if not is_gemini_available():
         raise HTTPException(status_code=503, detail="Gemini unavailable")
     
     email = await require_auth(request)
     
+    # 1. Fetch User Profile
     user_data = await db.store.find_one({"email": email})
-    recent = await db.predictions.find_one(
+    
+    # 2. Fetch Latest Prediction (ML Model)
+    recent_pred = await db.predictions.find_one(
         {"email": email},
         sort=[("created_at", -1)]
     )
     
-    if not recent:
+    # 3. ✅ FETCH LATEST REPORT ANALYSIS (Your PDF Data)
+    recent_report = await db.files.find_one(
+        {
+            "email": email,      # Matches user email
+            "analyzed": True     # Must be already analyzed
+        }, 
+        sort=[("uploaded_at", -1)] # Get the newest one
+    )
+    
+    # Check if we have enough data (Need at least one source)
+    if not recent_pred and not recent_report:
         raise HTTPException(
             status_code=404,
-            detail="No recent diagnosis. Complete prediction first."
+            detail="No health data found. Please run a Prediction or Upload a Report first."
         )
     
-    condition = recent.get("ml_prediction")
+    # Prepare Data for the AI
+    condition = recent_pred.get("ml_prediction") if recent_pred else "General Wellness"
+    
     user_profile = {
-        "age": user_data.get("age"),
-        "gender": user_data.get("gender"),
-        "weight": user_data.get("weight"),
-        "height": user_data.get("height")
+        "age": user_data.get("age", "Unknown"),
+        "gender": user_data.get("gender", "Unknown"),
+        "weight": user_data.get("weight", "Unknown"),
+        "height": user_data.get("height", "Unknown")
     }
     
-    health_plan = await gemini_personalized_health_plan(condition, user_profile)
+    # Get the analysis from the file (if it exists)
+    report_data = recent_report.get("analysis") if recent_report else None
     
-    # Store plan
+    # 🚀 GENERATE THE HYBRID PLAN
+    health_plan = await gemini_personalized_health_plan(
+        condition, 
+        user_profile,
+        report_analysis=report_data # Passing the PDF data here!
+    )
+    
+    # Save the plan
     try:
         await db.health_plans.insert_one({
             "email": email,
             "condition": condition,
+            "used_report": bool(report_data),
             "plan": health_plan,
             "created_at": datetime.utcnow()
         })
@@ -191,7 +217,7 @@ async def generate_health_plan(request: Request):
         pass
     
     return standard_response(
-        message="Health plan generated",
+        message="Hybrid Health Plan Generated",
         data=health_plan
     )
 
@@ -215,3 +241,4 @@ async def gemini_status():
             }
         }
     )
+
