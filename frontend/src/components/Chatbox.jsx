@@ -9,7 +9,7 @@ const Chatbot = () => {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content: "Hello! I'm your AI health assistant powered by Gemini. How can I help you today?",
+      content: "Hello! I'm your AI health assistant. I can help with health questions, symptom information, and general medical guidance.\n\n⚕️ Important: I provide evidence-based health information, NOT medical diagnoses. Always consult a healthcare provider for medical decisions. If you're experiencing a medical emergency, call 112/911 immediately.",
     },
   ]);
   const [inputMessage, setInputMessage] = useState("");
@@ -119,7 +119,7 @@ const Chatbot = () => {
 
       {/* Gemini Chat Window - Now bottom-right */}
       {geminiAvailable && isGeminiOpen && (
-        <div className="fixed bottom-0 right-0 md:bottom-6 md:right-6 w-full md:w-96 h-screen md:h-[600px] bg-white md:rounded-lg shadow-2xl flex flex-col z-[9999] border border-gray-200 animate-slideUp">
+        <div className="fixed bottom-0 right-0 md:bottom-6 md:right-6 w-full md:w-96 h-screen md:h-[600px] bg-white dark:bg-gray-800 md:rounded-lg shadow-2xl dark:shadow-gray-900/50 flex flex-col z-[9999] border border-gray-200 dark:border-gray-700 animate-slideUp">
           {/* Header */}
           <div className="bg-gradient-to-r from-btn2 to-sky-500 text-white p-4 md:rounded-t-lg flex justify-between items-center shadow-lg">
             <div className="flex items-center gap-2">
@@ -142,8 +142,8 @@ const Chatbot = () => {
 
           {/* Quick Questions (Show only if no messages yet) */}
           {messages.length === 1 && (
-            <div className="p-4 bg-blue-50 border-b border-blue-100">
-              <p className="text-xs font-bold text-gray-700 mb-2 flex items-center gap-1">
+            <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-800">
+              <p className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1">
                 <FaInfoCircle className="text-btn2" />
                 Quick Questions:
               </p>
@@ -152,7 +152,7 @@ const Chatbot = () => {
                   <button
                     key={index}
                     onClick={() => handleQuickQuestion(question)}
-                    className="text-xs bg-white hover:bg-btn2 hover:text-white border border-gray-300 hover:border-btn2 px-3 py-2 rounded-lg transition-all font-medium"
+                    className="text-xs bg-white dark:bg-gray-700 hover:bg-btn2 hover:text-white border border-gray-300 dark:border-gray-600 dark:text-gray-300 hover:border-btn2 px-3 py-2 rounded-lg transition-all font-medium"
                   >
                     {question}
                   </button>
@@ -162,7 +162,7 @@ const Chatbot = () => {
           )}
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-br from-gray-50 to-blue-50">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-900/80">
             {messages.map((msg, index) => (
               <div
                 key={index}
@@ -174,8 +174,8 @@ const Chatbot = () => {
                 <div
                   className={`max-w-[85%] md:max-w-[80%] rounded-2xl p-3 shadow-md ${
                     msg.role === "user"
-                      ? "bg-gradient-to-r from-btn2 to-sky-500 text-white"
-                      : "bg-white text-gray-800 border border-gray-200"
+                      ? "bg-gradient-to-r from-btn2 to-btn1 text-white"
+                      : "bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600"
                   }`}
                 >
                   <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
@@ -187,7 +187,7 @@ const Chatbot = () => {
             ))}
             {isLoading && (
               <div className="flex justify-start animate-slideUp">
-                <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-md">
+                <div className="bg-white dark:bg-gray-700 rounded-2xl p-4 border border-gray-200 dark:border-gray-600 shadow-md">
                   <div className="flex gap-1">
                     <div className="w-2 h-2 bg-btn2 rounded-full animate-bounce"></div>
                     <div className="w-2 h-2 bg-btn2 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
@@ -201,7 +201,7 @@ const Chatbot = () => {
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-gray-200 bg-white md:rounded-b-lg shadow-lg">
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 md:rounded-b-lg shadow-lg">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -209,7 +209,7 @@ const Chatbot = () => {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Type your health question..."
-                className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-btn2 focus:ring-4 focus:ring-btn2/20 transition-all text-sm"
+                className="flex-1 px-4 py-3 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-100 rounded-xl focus:outline-none focus:border-btn2 focus:ring-4 focus:ring-btn2/20 transition-all text-sm"
                 disabled={isLoading}
               />
               <button
@@ -221,8 +221,8 @@ const Chatbot = () => {
               </button>
             </div>
             <div className="flex items-center justify-between mt-2">
-              <p className="text-xs text-gray-500">
-                💡 Ask about symptoms, diet, exercise, or general health
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                ⚕️ AI health information only — not a medical diagnosis
               </p>
               <button
                 onClick={() => setMessages([messages[0]])}

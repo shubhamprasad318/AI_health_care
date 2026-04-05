@@ -178,7 +178,7 @@ function Articles() {
   });
 
   return (
-    <div className="w-full min-h-screen font-text bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8">
+    <div className="w-full min-h-screen font-text bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 py-8 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-5">
         {/* Header */}
         <motion.div 
@@ -186,7 +186,7 @@ function Articles() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="bg-gradient-to-r from-btn2 to-sky-500 rounded-2xl p-8 shadow-xl text-white relative overflow-hidden">
+            <div className="bg-gradient-to-r from-btn2 to-btn1 rounded-2xl p-8 shadow-xl text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-3">
@@ -209,7 +209,7 @@ function Articles() {
         >
           <div className="flex items-center gap-3 mb-4">
             <FaGlobe className="text-btn2 text-2xl" />
-            <h2 className="text-2xl font-bold text-gray-800">Trusted Health Resources</h2>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Trusted Health Resources</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {externalResources.map((resource, index) => (
@@ -221,18 +221,18 @@ function Articles() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className={`bg-gradient-to-br ${resource.bgColor} p-6 rounded-xl border-2 border-gray-200 hover:border-btn2 hover:shadow-xl transition-all duration-300 group cursor-pointer`}
+                className={`bg-gradient-to-br ${resource.bgColor} dark:from-gray-800 dark:to-gray-800/80 p-6 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-btn2 hover:shadow-xl dark:hover:shadow-gray-900/50 transition-all duration-300 group cursor-pointer`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className={`bg-gradient-to-r ${resource.color} w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform`}>
                     {resource.icon}
                   </div>
-                  <FaExternalLinkAlt className="text-gray-400 group-hover:text-btn2 transition-colors" />
+                  <FaExternalLinkAlt className="text-gray-400 dark:text-gray-500 group-hover:text-btn2 transition-colors" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-btn2 transition-colors">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2 group-hover:text-btn2 transition-colors">
                   {resource.name}
                 </h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
+                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                   {resource.description}
                 </p>
                 <div className="flex items-center gap-2 mt-4 text-btn2 font-semibold text-sm group-hover:gap-3 transition-all">
@@ -249,18 +249,18 @@ function Articles() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-8 bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-100"
+          className="mb-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg dark:shadow-gray-900/50 p-6 border-2 border-gray-100 dark:border-gray-700"
         >
           {/* Search Bar */}
           <div className="mb-6">
             <div className="relative">
-              <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
+              <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 text-xl" />
               <input
                 type="text"
                 placeholder="Search articles..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-300 focus:border-btn2 focus:ring-4 focus:ring-btn2/20 focus:outline-none transition-all text-lg"
+                className="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-100 focus:border-btn2 focus:ring-4 focus:ring-btn2/20 focus:outline-none transition-all text-lg"
               />
             </div>
           </div>
@@ -273,8 +273,8 @@ function Articles() {
                 onClick={() => setSelectedCategory(category)}
                 className={`px-4 py-2 rounded-xl font-bold transition-all ${
                   selectedCategory === category
-                    ? "bg-gradient-to-r from-btn2 to-sky-500 text-white shadow-lg scale-105"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? "bg-gradient-to-r from-btn2 to-btn1 text-white shadow-lg scale-105"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                 }`}
               >
                 {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -285,7 +285,7 @@ function Articles() {
 
         {/* Results Count */}
         <div className="mb-6">
-          <p className="text-gray-600 font-semibold">
+          <p className="text-gray-600 dark:text-gray-400 font-semibold">
             Showing <span className="text-btn2 font-bold">{filteredArticles.length}</span> article{filteredArticles.length !== 1 ? "s" : ""}
             {selectedCategory !== "all" && <span> in <span className="text-btn2">{selectedCategory}</span></span>}
           </p>
@@ -300,7 +300,7 @@ function Articles() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-gray-100 hover:shadow-2xl hover:border-btn2 transition-all duration-300 group"
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg dark:shadow-gray-900/50 overflow-hidden border-2 border-gray-100 dark:border-gray-700 hover:shadow-2xl hover:border-btn2 transition-all duration-300 group"
               >
                 {/* Image */}
                 <div className="relative h-48 overflow-hidden">
@@ -310,7 +310,7 @@ function Articles() {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />
                   <div className="absolute top-3 left-3">
-                    <span className="bg-gradient-to-r from-btn2 to-sky-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                    <span className="bg-gradient-to-r from-btn2 to-btn1 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
                       {article.category}
                     </span>
                   </div>
@@ -318,15 +318,15 @@ function Articles() {
 
                 {/* Content */}
                 <div className="p-6">
-                  <h2 className="text-xl font-bold text-gray-800 mb-3 line-clamp-2 group-hover:text-btn2 transition-colors">
+                  <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-3 line-clamp-2 group-hover:text-btn2 transition-colors">
                     {article.title}
                   </h2>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
                     {article.excerpt}
                   </p>
 
                   {/* Meta Info */}
-                  <div className="flex flex-wrap gap-3 mb-4 text-xs text-gray-500">
+                  <div className="flex flex-wrap gap-3 mb-4 text-xs text-gray-500 dark:text-gray-400">
                     <div className="flex items-center gap-1">
                       <FaUser className="text-btn2" />
                       <span>{article.author}</span>
@@ -347,13 +347,13 @@ function Articles() {
                       href={article.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 bg-gradient-to-r from-btn2 to-sky-500 text-white px-4 py-3 rounded-xl font-bold hover:from-sky-500 hover:to-btn2 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group-hover:scale-105"
+                      className="flex-1 bg-gradient-to-r from-btn2 to-btn1 text-white px-4 py-3 rounded-xl font-bold hover:from-sky-500 hover:to-btn2 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group-hover:scale-105"
                     >
                       Read Article
                       <FaExternalLinkAlt className="text-sm" />
                     </a>
-                    <button className="bg-gray-100 hover:bg-gray-200 p-3 rounded-xl transition-all">
-                      <FaBookmark className="text-gray-600" />
+                    <button className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 p-3 rounded-xl transition-all">
+                      <FaBookmark className="text-gray-600 dark:text-gray-300" />
                     </button>
                   </div>
                 </div>
@@ -365,17 +365,17 @@ function Articles() {
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-16 bg-white rounded-2xl shadow-lg border-2 border-gray-100"
+            className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-lg dark:shadow-gray-900/50 border-2 border-gray-100 dark:border-gray-700"
           >
-            <FaSearch className="text-gray-300 text-6xl mx-auto mb-4" />
-            <p className="text-gray-600 text-xl font-semibold mb-2">No articles found</p>
-            <p className="text-gray-500">Try adjusting your search or filters</p>
+            <FaSearch className="text-gray-300 dark:text-gray-600 text-6xl mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-300 text-xl font-semibold mb-2">No articles found</p>
+            <p className="text-gray-500 dark:text-gray-400">Try adjusting your search or filters</p>
             <button
               onClick={() => {
                 setSearchQuery("");
                 setSelectedCategory("all");
               }}
-              className="mt-6 bg-gradient-to-r from-btn2 to-sky-500 text-white px-6 py-3 rounded-xl font-bold hover:from-sky-500 hover:to-btn2 transition-all shadow-lg"
+              className="mt-6 bg-gradient-to-r from-btn2 to-btn1 text-white px-6 py-3 rounded-xl font-bold hover:from-sky-500 hover:to-btn2 transition-all shadow-lg"
             >
               Clear Filters
             </button>
@@ -387,15 +387,15 @@ function Articles() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="mt-12 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-8 border-2 border-green-200 text-center"
+          className="mt-12 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-2xl p-8 border-2 border-green-200 dark:border-green-800 text-center"
         >
-          <h3 className="text-2xl font-bold text-gray-800 mb-3">Want More Health Insights?</h3>
-          <p className="text-gray-700 mb-6">Subscribe to our newsletter for weekly health tips and expert advice</p>
+          <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3">Want More Health Insights?</h3>
+          <p className="text-gray-700 dark:text-gray-300 mb-6">Subscribe to our newsletter for weekly health tips and expert advice</p>
           <div className="flex flex-col md:flex-row gap-3 justify-center max-w-md mx-auto">
             <input
               type="email"
               placeholder="Enter your email"
-              className="flex-1 px-4 py-3 rounded-xl border-2 border-green-300 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 focus:outline-none transition-all"
+              className="flex-1 px-4 py-3 rounded-xl border-2 border-green-300 dark:border-green-700 dark:bg-gray-700/50 dark:text-gray-100 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 focus:outline-none transition-all"
             />
             <button className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-xl font-bold hover:from-green-600 hover:to-green-500 transition-all shadow-lg hover:shadow-xl">
               Subscribe

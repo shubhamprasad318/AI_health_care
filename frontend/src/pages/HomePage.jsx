@@ -38,7 +38,7 @@ function HomePage() {
   }, []);
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-lightBackground via-white to-lightBackground overflow-hidden relative">
+    <div className="w-full min-h-screen bg-gradient-to-br from-lightBackground via-white to-lightBackground dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 overflow-hidden relative transition-colors duration-300">
       {/* Animated background elements with better performance */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         {/* Top-left gradient blob */}

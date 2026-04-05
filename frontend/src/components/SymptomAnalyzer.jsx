@@ -52,7 +52,7 @@ const SymptomAnalyzer = () => {
 
       {isOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 p-4">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             {/* Header */}
             <div className="bg-gradient-to-r from-orange-500 to-orange-700 text-white p-6 rounded-t-2xl relative">
               <button
@@ -82,17 +82,17 @@ const SymptomAnalyzer = () => {
             {/* Content */}
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
                   Describe your symptoms in detail:
                 </label>
                 <textarea
                   value={symptomsText}
                   onChange={(e) => setSymptomsText(e.target.value)}
                   placeholder="e.g., I've been experiencing severe headaches for 3 days, along with nausea, sensitivity to light, and dizziness. The pain is mostly on the right side of my head..."
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-orange-500 transition resize-none"
+                  className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-100 rounded-xl focus:outline-none focus:border-orange-500 transition resize-none"
                   rows={6}
                 />
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                   💡 Tip: Include duration, severity, location, and any related symptoms for better analysis
                 </p>
               </div>
@@ -119,7 +119,7 @@ const SymptomAnalyzer = () => {
                 <div className="mt-6">
                   {analysis.error ? (
                     // ✅ Changed from red to yellow/orange theme
-                    <div className="p-6 bg-yellow-50 rounded-xl border-2 border-yellow-400">
+                    <div className="p-6 bg-yellow-50 dark:bg-yellow-900/30 rounded-xl border-2 border-yellow-400 dark:border-yellow-700">
                       <div className="flex items-center gap-3">
                         <div className="bg-yellow-400 p-3 rounded-full">
                           <FaExclamationCircle className="text-white text-xl" />
@@ -134,7 +134,7 @@ const SymptomAnalyzer = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="p-6 bg-orange-50 rounded-xl border-2 border-orange-200">
+                    <div className="p-6 bg-orange-50 dark:bg-orange-950/30 rounded-xl border-2 border-orange-200 dark:border-orange-800">
                       <h3 className="font-bold text-lg mb-4 text-orange-800 flex items-center gap-2">
                         <FaStethoscope />
                         Analysis Results:
@@ -147,12 +147,17 @@ const SymptomAnalyzer = () => {
                         </ReactMarkdown>
                       </div>
                       {analysis.disclaimer && (
-                        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg">
-                          <p className="text-xs text-gray-600 italic">
+                        <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg">
+                          <p className="text-xs text-gray-600 dark:text-gray-400 italic">
                             ⚠️ {analysis.disclaimer}
                           </p>
                         </div>
                       )}
+                      <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                        <p className="text-xs text-red-700 dark:text-red-400 font-medium">
+                          ⚕️ This is an AI-generated symptom assessment for informational purposes only. It is NOT a clinical diagnosis. If symptoms are severe, worsening, or you are unsure, seek medical attention immediately.
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>

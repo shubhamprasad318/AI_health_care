@@ -11,29 +11,19 @@ export default function AuthProvider({ children }) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // ✅ CHECK JWT TOKEN ON APP LOAD
   useEffect(() => {
     checkAuthStatus();
   }, []);
 
   const checkAuthStatus = async () => {
-    const token = localStorage.getItem("token");
-    
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
     try {
-      // Verify token with backend
       const response = await authAPI.checkAuth();
       
       if (response.success) {
         setLoggedIn(true);
         setUser(response.data?.user);
-        setEmail(response.data?.user?.email || localStorage.getItem("email") || "");
+        setEmail(response.data?.user?.email || "");
       } else {
-        // Token invalid, clear everything
         clearAuth();
       }
     } catch (error) {
@@ -44,23 +34,11 @@ export default function AuthProvider({ children }) {
     }
   };
 
-  const login = (userData, token) => {
-    // ✅ SAVE TOKEN TO LOCALSTORAGE
-    if (token) {
-      localStorage.setItem("token", token);
-    }
-    
-    // Save user data
+  const login = (userData) => {
     const userEmail = userData?.email || userData;
     setEmail(userEmail);
     setUser(userData);
     setLoggedIn(true);
-    
-    // Backward compatibility
-    localStorage.setItem("email", userEmail);
-    localStorage.setItem("loggedIn", "true");
-    
-    console.log("✅ User logged in:", userEmail);
   };
 
   const logout = async () => {
@@ -74,14 +52,9 @@ export default function AuthProvider({ children }) {
   };
 
   const clearAuth = () => {
-    // ✅ CLEAR TOKEN AND ALL AUTH DATA
-    localStorage.removeItem("token");
-    localStorage.removeItem("loggedIn");
-    localStorage.removeItem("email");
     setEmail("");
     setUser(null);
     setLoggedIn(false);
-    console.log("✅ Auth cleared");
   };
 
   // Show loading while checking authentication

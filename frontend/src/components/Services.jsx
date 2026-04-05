@@ -8,8 +8,8 @@ const Service = () => {
     <section className="font-text my-10 relative py-12">
       {/* Background decorative elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-btn2/10 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-20 right-10 w-40 h-40 bg-btn1/10 rounded-full blur-2xl"></div>
+        <div className="absolute top-20 left-10 w-32 h-32 bg-btn2/10 dark:bg-btn2/5 rounded-full blur-2xl"></div>
+        <div className="absolute bottom-20 right-10 w-40 h-40 bg-btn1/10 dark:bg-btn1/5 rounded-full blur-2xl"></div>
       </div>
       
       <div className="container mx-auto relative z-10">
@@ -22,10 +22,10 @@ const Service = () => {
               transition={{ duration: 0.6 }}
               className="mx-auto mb-12 max-w-[510px] text-center lg:mb-10"
             >
-              <h2 className="text-lightText mb-3 text-3xl font-extrabold sm:text-4xl md:text-[40px] font-playfair bg-gradient-to-r from-lightText via-btn2 to-lightText bg-clip-text text-transparent">
+              <h2 className="text-lightText mb-3 text-3xl font-extrabold sm:text-4xl md:text-[40px] font-playfair bg-gradient-to-r from-lightText via-btn2 to-lightText dark:from-blue-400 dark:via-btn2 dark:to-blue-400 bg-clip-text text-transparent">
                 What We Offer?
               </h2>
-              <p className="text-xs md:text-sm text-gray-700 leading-relaxed">
+              <p className="text-xs md:text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
                 Elevate well-being with our AI HealthEngine module: personalized
                 insights, proactive guidance, and seamless wellness at your
                 fingertips.
@@ -83,7 +83,7 @@ const ServiceCard = ({ icon, title, details }) => {
       >
         <motion.div
           whileHover={{ y: -10, scale: 1.02 }}
-          className="mx-6 md:mx-0 mb-9 rounded-[20px] border-2 border-lightText/30 shadow-xl shadow-gray-400/50 p-10 transform transition-all duration-500 hover:shadow-2xl hover:shadow-btn2/30 hover:border-btn2 md:px-7 font-nunito flex flex-col md:flex-row items-center justify-center bg-gradient-to-br from-white via-lightBackground/50 to-white relative overflow-hidden group"
+          className="mx-6 md:mx-0 mb-9 rounded-[20px] border-2 border-lightText/30 dark:border-gray-700 shadow-xl shadow-gray-400/50 dark:shadow-gray-900/50 p-10 transform transition-all duration-500 hover:shadow-2xl hover:shadow-btn2/30 hover:border-btn2 md:px-7 font-nunito flex flex-col md:flex-row items-center justify-center bg-gradient-to-br from-white via-lightBackground/50 to-white dark:from-gray-800 dark:via-gray-800/80 dark:to-gray-800 relative overflow-hidden group"
         >
           {/* Animated background gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-btn2/10 via-transparent to-btn1/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -101,8 +101,8 @@ const ServiceCard = ({ icon, title, details }) => {
             />
           </div>
           <div className="relative z-10">
-            <h4 className="text-2xl font-semibold text-dark mb-2 group-hover:text-lightText transition-colors duration-300">{title}</h4>
-            <p className="text-gray-800 text-justify text-xs leading-relaxed">{details}</p>
+            <h4 className="text-2xl font-semibold text-dark dark:text-gray-100 mb-2 group-hover:text-lightText dark:group-hover:text-btn2 transition-colors duration-300">{title}</h4>
+            <p className="text-gray-800 dark:text-gray-300 text-justify text-xs leading-relaxed">{details}</p>
           </div>
         </motion.div>
       </motion.div>

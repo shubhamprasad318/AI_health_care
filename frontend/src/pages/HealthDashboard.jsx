@@ -69,13 +69,13 @@ function HealthDashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
         <div className="text-center">
           <div className="relative">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-btn2 border-t-transparent mx-auto mb-4"></div>
             <FaHeartbeat className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-btn2 text-2xl animate-pulse" />
           </div>
-          <p className="text-gray-600 font-medium">Loading your health dashboard...</p>
+          <p className="text-gray-600 dark:text-gray-300 font-medium">Loading your health dashboard...</p>
         </div>
       </div>
     );
@@ -83,9 +83,9 @@ function HealthDashboard() {
 
   if (!dashboardData) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <div className="text-center p-8 bg-white rounded-2xl shadow-xl">
-          <p className="text-gray-600 text-lg">No data available</p>
+      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-gray-900/50">
+          <p className="text-gray-600 dark:text-gray-300 text-lg">No data available</p>
         </div>
       </div>
     );
@@ -98,11 +98,11 @@ function HealthDashboard() {
   const scoreStatus = getHealthScoreStatus(health_score?.score);
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 font-text py-8">
+    <div className="w-full min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 font-text py-8 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-5">
         {/* Header */}
         <div className="mb-10 animate-fadeIn">
-          <div className="bg-gradient-to-r from-btn2 to-sky-500 rounded-2xl p-8 shadow-xl text-white relative overflow-hidden">
+          <div className="bg-gradient-to-r from-btn2 to-btn1 rounded-2xl p-8 shadow-xl text-white relative overflow-hidden">
             {/* Decorative Elements */}
             <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
             <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
@@ -122,7 +122,7 @@ function HealthDashboard() {
         {/* Health Score Card - FEATURED */}
         {health_score && (
           <div className="mb-8 animate-scaleIn">
-            <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-2xl p-8 border-2 border-gray-200 hover:shadow-3xl transition-all duration-300">
+            <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-800/80 rounded-2xl shadow-2xl dark:shadow-gray-900/50 p-8 border-2 border-gray-200 dark:border-gray-700 hover:shadow-3xl transition-all duration-300">
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                 {/* Score Circle */}
                 <div className="relative">
@@ -153,7 +153,7 @@ function HealthDashboard() {
                     <p className="text-5xl font-extrabold" style={{ color: scoreStatus.color }}>
                       {health_score.score}
                     </p>
-                    <p className="text-sm text-gray-500 font-medium">/ 100</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">/ 100</p>
                   </div>
                 </div>
 
@@ -162,11 +162,11 @@ function HealthDashboard() {
                   <div className="flex items-center gap-3 mb-3">
                     <span className="text-4xl">{scoreStatus.icon}</span>
                     <div>
-                      <h3 className="text-3xl font-extrabold text-gray-800">{scoreStatus.status}</h3>
-                      <p className="text-gray-600 font-medium">Health Score Status</p>
+                      <h3 className="text-3xl font-extrabold text-gray-800 dark:text-gray-100">{scoreStatus.status}</h3>
+                      <p className="text-gray-600 dark:text-gray-400 font-medium">Health Score Status</p>
                     </div>
                   </div>
-                  <p className="text-gray-700 mb-4 text-lg leading-relaxed">
+                  <p className="text-gray-700 dark:text-gray-300 mb-4 text-lg leading-relaxed">
                     {health_score.message}
                   </p>
                   <div className="flex items-center gap-2 text-sm font-medium">
@@ -189,10 +189,10 @@ function HealthDashboard() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl hover:scale-105 transition-all duration-300 group animate-slideUp">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 p-6 border border-gray-100 dark:border-gray-700 hover:shadow-2xl hover:scale-105 transition-all duration-300 group animate-slideUp">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm mb-2 font-medium">Total Predictions</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mb-2 font-medium">Total Predictions</p>
                 <p className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
                   {statistics?.total_predictions || 0}
                 </p>
@@ -209,10 +209,10 @@ function HealthDashboard() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl hover:scale-105 transition-all duration-300 group animate-slideUp delay-200">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 p-6 border border-gray-100 dark:border-gray-700 hover:shadow-2xl hover:scale-105 transition-all duration-300 group animate-slideUp delay-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm mb-2 font-medium">Appointments</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mb-2 font-medium">Appointments</p>
                 <p className="text-4xl font-bold bg-gradient-to-r from-green-600 to-green-400 bg-clip-text text-transparent">
                   {statistics?.total_appointments || 0}
                 </p>
@@ -229,10 +229,10 @@ function HealthDashboard() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl hover:scale-105 transition-all duration-300 group animate-slideUp delay-400">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 p-6 border border-gray-100 dark:border-gray-700 hover:shadow-2xl hover:scale-105 transition-all duration-300 group animate-slideUp delay-400">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm mb-2 font-medium">Health Reports</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mb-2 font-medium">Health Reports</p>
                 <p className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
                   {statistics?.total_files || 0}
                 </p>
@@ -246,7 +246,7 @@ function HealthDashboard() {
           <div className={`rounded-xl shadow-lg p-6 border-2 hover:shadow-2xl hover:scale-105 transition-all duration-300 group animate-slideUp delay-600 ${bmiStatus.bg}`} style={{ borderColor: bmiStatus.color }}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm mb-2 font-medium">BMI</p>
+                <p className="text-gray-600 dark:text-gray-300 text-sm mb-2 font-medium">BMI</p>
                 <p className="text-4xl font-bold" style={{ color: bmiStatus.color }}>
                   {health_metrics?.bmi || "N/A"}
                 </p>
@@ -263,24 +263,24 @@ function HealthDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Health Metrics with Status Indicators */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-300 animate-slideLeft">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow duration-300 animate-slideLeft">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center gap-3">
               <div className="bg-gradient-to-br from-btn2 to-sky-400 p-2 rounded-lg">
                 <FaChartBar className="text-white text-xl" />
               </div>
               Health Metrics
             </h2>
             <div className="space-y-3">
-              <div className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg hover:from-blue-50 hover:to-sky-50 transition-all duration-300 border border-gray-200">
-                <span className="text-gray-700 font-medium">📏 Height</span>
-                <span className="font-bold text-gray-800 text-lg">
+              <div className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-700/50 rounded-lg hover:from-blue-50 hover:to-sky-50 dark:hover:from-blue-900/20 dark:hover:to-sky-900/20 transition-all duration-300 border border-gray-200 dark:border-gray-600">
+                <span className="text-gray-700 dark:text-gray-200 font-medium">📏 Height</span>
+                <span className="font-bold text-gray-800 dark:text-gray-100 text-lg">
                   {health_metrics?.height ? `${health_metrics.height} cm` : "Not set"}
                 </span>
               </div>
               
-              <div className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg hover:from-blue-50 hover:to-sky-50 transition-all duration-300 border border-gray-200">
-                <span className="text-gray-700 font-medium">⚖️ Weight</span>
-                <span className="font-bold text-gray-800 text-lg">
+              <div className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-700/50 rounded-lg hover:from-blue-50 hover:to-sky-50 dark:hover:from-blue-900/20 dark:hover:to-sky-900/20 transition-all duration-300 border border-gray-200 dark:border-gray-600">
+                <span className="text-gray-700 dark:text-gray-200 font-medium">⚖️ Weight</span>
+                <span className="font-bold text-gray-800 dark:text-gray-100 text-lg">
                   {health_metrics?.weight ? `${health_metrics.weight} kg` : "Not set"}
                 </span>
               </div>
@@ -288,7 +288,7 @@ function HealthDashboard() {
               {/* Blood Pressure with Status */}
               <div className={`flex justify-between items-center p-4 rounded-lg transition-all duration-300 border-2 ${bpStatus.bg}`} style={{ borderColor: bpStatus.color }}>
                 <div>
-                  <span className="text-gray-700 font-medium block">❤️ Blood Pressure</span>
+                  <span className="text-gray-700 dark:text-gray-200 font-medium block">❤️ Blood Pressure</span>
                   <span className={`text-xs font-bold ${bpStatus.text}`}>{bpStatus.status}</span>
                 </div>
                 <span className="font-bold text-lg" style={{ color: bpStatus.color }}>
@@ -299,7 +299,7 @@ function HealthDashboard() {
               {/* BMI with Status */}
               <div className={`flex justify-between items-center p-4 rounded-lg transition-all duration-300 border-2 ${bmiStatus.bg}`} style={{ borderColor: bmiStatus.color }}>
                 <div>
-                  <span className="text-gray-700 font-medium block">📊 BMI</span>
+                  <span className="text-gray-700 dark:text-gray-200 font-medium block">📊 BMI</span>
                   <span className={`text-xs font-bold ${bmiStatus.text}`}>{bmiStatus.status}</span>
                 </div>
                 <span className="font-bold text-lg" style={{ color: bmiStatus.color }}>
@@ -309,7 +309,7 @@ function HealthDashboard() {
             </div>
             <Link
               to="/profile"
-              className="mt-6 inline-flex items-center gap-2 bg-gradient-to-r from-btn2 to-sky-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-sky-500 hover:to-btn2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
+              className="mt-6 inline-flex items-center gap-2 bg-gradient-to-r from-btn2 to-btn1 text-white px-6 py-3 rounded-lg font-semibold hover:from-btn1 hover:to-btn2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
             >
               Update Metrics
               <span>→</span>
@@ -317,8 +317,8 @@ function HealthDashboard() {
           </div>
 
           {/* Recent Predictions */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-300 animate-slideRight">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow duration-300 animate-slideRight">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center gap-3">
               <div className="bg-gradient-to-br from-green-400 to-green-600 p-2 rounded-lg">
                 <FaStethoscope className="text-white text-xl" />
               </div>
@@ -329,12 +329,12 @@ function HealthDashboard() {
                 {recent_predictions.slice(0, 3).map((pred, idx) => (
                   <div
                     key={idx}
-                    className="p-4 bg-gradient-to-br from-blue-50 to-sky-50 rounded-xl border-2 border-blue-200 hover:border-blue-400 hover:shadow-md transition-all duration-300"
+                    className="p-4 bg-gradient-to-br from-blue-50 to-sky-50 dark:from-blue-950/30 dark:to-sky-950/30 rounded-xl border-2 border-blue-200 dark:border-blue-800 hover:border-blue-400 hover:shadow-md transition-all duration-300"
                   >
-                    <p className="text-lg font-bold text-gray-800 mb-1">
+                    <p className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-1">
                       {pred.ml_prediction || pred.disease}
                     </p>
-                    <p className="text-xs text-gray-600 flex items-center gap-2">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-2">
                       <FaCalendarAlt className="text-gray-400" />
                       {pred.created_at
                         ? new Date(pred.created_at).toLocaleDateString('en-US', { 
@@ -348,7 +348,7 @@ function HealthDashboard() {
                 ))}
                 <Link
                   to="/predict"
-                  className="block text-center bg-gradient-to-r from-btn2 to-sky-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-sky-500 hover:to-btn2 transition-all duration-300 shadow-md hover:shadow-lg mt-4"
+                  className="block text-center bg-gradient-to-r from-btn2 to-btn1 text-white px-6 py-3 rounded-lg font-semibold hover:from-btn1 hover:to-btn2 transition-all duration-300 shadow-md hover:shadow-lg mt-4"
                 >
                   Make New Prediction
                 </Link>
@@ -358,10 +358,10 @@ function HealthDashboard() {
                 <div className="mb-4">
                   <FaStethoscope className="text-gray-300 text-5xl mx-auto mb-3 animate-pulse" />
                 </div>
-                <p className="text-gray-500 mb-6 text-lg">No predictions yet</p>
+                <p className="text-gray-500 dark:text-gray-400 mb-6 text-lg">No predictions yet</p>
                 <Link
                   to="/predict"
-                  className="inline-block bg-gradient-to-r from-btn2 to-sky-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-sky-500 hover:to-btn2 transition-all duration-300 shadow-md hover:shadow-lg"
+                  className="inline-block bg-gradient-to-r from-btn2 to-btn1 text-white px-6 py-3 rounded-lg font-semibold hover:from-btn1 hover:to-btn2 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
                   Start Predicting
                 </Link>
@@ -372,9 +372,9 @@ function HealthDashboard() {
 
         {/* Upcoming Appointments */}
         {upcoming_appointments && upcoming_appointments.length > 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100 hover:shadow-xl transition-shadow duration-300 animate-slideUp">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 p-6 mb-8 border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow duration-300 animate-slideUp">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
                 <div className="bg-gradient-to-br from-green-400 to-green-600 p-2 rounded-lg">
                   <FaCalendarCheck className="text-white text-xl" />
                 </div>
@@ -391,22 +391,22 @@ function HealthDashboard() {
               {upcoming_appointments.slice(0, 3).map((apt) => (
                 <div
                   key={apt._id}
-                  className="p-5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 hover:from-blue-50 hover:to-sky-50 hover:shadow-md hover:border-blue-300 transition-all duration-300"
+                  className="p-5 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 hover:from-blue-50 hover:to-sky-50 dark:hover:from-blue-900/20 dark:hover:to-sky-900/20 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-300"
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="font-bold text-gray-800 text-lg mb-1">
+                      <p className="font-bold text-gray-800 dark:text-gray-100 text-lg mb-1">
                         Dr. {apt.doctor_name || apt.doctorName}
                       </p>
-                      <p className="text-sm text-gray-600 font-medium">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
                         {apt.specialization || apt.doctorSpecialization}
                       </p>
                     </div>
-                    <div className="text-right bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
-                      <p className="text-sm font-bold text-gray-800">
+                    <div className="text-right bg-white dark:bg-gray-700 px-4 py-2 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
+                      <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
                         {apt.date}
                       </p>
-                      <p className="text-sm text-gray-600">{apt.time}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{apt.time}</p>
                     </div>
                   </div>
                 </div>
@@ -417,8 +417,8 @@ function HealthDashboard() {
 
         {/* Most Common Issue */}
         {statistics?.most_common_issue && (
-          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg p-6 mb-8 border-2 border-orange-200 animate-scaleIn">
-            <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/30 rounded-xl shadow-lg dark:shadow-gray-900/50 p-6 mb-8 border-2 border-orange-200 dark:border-orange-800 animate-scaleIn">
+            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
               <span className="text-2xl">🔍</span>
               Most Common Health Issue
             </h3>
@@ -429,47 +429,47 @@ function HealthDashboard() {
         )}
 
         {/* Quick Actions */}
-        <div className="mt-8 bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-300 animate-fadeIn">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
+        <div className="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow duration-300 animate-fadeIn">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Quick Actions</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Link
               to="/predict"
-              className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 rounded-xl text-center transition-all duration-300 border-2 border-blue-200 hover:border-blue-400 hover:shadow-lg group"
+              className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-900/40 dark:hover:to-blue-800/40 rounded-xl text-center transition-all duration-300 border-2 border-blue-200 dark:border-blue-800 hover:border-blue-400 hover:shadow-lg group"
             >
               <div className="bg-blue-500 p-3 rounded-full w-fit mx-auto mb-3 group-hover:scale-110 transition-transform">
                 <FaStethoscope className="text-white text-2xl" />
               </div>
-              <p className="font-bold text-gray-800 group-hover:text-blue-700 transition-colors">Predict Disease</p>
+              <p className="font-bold text-gray-800 dark:text-gray-100 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">Predict Disease</p>
             </Link>
             
             <Link
               to="/book"
-              className="p-6 bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 rounded-xl text-center transition-all duration-300 border-2 border-green-200 hover:border-green-400 hover:shadow-lg group"
+              className="p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/30 hover:from-green-100 hover:to-green-200 dark:hover:from-green-900/40 dark:hover:to-green-800/40 rounded-xl text-center transition-all duration-300 border-2 border-green-200 dark:border-green-800 hover:border-green-400 hover:shadow-lg group"
             >
               <div className="bg-green-500 p-3 rounded-full w-fit mx-auto mb-3 group-hover:scale-110 transition-transform">
                 <FaCalendarCheck className="text-white text-2xl" />
               </div>
-              <p className="font-bold text-gray-800 group-hover:text-green-700 transition-colors">Book Appointment</p>
+              <p className="font-bold text-gray-800 dark:text-gray-100 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors">Book Appointment</p>
             </Link>
             
             <Link
               to="/tools"
-              className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 rounded-xl text-center transition-all duration-300 border-2 border-purple-200 hover:border-purple-400 hover:shadow-lg group"
+              className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/30 hover:from-purple-100 hover:to-purple-200 dark:hover:from-purple-900/40 dark:hover:to-purple-800/40 rounded-xl text-center transition-all duration-300 border-2 border-purple-200 dark:border-purple-800 hover:border-purple-400 hover:shadow-lg group"
             >
               <div className="bg-purple-500 p-3 rounded-full w-fit mx-auto mb-3 group-hover:scale-110 transition-transform">
                 <FaFileMedical className="text-white text-2xl" />
               </div>
-              <p className="font-bold text-gray-800 group-hover:text-purple-700 transition-colors">Health Tools</p>
+              <p className="font-bold text-gray-800 dark:text-gray-100 group-hover:text-purple-700 dark:group-hover:text-purple-400 transition-colors">Health Tools</p>
             </Link>
             
             <Link
               to="/profile"
-              className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 rounded-xl text-center transition-all duration-300 border-2 border-orange-200 hover:border-orange-400 hover:shadow-lg group"
+              className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/30 hover:from-orange-100 hover:to-orange-200 dark:hover:from-orange-900/40 dark:hover:to-orange-800/40 rounded-xl text-center transition-all duration-300 border-2 border-orange-200 dark:border-orange-800 hover:border-orange-400 hover:shadow-lg group"
             >
               <div className="bg-orange-500 p-3 rounded-full w-fit mx-auto mb-3 group-hover:scale-110 transition-transform">
                 <FaUser className="text-white text-2xl" />
               </div>
-              <p className="font-bold text-gray-800 group-hover:text-orange-700 transition-colors">View Profile</p>
+              <p className="font-bold text-gray-800 dark:text-gray-100 group-hover:text-orange-700 dark:group-hover:text-orange-400 transition-colors">View Profile</p>
             </Link>
           </div>
         </div>

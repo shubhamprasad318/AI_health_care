@@ -13,6 +13,8 @@ pymongo
 # Authentication & Security
 bcrypt
 python-jose[cryptography]
+pyotp
+qrcode[pil]
 
 # Email
 aiosmtplib
@@ -34,6 +36,15 @@ email-validator
 
 # Environment
 python-dotenv
+
+# LiveKit (token generation only)
+livekit-api
+
+# Rate Limiting
+slowapi
+
+# PDF Generation
+reportlab
 
 # Utilities
 aiofiles

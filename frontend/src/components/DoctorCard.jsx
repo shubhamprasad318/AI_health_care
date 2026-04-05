@@ -69,7 +69,7 @@ function DoctorCard({
 
   return (
     <>
-      <div className="relative bg-gradient-to-br from-blue-50 via-white to-purple-50 rounded-2xl shadow-xl border-2 border-gray-200 hover:border-btn2 hover:shadow-2xl transition-all duration-500 overflow-hidden group animate-slideUp">
+      <div className="relative bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-800 dark:via-gray-800/80 dark:to-gray-800 rounded-2xl shadow-xl dark:shadow-gray-900/50 border-2 border-gray-200 dark:border-gray-700 hover:border-btn2 hover:shadow-2xl transition-all duration-500 overflow-hidden group animate-slideUp">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
           <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-200/40 to-purple-200/40 rounded-full -mr-32 -mt-32 blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
@@ -92,7 +92,7 @@ function DoctorCard({
               <div className="absolute -bottom-2 -right-2 bg-gradient-to-br from-green-400 to-green-600 w-7 h-7 rounded-full border-4 border-white shadow-lg animate-pulse group-hover:scale-110 transition-transform"></div>
             </div>
             <div className="flex-1">
-              <h5 className="text-xl font-extrabold text-gray-800 mb-2 group-hover:text-btn2 transition-colors duration-300 transform group-hover:translate-x-1">
+              <h5 className="text-xl font-extrabold text-gray-800 dark:text-gray-100 mb-2 group-hover:text-btn2 transition-colors duration-300 transform group-hover:translate-x-1">
                 {name}
               </h5>
               <div className="bg-gradient-to-r from-btn2 via-sky-500 to-blue-600 text-white px-4 py-1.5 rounded-full text-xs font-bold inline-block mb-2 shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
@@ -106,20 +106,20 @@ function DoctorCard({
                     style={{ transitionDelay: `${i * 50}ms` }}
                   />
                 ))}
-                <span className="text-gray-600 text-xs ml-1 font-semibold group-hover:text-gray-800 transition-colors">5.0</span>
+                <span className="text-gray-600 dark:text-gray-400 text-xs ml-1 font-semibold group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors">5.0</span>
               </div>
             </div>
           </div>
           
           {/* Info Section with Animated Icons */}
           <div className="space-y-3 mb-6">
-            <div className="flex items-center gap-3 text-gray-700 bg-white/80 backdrop-blur-sm p-3 rounded-xl border-2 border-gray-200 group-hover:bg-white group-hover:border-red-300 group-hover:shadow-md transition-all duration-300 transform group-hover:translate-x-1">
+              <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 bg-white/80 dark:bg-gray-700/50 backdrop-blur-sm p-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 group-hover:bg-white dark:group-hover:bg-gray-700 group-hover:border-red-300 group-hover:shadow-md transition-all duration-300 transform group-hover:translate-x-1">
               <div className="bg-gradient-to-br from-red-100 to-red-200 p-2.5 rounded-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-sm">
                 <FaMapMarkerAlt className="text-red-600 text-lg" />
               </div>
               <span className="font-medium text-sm group-hover:font-semibold transition-all">{city}, {location}</span>
             </div>
-            <div className="flex items-center gap-3 text-gray-700 bg-white/80 backdrop-blur-sm p-3 rounded-xl border-2 border-gray-200 group-hover:bg-white group-hover:border-yellow-300 group-hover:shadow-md transition-all duration-300 transform group-hover:translate-x-1">
+              <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 bg-white/80 dark:bg-gray-700/50 backdrop-blur-sm p-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 group-hover:bg-white dark:group-hover:bg-gray-700 group-hover:border-yellow-300 group-hover:shadow-md transition-all duration-300 transform group-hover:translate-x-1">
               <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 p-2.5 rounded-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-sm">
                 <FaAward className="text-yellow-600 text-lg" />
               </div>
@@ -145,10 +145,10 @@ function DoctorCard({
       </div>
         {openModal && (
           <div className="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-            <div className="bg-white p-8 md:p-10 rounded-3xl w-full max-w-2xl shadow-2xl border-4 border-gray-100 animate-slideUp relative">
+            <div className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-3xl w-full max-w-2xl shadow-2xl border-4 border-gray-100 dark:border-gray-700 animate-slideUp relative">
               <button
                 onClick={handleModalClose}
-                className="absolute top-6 right-6 text-gray-400 hover:text-red-500 text-4xl font-bold w-12 h-12 flex items-center justify-center rounded-full hover:bg-red-50 transition-all duration-300"
+                className="absolute top-6 right-6 text-gray-400 hover:text-red-500 dark:hover:text-red-400 text-4xl font-bold w-12 h-12 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 transition-all duration-300"
               >
                 ×
               </button>
@@ -159,26 +159,26 @@ function DoctorCard({
                     <FaCalendarAlt className="text-white text-2xl" />
                   </div>
                   <div>
-                    <h2 className="text-3xl font-extrabold text-gray-800">Book Appointment</h2>
-                    <p className="text-gray-600 text-sm">Fill in your details to confirm</p>
+                    <h2 className="text-3xl font-extrabold text-gray-800 dark:text-gray-100">Book Appointment</h2>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">Fill in your details to confirm</p>
                   </div>
                 </div>
                 <div className="h-1 w-24 bg-gradient-to-r from-btn2 to-sky-500 rounded-full"></div>
               </div>
 
-              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-sky-50 rounded-xl border border-blue-200">
+              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-sky-50 dark:from-blue-950/30 dark:to-sky-950/30 rounded-xl border border-blue-200 dark:border-blue-800">
                 <div className="flex items-center gap-3">
                   <FaUserMd className="text-blue-600 text-xl" />
                   <div>
-                    <p className="font-bold text-gray-800">{name}</p>
-                    <p className="text-sm text-gray-600">{Specialization}</p>
+                    <p className="font-bold text-gray-800 dark:text-gray-100 dark:text-gray-100">{name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{Specialization}</p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                     <FaUserMd className="text-btn2" />
                     Your Name
                   </label>
@@ -186,14 +186,14 @@ function DoctorCard({
                     type="text"
                     name="name"
                     placeholder="Enter your full name"
-                    className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:border-btn2 focus:ring-2 focus:ring-btn2/20 transition-all font-medium"
+                    className="w-full border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-btn2 focus:ring-2 focus:ring-btn2/20 transition-all font-medium"
                     value={appointmentDetails.name}
                     onChange={handleInputChange}
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                     <FaEnvelope className="text-btn2" />
                     Your Email
                   </label>
@@ -201,7 +201,7 @@ function DoctorCard({
                     type="email"
                     name="email"
                     placeholder="Enter your email address"
-                    className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:border-btn2 focus:ring-2 focus:ring-btn2/20 transition-all font-medium"
+                    className="w-full border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-btn2 focus:ring-2 focus:ring-btn2/20 transition-all font-medium"
                     value={appointmentDetails.email}
                     onChange={handleInputChange}
                     required
@@ -209,27 +209,27 @@ function DoctorCard({
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                       <FaCalendarAlt className="text-btn2" />
                       Date
                     </label>
                     <input
                       type="date"
                       name="date"
-                      className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:border-btn2 focus:ring-2 focus:ring-btn2/20 transition-all font-medium"
+                      className="w-full border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-btn2 focus:ring-2 focus:ring-btn2/20 transition-all font-medium"
                       value={appointmentDetails.date}
                       onChange={handleInputChange}
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                       <FaClock className="text-btn2" />
                       Time
                     </label>
                     <select
                       name="time"
-                      className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:border-btn2 focus:ring-2 focus:ring-btn2/20 transition-all font-medium bg-white"
+                      className="w-full border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-btn2 focus:ring-2 focus:ring-btn2/20 transition-all font-medium bg-white"
                       value={appointmentDetails.time}
                       onChange={handleInputChange}
                       required
@@ -253,13 +253,13 @@ function DoctorCard({
               <div className="mt-8 flex gap-4">
                 <button
                   onClick={handleModalClose}
-                  className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-xl font-bold hover:bg-gray-300 transition-all duration-300"
+                  className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-3 rounded-xl font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-300"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleBookAppointment}
-                  className="flex-1 bg-gradient-to-r from-btn2 to-sky-500 text-white px-6 py-3 rounded-xl font-bold hover:from-sky-500 hover:to-btn2 transition-all duration-300 shadow-lg hover:shadow-xl"
+                  className="flex-1 bg-gradient-to-r from-btn2 to-btn1 text-white px-6 py-3 rounded-xl font-bold hover:from-btn1 hover:to-btn2 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-btn2/25"
                 >
                   Continue
                 </button>
@@ -269,63 +269,63 @@ function DoctorCard({
         )}
         {confirmationModalOpen && (
           <div className="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-            <div className="bg-white p-8 md:p-10 rounded-3xl w-full max-w-2xl shadow-2xl border-4 border-gray-100 animate-slideUp relative">
+            <div className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-3xl w-full max-w-2xl shadow-2xl border-4 border-gray-100 dark:border-gray-700 animate-slideUp relative">
               <div className="text-center mb-6">
                 <div className="bg-gradient-to-br from-green-400 to-green-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <FaCheckCircle className="text-white text-4xl" />
                 </div>
-                <h2 className="text-3xl font-extrabold text-gray-800 mb-2">Confirm Appointment</h2>
-                <p className="text-gray-600">Please review your appointment details</p>
+                <h2 className="text-3xl font-extrabold text-gray-800 dark:text-gray-100 mb-2">Confirm Appointment</h2>
+                <p className="text-gray-600 dark:text-gray-400">Please review your appointment details</p>
               </div>
 
-              <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-6 border-2 border-gray-200 mb-6">
+              <div className="bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-700 dark:to-gray-700/50 rounded-2xl p-6 border-2 border-gray-200 dark:border-gray-600 mb-6">
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+                  <div className="flex items-center gap-3 pb-3 border-b border-gray-200 dark:border-gray-600">
                     <FaUserMd className="text-btn2 text-xl" />
                     <div className="flex-1">
-                      <p className="text-xs text-gray-500 font-medium">Patient Name</p>
-                      <p className="font-bold text-gray-800">{appointmentDetails.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Patient Name</p>
+                      <p className="font-bold text-gray-800 dark:text-gray-100">{appointmentDetails.name}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+                  <div className="flex items-center gap-3 pb-3 border-b border-gray-200 dark:border-gray-600">
                     <FaEnvelope className="text-btn2 text-xl" />
                     <div className="flex-1">
-                      <p className="text-xs text-gray-500 font-medium">Email</p>
-                      <p className="font-bold text-gray-800">{appointmentDetails.email}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Email</p>
+                      <p className="font-bold text-gray-800 dark:text-gray-100">{appointmentDetails.email}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 pb-3 border-b border-gray-200">
+                  <div className="grid grid-cols-2 gap-4 pb-3 border-b border-gray-200 dark:border-gray-600">
                     <div className="flex items-center gap-3">
                       <FaCalendarAlt className="text-btn2 text-xl" />
                       <div>
-                        <p className="text-xs text-gray-500 font-medium">Date</p>
-                        <p className="font-bold text-gray-800">{appointmentDetails.date}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Date</p>
+                        <p className="font-bold text-gray-800 dark:text-gray-100">{appointmentDetails.date}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <FaClock className="text-btn2 text-xl" />
                       <div>
-                        <p className="text-xs text-gray-500 font-medium">Time</p>
-                        <p className="font-bold text-gray-800">{appointmentDetails.time}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Time</p>
+                        <p className="font-bold text-gray-800 dark:text-gray-100">{appointmentDetails.time}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+                  <div className="flex items-center gap-3 pb-3 border-b border-gray-200 dark:border-gray-600">
                     <FaUserMd className="text-btn2 text-xl" />
                     <div className="flex-1">
-                      <p className="text-xs text-gray-500 font-medium">Doctor</p>
-                      <p className="font-bold text-gray-800">{name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Doctor</p>
+                      <p className="font-bold text-gray-800 dark:text-gray-100">{name}</p>
                       <p className="text-sm text-gray-600">{Specialization}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+                  <div className="flex items-center gap-3 pb-3 border-b border-gray-200 dark:border-gray-600">
                     <FaMapMarkerAlt className="text-red-500 text-xl" />
                     <div className="flex-1">
-                      <p className="text-xs text-gray-500 font-medium">Location</p>
-                      <p className="font-bold text-gray-800">{location}, {city}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Location</p>
+                      <p className="font-bold text-gray-800 dark:text-gray-100">{location}, {city}</p>
                     </div>
                   </div>
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl border-2 border-green-200">
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 p-4 rounded-xl border-2 border-green-200 dark:border-green-800">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs text-gray-600 font-medium">Visiting Fee</p>
@@ -340,7 +340,7 @@ function DoctorCard({
               <div className="flex gap-4">
                 <button
                   onClick={handleConfirmationModalClose}
-                  className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-xl font-bold hover:bg-gray-300 transition-all duration-300"
+                  className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-3 rounded-xl font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-300"
                 >
                   Edit
                 </button>

@@ -112,13 +112,13 @@ function Signup() {
     });
 
   return (
-    <div className="relative flex flex-col justify-center items-center w-full md:h-[600px] font-text h-[700px] mt-20 md:mt-0">
-      <div className="rounded shadow-md shadow-gray-400 mx-10">
+    <div className="relative flex flex-col justify-center items-center w-full md:h-[600px] font-text h-[700px] mt-20 md:mt-0 dark:bg-gray-950 transition-colors duration-300">
+      <div className="rounded-2xl shadow-xl shadow-gray-300 dark:shadow-gray-900/50 mx-10 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div className="">
-          <h1 className="font-semibold capitalize text-4xl justify-center items-center flex p-4 text-lightText">
+          <h1 className="font-semibold capitalize text-4xl justify-center items-center flex p-4 text-lightText dark:text-gray-100">
             register
           </h1>
-          <p className="text-xs px-3 py-2 text-gray-700 font-semibold flex justify-center">
+          <p className="text-xs px-3 py-2 text-gray-700 dark:text-gray-400 font-semibold flex justify-center">
             Join AIHealth Engine for personalized wellness with just a click –
             Register today!
           </p>
@@ -138,10 +138,10 @@ function Signup() {
                   onBlur={handleBlur}
                   autoComplete="off"
                   disabled={isLoading}
-                  className="bg-transparent shadow-sm focus:outline-none shadow-gray-400 font-medium px-4 py-2"
+                  className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
                 />
                 {errors.first_name && touched.first_name ? (
-                  <p className="text-sm text-red-700">{errors.first_name}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{errors.first_name}</p>
                 ) : null}
               </div>
               <div className="flex flex-col px-2 py-2">
@@ -155,10 +155,10 @@ function Signup() {
                   onBlur={handleBlur}
                   autoComplete="off"
                   disabled={isLoading}
-                  className="bg-transparent shadow-sm focus:outline-none shadow-gray-400 font-medium px-4 py-2"
+                  className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
                 />
                 {errors.last_name && touched.last_name ? (
-                  <p className="text-sm text-red-700">{errors.last_name}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{errors.last_name}</p>
                 ) : null}
               </div>
             </div>
@@ -168,7 +168,7 @@ function Signup() {
                 id="phone_number"
                 type="number"
                 placeholder="Phone Number"
-                className="bg-transparent shadow-sm focus:outline-none shadow-gray-400 font-medium px-4 py-2 w-full"
+                className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 w-full rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
                 value={values.phone_number}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -176,7 +176,7 @@ function Signup() {
                 disabled={isLoading}
               />
               {errors.phone_number && touched.phone_number ? (
-                <p className="text-sm text-red-700">{errors.phone_number}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{errors.phone_number}</p>
               ) : null}
             </div>
             <div className="px-6 mb-5">
@@ -185,7 +185,7 @@ function Signup() {
                 id="email"
                 type="email"
                 placeholder="Email"
-                className="bg-transparent shadow-sm focus:outline-none shadow-gray-400 font-medium px-4 py-2 w-full"
+                className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 w-full rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
                 value={values.email}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -193,7 +193,7 @@ function Signup() {
                 disabled={isLoading}
               />
               {errors.email && touched.email ? (
-                <p className="text-sm text-red-700">{errors.email}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{errors.email}</p>
               ) : null}
             </div>
             <div className="md:flex rounded-md mb-5 px-4 text-gray-500">
@@ -203,7 +203,7 @@ function Signup() {
                   id="age"
                   type="number"
                   placeholder="Age"
-                  className="bg-transparent shadow-sm focus:outline-none shadow-gray-400 font-medium px-4 py-2 w-full"
+                  className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 w-full rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
                   value={values.age}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -211,14 +211,14 @@ function Signup() {
                   disabled={isLoading}
                 />
                 {errors.age && touched.age ? (
-                  <p className="text-sm text-red-700">{errors.age}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{errors.age}</p>
                 ) : null}
               </div>
               <div className="flex flex-col px-2 py-2">
                 <select
                   name="gender"
                   id="gender"
-                  className="bg-transparent shadow-sm focus:outline-none shadow-gray-400 font-medium px-4 py-2 w-full"
+                  className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 w-full rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
                   value={values.gender}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -230,7 +230,7 @@ function Signup() {
                   <option value="Other">Other</option>
                 </select>
                 {errors.gender && touched.gender ? (
-                  <p className="text-sm text-red-700">{errors.gender}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{errors.gender}</p>
                 ) : null}
               </div>
             </div>
@@ -241,7 +241,7 @@ function Signup() {
                   id="city"
                   type="text"
                   placeholder="City"
-                  className="bg-transparent shadow-sm focus:outline-none shadow-gray-400 font-medium px-4 py-2 w-full"
+                  className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 w-full rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
                   value={values.city}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -249,7 +249,7 @@ function Signup() {
                   disabled={isLoading}
                 />
                 {errors.city && touched.city ? (
-                  <p className="text-sm text-red-700">{errors.city}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{errors.city}</p>
                 ) : null}
               </div>
               <div className="flex flex-col px-2 py-2">
@@ -258,7 +258,7 @@ function Signup() {
                   id="state"
                   type="text"
                   placeholder="State"
-                  className="bg-transparent shadow-sm focus:outline-none shadow-gray-400 font-medium px-4 py-2 w-full"
+                  className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 w-full rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
                   value={values.state}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -266,7 +266,7 @@ function Signup() {
                   disabled={isLoading}
                 />
                 {errors.state && touched.state ? (
-                  <p className="text-sm text-red-700">{errors.state}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{errors.state}</p>
                 ) : null}
               </div>
             </div>
@@ -277,7 +277,7 @@ function Signup() {
                   id="password"
                   type="password"
                   placeholder="Password"
-                  className="bg-transparent shadow-sm focus:outline-none shadow-gray-400 font-medium px-4 py-2"
+                  className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
                   value={values.password}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -285,7 +285,7 @@ function Signup() {
                   disabled={isLoading}
                 />
                 {errors.password && touched.password ? (
-                  <p className="text-sm text-red-700">{errors.password}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{errors.password}</p>
                 ) : null}
               </div>
               <div className="flex flex-col px-2 py-2">
@@ -294,7 +294,7 @@ function Signup() {
                   id="confirm_password"
                   type="password"
                   placeholder="Confirm Password"
-                  className="bg-transparent shadow-sm focus:outline-none shadow-gray-400 font-medium px-4 py-2"
+                  className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
                   value={values.confirm_password}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -302,18 +302,18 @@ function Signup() {
                   disabled={isLoading}
                 />
                 {errors.confirm_password && touched.confirm_password ? (
-                  <p className="text-sm text-red-700">
+                  <p className="text-sm text-red-600 dark:text-red-400">
                     {errors.confirm_password}
                   </p>
                 ) : null}
               </div>
             </div>
           </div>
-          <div className="flex justify-center text-gray-500">
+          <div className="flex justify-center text-gray-500 dark:text-gray-400">
             <p>
               Already have an account?
               <Link to="/login">
-                <span className="p-2 capitalize text-btn1 font-semibold">
+                <span className="p-2 capitalize text-btn1 dark:text-btn1 font-semibold">
                   log in
                 </span>
               </Link>
@@ -323,8 +323,8 @@ function Signup() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`capitalize font-semibold text-white bg-btn2 px-8 py-2 rounded transition-opacity ${
-                isLoading ? "opacity-70 cursor-not-allowed" : "hover:opacity-90"
+              className={`capitalize font-semibold text-white bg-gradient-to-r from-btn2 to-btn1 px-8 py-2.5 rounded-xl shadow-lg hover:shadow-xl hover:shadow-btn2/20 transition-all duration-300 ${
+                isLoading ? "opacity-70 cursor-not-allowed" : "hover:scale-105"
               }`}
             >
               {isLoading ? "Registering..." : "Register"}

@@ -1,0 +1,55 @@
+# Environment variables / secrets
+.env
+.env.*
+backend/.env
+frontend/.env
+livekit-agent/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# ML model artifacts
+*.pkl
+*.joblib
+*.h5
+
+# Uploads
+uploads/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+frontend/dist/
+frontend/build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+app.log
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Ruff / linting cache
+.ruff_cache/

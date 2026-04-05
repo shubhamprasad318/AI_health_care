@@ -66,12 +66,12 @@ const Contact = () => {
   };
 
   return (
-    <section className="relative h-screen font-text items-center flex justify-center text-black py-20 md:py-11 bg-white mt-20">
+    <section className="relative h-screen font-text items-center flex justify-center text-black dark:text-gray-100 py-20 md:py-11 bg-white dark:bg-transparent mt-20">
       <div className="container mb-52 md:mb-0">
         <div className="-mx-4 flex flex-wrap md:mt-20 lg:justify-between">
           <div className="w-full px-4 lg:w-1/2 xl:w-6/12">
             <div className="mb-10 max-w-[570px] lg:mb-0 px-4">
-              <span className="mb-4 px-8 md:block md:text-4xl text-3xl text-lightText font-bold justify-center flex">
+              <span className="mb-4 px-8 md:block md:text-4xl text-3xl text-lightText dark:text-btn2 font-bold justify-center flex">
                 Contact Us
               </span>
               <p className="mb-9 text-gray-600 dark:text-gray-400 text-sm font-feedback font-medium leading-relaxed text-body-color px-8 text-justify">
@@ -87,8 +87,8 @@ const Contact = () => {
                   </svg>
                 </div>
                 <div className="w-full">
-                  <h4 className="mb-1 md:text-xl text-lg font-semibold text-dark">Our Location</h4>
-                  <p className="text-sm italic text-gray-700">Mumbai</p>
+                   <h4 className="mb-1 md:text-xl text-lg font-semibold text-dark dark:text-gray-100">Our Location</h4>
+                  <p className="text-sm italic text-gray-700 dark:text-gray-400">Mumbai</p>
                 </div>
               </div>
 
@@ -109,8 +109,8 @@ const Contact = () => {
                   </svg>
                 </div>
                 <div className="w-full">
-                  <h4 className="mb-1 md:text-xl text-lg font-semibold text-dark">Phone Number</h4>
-                  <p className="text-sm italic text-gray-700">+91 9009009009</p>
+                   <h4 className="mb-1 md:text-xl text-lg font-semibold text-dark dark:text-gray-100">Phone Number</h4>
+                  <p className="text-sm italic text-gray-700 dark:text-gray-400">+91 9009009009</p>
                 </div>
               </div>
 
@@ -124,14 +124,14 @@ const Contact = () => {
                   </svg>
                 </div>
                 <div className="w-full">
-                  <h4 className="mb-1 md:text-xl text-lg font-semibold text-dark">Email Address</h4>
-                  <p className="text-sm italic text-gray-700">drmedsonnetwork@gmail.com</p>
+                   <h4 className="mb-1 md:text-xl text-lg font-semibold text-dark dark:text-gray-100">Email Address</h4>
+                  <p className="text-sm italic text-gray-700 dark:text-gray-400">drmedsonnetwork@gmail.com</p>
                 </div>
               </div>
             </div>
           </div>
           <div className="w-full px-4 lg:w-1/2 xl:w-5/12">
-            <div className="relative rounded-lg bg-white p-8 shadow-lg sm:p-12">
+            <div className="relative rounded-lg bg-white dark:bg-gray-800 p-8 shadow-lg dark:shadow-gray-900/50 dark:border dark:border-gray-700 sm:p-12">
               <form onSubmit={sendEmail}>
                 <div className="mb-6">
                   <input
@@ -141,7 +141,7 @@ const Contact = () => {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Name"
-                    className="w-full rounded border border-gray-300 py-3 px-4 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus-visible:shadow-none"
+                    className="w-full rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-100 py-3 px-4 text-base font-medium text-body-color placeholder-body-color dark:placeholder-gray-400 outline-none focus:border-primary focus-visible:shadow-none"
                     required
                   />
                 </div>
@@ -153,7 +153,7 @@ const Contact = () => {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Email"
-                    className="w-full rounded border border-gray-300 py-3 px-4 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus-visible:shadow-none"
+                    className="w-full rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-100 py-3 px-4 text-base font-medium text-body-color placeholder-body-color dark:placeholder-gray-400 outline-none focus:border-primary focus-visible:shadow-none"
                     required
                   />
                 </div>
@@ -165,7 +165,7 @@ const Contact = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="Phone (Optional)"
-                    className="w-full rounded border border-gray-300 py-3 px-4 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus-visible:shadow-none"
+                    className="w-full rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-100 py-3 px-4 text-base font-medium text-body-color placeholder-body-color dark:placeholder-gray-400 outline-none focus:border-primary focus-visible:shadow-none"
                   />
                 </div>
                 <div className="mb-6">
@@ -176,14 +176,14 @@ const Contact = () => {
                     value={formData.details}
                     onChange={handleChange}
                     placeholder="Details"
-                    className="w-full rounded border border-gray-300 py-3 px-4 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus-visible:shadow-none"
+                    className="w-full rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-100 py-3 px-4 text-base font-medium text-body-color placeholder-body-color dark:placeholder-gray-400 outline-none focus:border-primary focus-visible:shadow-none"
                     required
                   ></textarea>
                 </div>
                 <div>
                   <button
                     type="submit"
-                    className="w-full bg-btn2 rounded border border-primary p-3 transition hover:bg-opacity-90"
+                    className="w-full bg-gradient-to-r from-btn2 to-btn1 rounded border border-primary p-3 transition hover:opacity-90 hover:shadow-lg hover:shadow-btn2/25"
                   >
                     <span className="text-white  text-base font-semibold">
                       Send Message

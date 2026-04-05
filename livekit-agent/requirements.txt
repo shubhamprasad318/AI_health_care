@@ -1,0 +1,11 @@
+# LiveKit Agent SDK
+livekit
+livekit-api
+livekit-agents
+
+# LiveKit Plugins
+livekit-plugins-google
+livekit-plugins-silero
+
+# Environment
+python-dotenv

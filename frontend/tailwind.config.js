@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  darkMode: "class",
   theme: {
     fontFamily: {
       logo: ["Tac One", "sans-serif"],
@@ -17,6 +18,21 @@ export default {
         accent: "#0D9488",
         primary: "#1E40AF",
         secondary: "#64748B",
+        dark: {
+          surface: "#1e293b",
+          card: "#1e293b",
+          border: "#334155",
+          hover: "#334155",
+          muted: "#94a3b8",
+        },
+      },
+      backdropBlur: {
+        xs: "2px",
+      },
+      transitionDuration: {
+        fast: "150ms",
+        normal: "300ms",
+        slow: "500ms",
       },
       backgroundImage: {
         img3: 'url("https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D")',
@@ -38,6 +54,8 @@ export default {
         'scaleIn': 'scaleIn 0.5s ease-out',
         'spin-slow': 'spin 3s linear infinite',
         'bounce-slow': 'bounce 3s infinite',
+        'glow': 'glow 2s ease-in-out infinite alternate',
+        'shimmer': 'shimmer 2s linear infinite',
       },
       // ✅ KEYFRAMES FOR ANIMATIONS
       keyframes: {
@@ -123,6 +141,14 @@ export default {
             opacity: '1',
           },
         },
+        glow: {
+          '0%': {
+            boxShadow: '0 0 5px rgba(37, 99, 235, 0.2), 0 0 20px rgba(37, 99, 235, 0.1)',
+          },
+          '100%': {
+            boxShadow: '0 0 10px rgba(37, 99, 235, 0.4), 0 0 40px rgba(37, 99, 235, 0.2)',
+          },
+        },
       },
       // ✅ ANIMATION DELAYS
       transitionDelay: {
@@ -139,6 +165,11 @@ export default {
       boxShadow: {
         '3xl': '0 35px 60px -15px rgba(0, 0, 0, 0.3)',
         'inner-lg': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
+        'glow-sm': '0 0 10px rgba(37, 99, 235, 0.15)',
+        'glow-md': '0 0 20px rgba(37, 99, 235, 0.2)',
+        'glow-lg': '0 0 30px rgba(37, 99, 235, 0.25)',
+        'dark-lg': '0 10px 25px rgba(0, 0, 0, 0.5)',
+        'dark-xl': '0 20px 40px rgba(0, 0, 0, 0.6)',
       },
     },
   },

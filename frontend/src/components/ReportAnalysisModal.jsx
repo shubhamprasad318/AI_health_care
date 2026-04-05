@@ -22,7 +22,7 @@ const ReportAnalysisModal = ({ analysis, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
         <div className="bg-gradient-to-r from-purple-500 to-purple-700 text-white p-6 rounded-t-2xl relative sticky top-0 z-10">
           <button
@@ -44,9 +44,9 @@ const ReportAnalysisModal = ({ analysis, onClose }) => {
         <div className="p-6 space-y-6">
           {/* Report Type & Risk */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-blue-50 p-4 rounded-xl border-2 border-blue-200">
-              <p className="text-sm text-gray-600 font-semibold mb-1">Report Type</p>
-              <p className="text-xl font-bold text-gray-800">
+            <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-gray-600 dark:text-gray-400 font-semibold mb-1">Report Type</p>
+              <p className="text-xl font-bold text-gray-800 dark:text-gray-100">
                 {analysis.report_type || "Medical Report"}
               </p>
             </div>
@@ -61,19 +61,19 @@ const ReportAnalysisModal = ({ analysis, onClose }) => {
 
           {/* Date */}
           {analysis.date && (
-            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-              <span className="text-sm text-gray-600 font-semibold">Report Date: </span>
-              <span className="text-gray-800 font-bold">{analysis.date}</span>
+            <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
+              <span className="text-sm text-gray-600 dark:text-gray-400 font-semibold">Report Date: </span>
+              <span className="text-gray-800 dark:text-gray-100 font-bold">{analysis.date}</span>
             </div>
           )}
 
           {/* Summary */}
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-5 rounded-xl border-2 border-blue-200">
+          <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 p-5 rounded-xl border-2 border-blue-200 dark:border-blue-800">
             <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
               <FaFileAlt className="text-blue-600" />
               Summary
             </h3>
-            <p className="text-gray-700 leading-relaxed">{analysis.summary || "No summary available"}</p>
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{analysis.summary || "No summary available"}</p>
           </div>
 
           {/* Key Findings */}
@@ -85,9 +85,9 @@ const ReportAnalysisModal = ({ analysis, onClose }) => {
               </h3>
               <ul className="space-y-2">
                 {analysis.key_findings.map((finding, idx) => (
-                  <li key={idx} className="flex items-start gap-3 bg-green-50 p-4 rounded-lg border border-green-200 hover:shadow-md transition-all">
+                  <li key={idx} className="flex items-start gap-3 bg-green-50 dark:bg-green-950/30 p-4 rounded-lg border border-green-200 dark:border-green-800 hover:shadow-md transition-all">
                     <span className="text-green-600 font-bold text-lg">•</span>
-                    <span className="text-gray-700 flex-1">{finding}</span>
+                    <span className="text-gray-700 dark:text-gray-300 flex-1">{finding}</span>
                   </li>
                 ))}
               </ul>
@@ -103,9 +103,9 @@ const ReportAnalysisModal = ({ analysis, onClose }) => {
               </h3>
               <div className="space-y-3">
                 {analysis.abnormal_values.map((item, idx) => (
-                  <div key={idx} className="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-200 hover:shadow-md transition-all">
+                  <div key={idx} className="bg-yellow-50 dark:bg-yellow-950/30 p-4 rounded-lg border-2 border-yellow-200 dark:border-yellow-800 hover:shadow-md transition-all">
                     <div className="flex justify-between items-start mb-2">
-                      <span className="font-bold text-gray-800 text-lg">{item.parameter}</span>
+                      <span className="font-bold text-gray-800 dark:text-gray-100 text-lg">{item.parameter}</span>
                       <span className={`px-3 py-1 rounded-full text-sm font-bold ${
                         item.status?.toLowerCase() === "high" 
                           ? "bg-red-100 text-red-700" 
@@ -116,12 +116,12 @@ const ReportAnalysisModal = ({ analysis, onClose }) => {
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
-                        <span className="text-gray-600">Value: </span>
-                        <strong className="text-gray-800">{item.value}</strong>
+                        <span className="text-gray-600 dark:text-gray-400">Value: </span>
+                        <strong className="text-gray-800 dark:text-gray-100">{item.value}</strong>
                       </div>
                       <div>
-                        <span className="text-gray-600">Normal: </span>
-                        <strong className="text-gray-800">{item.normal_range}</strong>
+                        <span className="text-gray-600 dark:text-gray-400">Normal: </span>
+                        <strong className="text-gray-800 dark:text-gray-100">{item.normal_range}</strong>
                       </div>
                     </div>
                   </div>
@@ -145,11 +145,11 @@ const ReportAnalysisModal = ({ analysis, onClose }) => {
                   : String(value); // Otherwise convert to string
                 
                 return (
-                  <div key={key} className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200 hover:shadow-md transition-all">
-                    <p className="text-sm text-gray-600 font-semibold capitalize mb-1">
+                  <div key={key} className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800 hover:shadow-md transition-all">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-semibold capitalize mb-1">
                       {key.replace(/_/g, " ")}
                     </p>
-                    <p className="text-lg font-bold text-gray-800">{displayValue}</p>
+                    <p className="text-lg font-bold text-gray-800 dark:text-gray-100">{displayValue}</p>
                   </div>
                 );
               })}
@@ -167,9 +167,9 @@ const ReportAnalysisModal = ({ analysis, onClose }) => {
               </h3>
               <ul className="space-y-2">
                 {analysis.recommendations.map((rec, idx) => (
-                  <li key={idx} className="flex items-start gap-3 bg-purple-50 p-4 rounded-lg border border-purple-200 hover:shadow-md transition-all">
+                  <li key={idx} className="flex items-start gap-3 bg-purple-50 dark:bg-purple-950/30 p-4 rounded-lg border border-purple-200 dark:border-purple-800 hover:shadow-md transition-all">
                     <span className="text-purple-600 font-bold">✓</span>
-                    <span className="text-gray-700 flex-1">{rec}</span>
+                    <span className="text-gray-700 dark:text-gray-300 flex-1">{rec}</span>
                   </li>
                 ))}
               </ul>
@@ -177,8 +177,8 @@ const ReportAnalysisModal = ({ analysis, onClose }) => {
           )}
 
           {/* Disclaimer */}
-          <div className="bg-gray-100 p-4 rounded-lg border-l-4 border-gray-400">
-            <p className="text-sm text-gray-700">
+          <div className="bg-gray-100 dark:bg-gray-700/50 p-4 rounded-lg border-l-4 border-gray-400 dark:border-gray-500">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
               <strong>⚠️ Disclaimer:</strong> This analysis is AI-generated for informational purposes only. 
               Always consult with healthcare professionals for medical advice and treatment decisions.
             </p>
@@ -186,7 +186,7 @@ const ReportAnalysisModal = ({ analysis, onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 p-4 rounded-b-2xl border-t">
+        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-b-2xl border-t dark:border-gray-700">
           <button
             onClick={onClose}
             className="w-full bg-gradient-to-r from-purple-500 to-purple-700 text-white px-6 py-3 rounded-xl font-bold hover:from-purple-600 hover:to-purple-800 transition-all shadow-lg hover:shadow-xl"

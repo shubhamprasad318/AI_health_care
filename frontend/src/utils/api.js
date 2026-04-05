@@ -12,22 +12,15 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 async function apiRequest(endpoint, options = {}) {
   try {
     const isFormData = options.body instanceof FormData;
-    const token = localStorage.getItem('token');
     
-    // Build headers
     const headers = {};
     
-    // Add Content-Type if not FormData
-    if (!isFormData) {
+    if (!isFormData && options.method && options.method.toUpperCase() !== 'GET') {
+      headers['Content-Type'] = 'application/json';
+    } else if (!isFormData && !options.method) {
       headers['Content-Type'] = 'application/json';
     }
     
-    // Add Authorization token if available
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    // Merge with custom headers
     Object.assign(headers, options.headers);
     
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -64,42 +57,52 @@ async function apiRequest(endpoint, options = {}) {
  */
 export const authAPI = {
   login: async (email, password) => {
-    const response = await apiRequest("/auth/login", {
+    return apiRequest("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
-    
-    // Save token after successful login
-    if (response.success && response.data?.access_token) {
-      localStorage.setItem('token', response.data.access_token);
-    }
-    
-    return response;
+  },
+
+  verify2FA: async (email, code, isRecovery = false) => {
+    return apiRequest("/auth/2fa/verify-login", {
+      method: "POST",
+      body: JSON.stringify({ email, code, is_recovery: isRecovery }),
+    });
+  },
+
+  setup2FA: async () => {
+    return apiRequest("/auth/2fa/setup", { method: "POST" });
+  },
+
+  verifySetup2FA: async (code) => {
+    return apiRequest("/auth/2fa/verify-setup", {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    });
+  },
+
+  disable2FA: async (code) => {
+    return apiRequest("/auth/2fa/disable", {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    });
+  },
+
+  get2FAStatus: async () => {
+    return apiRequest("/auth/2fa/status", { method: "GET" });
   },
 
   signup: async (userData) => {
-    const response = await apiRequest("/auth/signup", {
+    return apiRequest("/auth/signup", {
       method: "POST",
       body: JSON.stringify(userData),
     });
-    
-    // Save token after signup
-    if (response.success && response.data?.access_token) {
-      localStorage.setItem('token', response.data.access_token);
-    }
-    
-    return response;
   },
 
   logout: async () => {
-    const response = await apiRequest("/auth/logout", {
+    return apiRequest("/auth/logout", {
       method: "POST",
     });
-    
-    // Clear token on logout
-    localStorage.removeItem('token');
-    
-    return response;
   },
 
   // Check authentication status
@@ -299,18 +302,8 @@ export const fileAPI = {
     });
   },
 
-  // ✅ NEW: View file with JWT authentication
   viewFile: async (fileId) => {
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-    
     const response = await fetch(`${API_BASE_URL}/files/${fileId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
       credentials: 'include'
     });
     
@@ -345,6 +338,80 @@ export const contactAPI = {
 };
 
 /**
+ * LiveKit APIs
+ */
+export const livekitAPI = {
+  getToken: async () => {
+    return apiRequest("/livekit/token", {
+      method: "POST",
+    });
+  },
+
+  getStatus: async () => {
+    return apiRequest("/livekit/status", {
+      method: "GET",
+    });
+  },
+};
+
+/**
+ * Medication Tracker APIs
+ */
+export const medicationAPI = {
+  add: async (medicationData) => {
+    return apiRequest("/medications", {
+      method: "POST",
+      body: JSON.stringify(medicationData),
+    });
+  },
+
+  list: async (active = null) => {
+    const params = active !== null ? `?active=${active}` : "";
+    return apiRequest(`/medications${params}`, {
+      method: "GET",
+    });
+  },
+
+  get: async (medicationId) => {
+    return apiRequest(`/medications/${medicationId}`, {
+      method: "GET",
+    });
+  },
+
+  update: async (medicationId, updateData) => {
+    return apiRequest(`/medications/${medicationId}`, {
+      method: "PATCH",
+      body: JSON.stringify(updateData),
+    });
+  },
+
+  delete: async (medicationId) => {
+    return apiRequest(`/medications/${medicationId}`, {
+      method: "DELETE",
+    });
+  },
+
+  log: async (logData) => {
+    return apiRequest("/medications/log", {
+      method: "POST",
+      body: JSON.stringify(logData),
+    });
+  },
+
+  getLogs: async (medicationId, days = 30) => {
+    return apiRequest(`/medications/${medicationId}/logs?days=${days}`, {
+      method: "GET",
+    });
+  },
+
+  getAdherenceStats: async (days = 30) => {
+    return apiRequest(`/medications/adherence/stats?days=${days}`, {
+      method: "GET",
+    });
+  },
+};
+
+/**
  * Health Dashboard APIs
  */
 export const healthAPI = {
@@ -360,11 +427,215 @@ export const healthAPI = {
     });
   },
 
-  // Get health metrics only
   getMetrics: async () => {
     return apiRequest("/health/metrics", {
       method: "GET",
     });
+  },
+};
+
+/**
+ * Timeline / Health Journal APIs
+ */
+export const timelineAPI = {
+  getTimeline: async (days = 90, eventType = null, limit = 100) => {
+    const params = new URLSearchParams({ days, limit });
+    if (eventType) params.append("event_type", eventType);
+    return apiRequest(`/timeline?${params}`, { method: "GET" });
+  },
+
+  createJournal: async (entryData) => {
+    return apiRequest("/timeline/journal", {
+      method: "POST",
+      body: JSON.stringify(entryData),
+    });
+  },
+
+  getJournalEntries: async (limit = 50, mood = null) => {
+    const params = new URLSearchParams({ limit });
+    if (mood) params.append("mood", mood);
+    return apiRequest(`/timeline/journal?${params}`, { method: "GET" });
+  },
+
+  updateJournal: async (entryId, updateData) => {
+    return apiRequest(`/timeline/journal/${entryId}`, {
+      method: "PATCH",
+      body: JSON.stringify(updateData),
+    });
+  },
+
+  deleteJournal: async (entryId) => {
+    return apiRequest(`/timeline/journal/${entryId}`, {
+      method: "DELETE",
+    });
+  },
+};
+
+/**
+ * Health Report APIs
+ */
+export const reportAPI = {
+  downloadReport: async (days = 90) => {
+    const response = await fetch(`${API_BASE_URL}/reports/generate?days=${days}`, {
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error("Failed to generate report");
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `health_report_${new Date().toISOString().split("T")[0]}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
+
+  getSummary: async (days = 90) => {
+    return apiRequest(`/reports/summary?days=${days}`, { method: "GET" });
+  },
+};
+
+/**
+ * Family Profile APIs
+ */
+export const familyAPI = {
+  create: async (profileData) => {
+    return apiRequest("/family", {
+      method: "POST",
+      body: JSON.stringify(profileData),
+    });
+  },
+
+  list: async () => {
+    return apiRequest("/family", { method: "GET" });
+  },
+
+  get: async (profileId) => {
+    return apiRequest(`/family/${profileId}`, { method: "GET" });
+  },
+
+  update: async (profileId, updateData) => {
+    return apiRequest(`/family/${profileId}`, {
+      method: "PATCH",
+      body: JSON.stringify(updateData),
+    });
+  },
+
+  delete: async (profileId) => {
+    return apiRequest(`/family/${profileId}`, { method: "DELETE" });
+  },
+
+  getSummary: async (profileId) => {
+    return apiRequest(`/family/${profileId}/summary`, { method: "GET" });
+  },
+};
+
+/**
+ * Doctor Directory APIs
+ */
+export const doctorAPI = {
+  list: async (params = {}) => {
+    const searchParams = new URLSearchParams();
+    if (params.specialization) searchParams.append("specialization", params.specialization);
+    if (params.city) searchParams.append("city", params.city);
+    if (params.search) searchParams.append("search", params.search);
+    if (params.min_rating) searchParams.append("min_rating", params.min_rating);
+    if (params.sort_by) searchParams.append("sort_by", params.sort_by);
+    if (params.limit) searchParams.append("limit", params.limit);
+    if (params.skip) searchParams.append("skip", params.skip);
+    return apiRequest(`/doctors?${searchParams}`, { method: "GET" });
+  },
+
+  get: async (doctorId) => {
+    return apiRequest(`/doctors/${doctorId}`, { method: "GET" });
+  },
+
+  getSpecializations: async () => {
+    return apiRequest("/doctors/specializations", { method: "GET" });
+  },
+
+  getCities: async () => {
+    return apiRequest("/doctors/cities", { method: "GET" });
+  },
+
+  addReview: async (doctorId, reviewData) => {
+    return apiRequest(`/doctors/${doctorId}/reviews`, {
+      method: "POST",
+      body: JSON.stringify(reviewData),
+    });
+  },
+
+  updateReview: async (doctorId, reviewData) => {
+    return apiRequest(`/doctors/${doctorId}/reviews`, {
+      method: "PATCH",
+      body: JSON.stringify(reviewData),
+    });
+  },
+
+  deleteReview: async (doctorId) => {
+    return apiRequest(`/doctors/${doctorId}/reviews`, { method: "DELETE" });
+  },
+
+  seed: async () => {
+    return apiRequest("/doctors/seed", { method: "POST" });
+  },
+};
+
+export const gamificationAPI = {
+  getData: async () => {
+    return apiRequest("/gamification", { method: "GET" });
+  },
+};
+
+export const adminAPI = {
+  getStats: async () => {
+    return apiRequest("/admin/stats", { method: "GET" });
+  },
+
+  getUsers: async (search = "", limit = 50, skip = 0) => {
+    const params = new URLSearchParams({ limit, skip });
+    if (search) params.append("search", search);
+    return apiRequest(`/admin/users?${params}`, { method: "GET" });
+  },
+
+  getUserDetail: async (userId) => {
+    return apiRequest(`/admin/users/${userId}`, { method: "GET" });
+  },
+
+  deleteUser: async (userId) => {
+    return apiRequest(`/admin/users/${userId}`, { method: "DELETE" });
+  },
+
+  getSystemHealth: async () => {
+    return apiRequest("/admin/system", { method: "GET" });
+  },
+
+  getActivity: async (limit = 20) => {
+    return apiRequest(`/admin/activity?limit=${limit}`, { method: "GET" });
+  },
+};
+
+/**
+ * Notification APIs
+ */
+export const notificationAPI = {
+  list: async (limit = 50, unreadOnly = false) => {
+    const params = new URLSearchParams({ limit });
+    if (unreadOnly) params.append("unread_only", "true");
+    return apiRequest(`/notifications?${params}`, { method: "GET" });
+  },
+
+  markRead: async (notificationId) => {
+    return apiRequest(`/notifications/${notificationId}/read`, { method: "PATCH" });
+  },
+
+  markAllRead: async () => {
+    return apiRequest("/notifications/read-all", { method: "PATCH" });
+  },
+
+  delete: async (notificationId) => {
+    return apiRequest(`/notifications/${notificationId}`, { method: "DELETE" });
   },
 };
 
@@ -408,16 +679,8 @@ export const checkAuthentication = async () => {
  */
 export const downloadFile = async (fileId, filename) => {
   try {
-    const token = localStorage.getItem('token');
-    const headers = {};
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
     const response = await fetch(`${API_BASE_URL}/files/${fileId}`, {
       credentials: "include",
-      headers,
     });
     
     if (!response.ok) throw new Error("Download failed");
@@ -451,6 +714,15 @@ export default {
   contact: contactAPI,
   health: healthAPI,
   article: articleAPI,
+  livekit: livekitAPI,
+  medication: medicationAPI,
+  timeline: timelineAPI,
+  report: reportAPI,
+  family: familyAPI,
+  notification: notificationAPI,
+  doctor: doctorAPI,
+  gamification: gamificationAPI,
+  admin: adminAPI,
   checkAuthentication,
   downloadFile,
 };

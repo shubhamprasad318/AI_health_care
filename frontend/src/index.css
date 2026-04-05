@@ -243,6 +243,16 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Dark mode base transitions */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #111827;
+  color: #e5e7eb;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
@@ -250,6 +260,10 @@ html {
 
 ::-webkit-scrollbar-track {
   background: #f1f1f1;
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: #1f2937;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -261,16 +275,53 @@ html {
   background: linear-gradient(to bottom, #7ab8d9, #e0a87a);
 }
 
+html.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #2563eb, #7c3aed);
+}
+
 /* Glass morphism effect */
 .glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+html.dark .glass {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+html.dark .glass-card {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(148, 163, 184, 0.08);
 }
 
 /* Text gradient */
 .text-gradient {
   background: linear-gradient(135deg, #51829B 0%, #93C6E7 50%, #EFBC9B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+html.dark .text-gradient {
+  background: linear-gradient(135deg, #60a5fa 0%, #38bdf8 50%, #a78bfa 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -286,12 +337,20 @@ html {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
+html.dark .hover-lift:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
 /* ✅ REMOVED: Botpress positioning (no longer needed) */
 
 /* Markdown content styling */
 .prose {
   color: #374151;
   max-width: none;
+}
+
+html.dark .prose {
+  color: #d1d5db;
 }
 
 .prose h1,
@@ -304,9 +363,22 @@ html {
   color: #1f2937;
 }
 
+html.dark .prose h1,
+html.dark .prose h2,
+html.dark .prose h3,
+html.dark .prose h4,
+html.dark .prose h5,
+html.dark .prose h6 {
+  color: #f3f4f6;
+}
+
 .prose strong {
   color: #111827;
   font-weight: 700;
+}
+
+html.dark .prose strong {
+  color: #f9fafb;
 }
 
 .prose a {
@@ -319,6 +391,11 @@ html {
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   font-size: 0.875em;
+}
+
+html.dark .prose code {
+  background-color: #374151;
+  color: #e5e7eb;
 }
 
 .prose pre {
@@ -346,6 +423,10 @@ html {
   color: #6b7280;
 }
 
+html.dark .prose blockquote {
+  color: #9ca3af;
+}
+
 /* ✅ NEW: Utility classes for shadows and effects */
 .shadow-3xl {
   box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
@@ -359,6 +440,11 @@ html {
   width: 40px;
   height: 40px;
   animation: spin 0.8s linear infinite;
+}
+
+html.dark .spinner {
+  border-color: rgba(255, 255, 255, 0.1);
+  border-top-color: #60a5fa;
 }
 
 /* ✅ NEW: Gradient text animation */
@@ -391,6 +477,10 @@ html {
 .card-hover:hover {
   transform: translateY(-5px) scale(1.02);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+html.dark .card-hover:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
 /* ✅ NEW: Button ripple effect */
@@ -428,13 +518,75 @@ html {
   height: 300px;
 }
 
-/* ✅ NEW: Focus visible for accessibility */
+/* Dark gradient backgrounds */
+.dark-gradient-bg {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+}
+
+.dark-gradient-bg-subtle {
+  background: linear-gradient(180deg, #111827 0%, #1e293b 100%);
+}
+
+/* Glow border for focus and accent elements */
+.glow-border {
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.15), 0 0 20px rgba(37, 99, 235, 0.05);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+html.dark .glow-border {
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.2), 0 0 30px rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.glow-border-hover:hover {
+  box-shadow: 0 0 15px rgba(37, 99, 235, 0.25), 0 0 30px rgba(37, 99, 235, 0.1);
+}
+
+html.dark .glow-border-hover:hover {
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.3), 0 0 40px rgba(59, 130, 246, 0.15);
+}
+
+/* Section divider */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.3), transparent);
+}
+
+html.dark .section-divider {
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.15), transparent);
+}
+
+/* Dark mode card base */
+.dark-card {
+  transition: all 0.3s ease;
+}
+
+html.dark .dark-card {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+html.dark .dark-card:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+}
+
+/* Smooth page transitions */
+.page-enter {
+  animation: fadeIn 0.4s ease-out, slideUp 0.5s ease-out;
+}
+
+/* Focus visible for accessibility */
 *:focus-visible {
   outline: 2px solid #93C6E7;
   outline-offset: 2px;
 }
 
-/* ✅ NEW: Print styles */
+html.dark *:focus-visible {
+  outline-color: #60a5fa;
+}
+
+/* Print styles */
 @media print {
   .no-print {
     display: none !important;

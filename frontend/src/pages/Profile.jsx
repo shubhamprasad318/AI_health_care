@@ -168,7 +168,7 @@ function Profile() {
       const updateData = {
         name: values.name,
         phone: values.phoneNumber,
-        age: parseInt(values.age) || values.age,
+        age: values.age && !isNaN(values.age) ? parseInt(values.age, 10) : "",
         gender: values.gender,
         height: values.height,
         weight: values.weight,
@@ -248,23 +248,23 @@ function Profile() {
 
   const renderAboutSection = () => (
     <div className="p-4 animate-slideUp">
-      <div className="w-full bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-8 rounded-2xl border-2 border-gray-200 shadow-xl relative overflow-hidden">
+      <div className="w-full bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-800 p-8 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-xl dark:shadow-gray-900/50 relative overflow-hidden">
         {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-200/20 to-purple-200/20 rounded-full -mr-20 -mt-20 blur-2xl"></div>
-        <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-purple-200/20 to-pink-200/20 rounded-full -ml-20 -mb-20 blur-2xl"></div>
+        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-200/20 to-purple-200/20 dark:from-blue-800/20 dark:to-purple-800/20 rounded-full -mr-20 -mt-20 blur-2xl"></div>
+        <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-purple-200/20 to-pink-200/20 dark:from-purple-800/20 dark:to-pink-800/20 rounded-full -ml-20 -mb-20 blur-2xl"></div>
         
         <div className="relative z-10">
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-br from-btn2 to-sky-500 p-3 rounded-xl shadow-lg">
+              <div className="bg-gradient-to-br from-btn2 to-btn1 p-3 rounded-xl shadow-lg">
                 <FaUser className="text-white text-xl" />
               </div>
-              <h2 className="text-3xl font-extrabold text-gray-800">Personal Details</h2>
+              <h2 className="text-3xl font-extrabold text-gray-800 dark:text-gray-100">Personal Details</h2>
             </div>
             {!isEditing && (
               <button
                 onClick={handleEditClick}
-                className="flex items-center gap-2 bg-gradient-to-r from-btn2 to-sky-500 text-white px-6 py-3 rounded-xl font-bold hover:from-sky-500 hover:to-btn2 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform"
+                className="flex items-center gap-2 bg-gradient-to-r from-btn2 to-btn1 text-white px-6 py-3 rounded-xl font-bold hover:from-btn1 hover:to-btn2 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform"
               >
                 <FaPenToSquare /> Edit Profile
               </button>
@@ -282,7 +282,7 @@ function Profile() {
               { field: "joiningDate", icon: FaCalendarAlt, type: "text" },
             ].map(({ field, icon: Icon, type }) => (
               <div className="flex flex-col group" key={field}>
-                <label htmlFor={field} className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                <label htmlFor={field} className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                   <Icon className="text-btn2" />
                   {field.charAt(0).toUpperCase() + field.slice(1)}
                 </label>
@@ -293,21 +293,21 @@ function Profile() {
                   value={values[field]}
                   onChange={handleChange}
                   disabled={field === "email"}
-                  className="px-5 py-3.5 rounded-xl border-2 border-gray-300 focus:border-btn2 focus:ring-4 focus:ring-btn2/20 focus:outline-none transition-all bg-white font-medium group-hover:border-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="px-5 py-3.5 rounded-xl border-2 border-gray-300 dark:border-gray-600 focus:border-btn2 focus:ring-4 focus:ring-btn2/20 focus:outline-none transition-all bg-white dark:bg-gray-700/50 dark:text-gray-100 font-medium group-hover:border-gray-400 disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed"
                 />
               </div>
             ))}
-            <div className="flex gap-4 mt-8 pt-6 border-t-2 border-gray-200">
+            <div className="flex gap-4 mt-8 pt-6 border-t-2 border-gray-200 dark:border-gray-600">
               <button
                 onClick={handleSaveClick}
-                className="flex-1 bg-gradient-to-r from-btn2 to-sky-500 text-white px-6 py-4 rounded-xl font-bold hover:from-sky-500 hover:to-btn2 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 hover:scale-105 transform"
+                className="flex-1 bg-gradient-to-r from-btn2 to-btn1 text-white px-6 py-4 rounded-xl font-bold hover:from-btn1 hover:to-btn2 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 hover:scale-105 transform"
               >
                 <FaCheckCircle />
                 Save Changes
               </button>
               <button
                 onClick={() => setIsEditing(false)}
-                className="flex-1 bg-gray-200 text-gray-700 px-6 py-4 rounded-xl font-bold hover:bg-gray-300 transition-all duration-300 flex items-center justify-center gap-2"
+                className="flex-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-4 rounded-xl font-bold hover:bg-gray-300 dark:hover:bg-gray-500 transition-all duration-300 flex items-center justify-center gap-2"
               >
                 <FaTimes />
                 Cancel
@@ -325,16 +325,16 @@ function Profile() {
               { field: "address", icon: FaMapMarkerAlt, colorClass: "bg-gradient-to-br from-red-100 to-red-200", iconClass: "text-red-600" },
               { field: "joiningDate", icon: FaCalendarAlt, colorClass: "bg-gradient-to-br from-orange-100 to-orange-200", iconClass: "text-orange-600" },
             ].map(({ field, icon: Icon, colorClass, iconClass }) => (
-              <div key={field} className="p-5 bg-white rounded-xl border-2 border-gray-200 hover:border-btn2 hover:shadow-xl transition-all duration-300 group">
+              <div key={field} className="p-5 bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-btn2 hover:shadow-xl transition-all duration-300 group">
                 <div className="flex items-center gap-3 mb-2">
                   <div className={`${colorClass} p-2.5 rounded-lg group-hover:scale-110 transition-transform`}>
                     <Icon className={`${iconClass} text-lg`} />
                   </div>
-                  <p className="text-xs text-gray-500 font-bold uppercase tracking-wide">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wide">
                     {field.charAt(0).toUpperCase() + field.slice(1)}
                   </p>
                 </div>
-                <p className="text-base font-extrabold text-gray-800 ml-12 group-hover:text-btn2 transition-colors">
+                <p className="text-base font-extrabold text-gray-800 dark:text-gray-100 ml-12 group-hover:text-btn2 transition-colors">
                   {values[field] || "Not set"}
                 </p>
               </div>
@@ -352,21 +352,21 @@ function Profile() {
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-xl shadow-lg">
           <FaFileMedical className="text-white text-2xl" />
         </div>
-        <h2 className="text-3xl font-extrabold text-gray-800">Health Reports</h2>
+        <h2 className="text-3xl font-extrabold text-gray-800 dark:text-gray-100">Health Reports</h2>
       </div>
       <div className="flex flex-col">
-        <div className="mb-8 p-8 bg-gradient-to-br from-blue-50 via-sky-50 to-blue-100 rounded-2xl border-2 border-dashed border-blue-300 hover:border-blue-500 hover:shadow-xl transition-all duration-300 relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-200/0 to-purple-200/0 group-hover:from-blue-200/20 group-hover:to-purple-200/20 transition-all duration-500"></div>
+        <div className="mb-8 p-8 bg-gradient-to-br from-blue-50 via-sky-50 to-blue-100 dark:from-blue-950/30 dark:via-sky-950/30 dark:to-blue-900/30 rounded-2xl border-2 border-dashed border-blue-300 dark:border-blue-700 hover:border-blue-500 hover:shadow-xl transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-200/0 to-purple-200/0 group-hover:from-blue-200/20 group-hover:to-purple-200/20 dark:group-hover:from-blue-800/20 dark:group-hover:to-purple-800/20 transition-all duration-500"></div>
           
           <label className="cursor-pointer relative z-10">
             <div className="text-center">
               <div className="mb-4 flex justify-center">
-                <div className="bg-gradient-to-br from-btn2 to-sky-500 p-4 rounded-full shadow-lg group-hover:scale-110 transition-transform">
+                <div className="bg-gradient-to-br from-btn2 to-btn1 p-4 rounded-full shadow-lg group-hover:scale-110 transition-transform">
                   <FaUpload className="text-white text-3xl" />
                 </div>
               </div>
-              <p className="text-gray-800 font-bold text-lg mb-2">Upload Health Reports</p>
-              <p className="text-sm text-gray-600 mb-6">Click to select files or drag and drop (PDF, JPG, PNG)</p>
+              <p className="text-gray-800 dark:text-gray-100 font-bold text-lg mb-2">Upload Health Reports</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Click to select files or drag and drop (PDF, JPG, PNG)</p>
               <input
                 type="file"
                 onChange={handleFileUpload}
@@ -377,7 +377,7 @@ function Profile() {
               />
               <label
                 htmlFor="file-upload"
-                className="inline-block bg-gradient-to-r from-btn2 to-sky-500 text-white px-8 py-4 rounded-xl font-bold hover:from-sky-500 hover:to-btn2 transition-all duration-300 shadow-xl hover:shadow-2xl cursor-pointer hover:scale-105 transform"
+                className="inline-block bg-gradient-to-r from-btn2 to-btn1 text-white px-8 py-4 rounded-xl font-bold hover:from-btn1 hover:to-btn2 transition-all duration-300 shadow-xl hover:shadow-2xl cursor-pointer hover:scale-105 transform"
               >
                 <FaUpload className="inline mr-2" />
                 Choose Files
@@ -387,12 +387,12 @@ function Profile() {
         </div>
         
         {uploadedFiles.length > 0 && (
-          <div className="bg-white p-6 rounded-2xl border-2 border-gray-200 shadow-xl">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-xl dark:shadow-gray-900/50">
             <div className="flex items-center gap-3 mb-6">
               <div className="bg-gradient-to-br from-green-500 to-green-600 p-2 rounded-lg">
                 <FaCheckCircle className="text-white text-xl" />
               </div>
-              <h3 className="text-2xl font-extrabold text-gray-800">Uploaded Files</h3>
+              <h3 className="text-2xl font-extrabold text-gray-800 dark:text-gray-100">Uploaded Files</h3>
               <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold">
                 {uploadedFiles.length} {uploadedFiles.length === 1 ? "file" : "files"}
               </span>
@@ -401,7 +401,7 @@ function Profile() {
               {uploadedFiles.map((file, index) => (
                 <div 
                   key={file._id || file.file_id} 
-                  className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border-2 border-gray-200 hover:border-btn2 hover:shadow-lg transition-all duration-300 group gap-3"
+                  className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-700/50 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:border-btn2 hover:shadow-lg transition-all duration-300 group gap-3"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <div className="flex items-center gap-3 flex-1">
@@ -409,7 +409,7 @@ function Profile() {
                       <FaFileMedical className="text-blue-600 text-xl" />
                     </div>
                     <div>
-                      <span className="font-bold text-gray-800 group-hover:text-btn2 transition-colors block">
+                      <span className="font-bold text-gray-800 dark:text-gray-100 group-hover:text-btn2 transition-colors block">
                         {file.filename || file.original_filename || file.stored_filename}
                       </span>
                       {file.analyzed && (
@@ -458,10 +458,10 @@ function Profile() {
         )}
         
         {uploadedFiles.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-2xl border-2 border-dashed border-gray-300">
-            <FaFileMedical className="text-gray-300 text-6xl mx-auto mb-4" />
-            <p className="text-gray-600 font-semibold text-lg">No files uploaded yet</p>
-            <p className="text-gray-500 text-sm mt-2">Upload your health reports to keep them organized</p>
+          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600">
+            <FaFileMedical className="text-gray-300 dark:text-gray-600 text-6xl mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-300 font-semibold text-lg">No files uploaded yet</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">Upload your health reports to keep them organized</p>
           </div>
         )}
       </div>
@@ -481,14 +481,13 @@ const renderHealthSection = () => {
           <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 rounded-xl shadow-lg">
             <FaHeartbeat className="text-white text-2xl" />
           </div>
-          <h2 className="text-3xl font-extrabold text-gray-800">Health Management</h2>
+          <h2 className="text-3xl font-extrabold text-gray-800 dark:text-gray-100">Health Management</h2>
         </div>
         
-        {/* ✅ EDIT/SAVE TOGGLE BUTTONS */}
         {!isEditing ? (
           <button
             onClick={handleEditClick}
-            className="flex items-center gap-2 bg-gradient-to-r from-btn2 to-sky-500 text-white px-6 py-3 rounded-xl font-bold hover:from-sky-500 hover:to-btn2 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+            className="flex items-center gap-2 bg-gradient-to-r from-btn2 to-btn1 text-white px-6 py-3 rounded-xl font-bold hover:from-btn1 hover:to-btn2 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
           >
             <FaPenToSquare /> Edit Metrics
           </button>
@@ -502,7 +501,7 @@ const renderHealthSection = () => {
             </button>
             <button
               onClick={() => setIsEditing(false)}
-              className="flex items-center gap-2 bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-bold hover:bg-gray-300 transition-all"
+              className="flex items-center gap-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-xl font-bold hover:bg-gray-300 dark:hover:bg-gray-500 transition-all"
             >
               <FaTimes /> Cancel
             </button>
@@ -512,12 +511,12 @@ const renderHealthSection = () => {
       
       <div className="max-h-[calc(100vh-300px)] overflow-y-auto pr-2 space-y-6">
         {/* ✅ BMI CALCULATOR CARD */}
-        <div className="bg-gradient-to-br from-blue-50 to-sky-50 p-6 rounded-2xl border-2 border-blue-200 shadow-lg hover:shadow-xl transition-all">
+        <div className="bg-gradient-to-br from-blue-50 to-sky-50 dark:from-blue-950/30 dark:to-sky-950/30 p-6 rounded-2xl border-2 border-blue-200 dark:border-blue-800 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center gap-3 mb-4">
             <div className="bg-blue-500 p-2 rounded-lg">
               <FaChartLine className="text-white text-xl" />
             </div>
-            <h3 className="text-xl font-bold text-gray-800">BMI Calculator</h3>
+            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">BMI Calculator</h3>
           </div>
           
           {isEditing ? (
@@ -525,7 +524,7 @@ const renderHealthSection = () => {
               {/* Height & Weight Input Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                     <FaRuler className="text-blue-500" />
                     Height (cm)
                   </label>
@@ -537,12 +536,12 @@ const renderHealthSection = () => {
                     placeholder="e.g., 175"
                     min="50"
                     max="300"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all text-lg font-semibold"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all text-lg font-semibold bg-white dark:bg-gray-700/50 dark:text-gray-100"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Enter your height in centimeters (50-300 cm)</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter your height in centimeters (50-300 cm)</p>
                 </div>
                 <div>
-                  <label className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                     <FaWeight className="text-blue-500" />
                     Weight (kg)
                   </label>
@@ -554,9 +553,9 @@ const renderHealthSection = () => {
                     placeholder="e.g., 70"
                     min="20"
                     max="300"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all text-lg font-semibold"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all text-lg font-semibold bg-white dark:bg-gray-700/50 dark:text-gray-100"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Enter your weight in kilograms (20-300 kg)</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter your weight in kilograms (20-300 kg)</p>
                 </div>
               </div>
               
@@ -565,7 +564,7 @@ const renderHealthSection = () => {
                 <div className={`p-4 rounded-xl ${bmiStatus.bgColor} border-2 animate-scaleIn`} style={{ borderColor: bmiStatus.color }}>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-bold text-gray-600">Calculated BMI</p>
+                      <p className="text-sm font-bold text-gray-600 dark:text-gray-400">Calculated BMI</p>
                       <p className="text-4xl font-extrabold mt-1" style={{ color: bmiStatus.color }}>
                         {values.bmi}
                       </p>
@@ -576,7 +575,7 @@ const renderHealthSection = () => {
                     <div className="text-5xl">📊</div>
                   </div>
                   {bmiStatus.message && (
-                    <p className="text-xs text-gray-600 mt-3 bg-white/50 p-2 rounded-lg">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-3 bg-white/50 dark:bg-gray-800/50 p-2 rounded-lg">
                       💡 {bmiStatus.message}
                     </p>
                   )}
@@ -585,7 +584,7 @@ const renderHealthSection = () => {
               
               {/* Blood Pressure Input */}
               <div>
-                <label className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                <label className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                   <FaHeartbeat className="text-red-500" />
                   Blood Pressure (e.g., 120/80)
                 </label>
@@ -596,14 +595,14 @@ const renderHealthSection = () => {
                   onChange={handleChange}
                   placeholder="120/80"
                   pattern="\d{2,3}/\d{2,3}"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all text-lg font-semibold"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all text-lg font-semibold bg-white dark:bg-gray-700/50 dark:text-gray-100"
                 />
-                <p className="text-xs text-gray-500 mt-1">Format: Systolic/Diastolic (e.g., 120/80)</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Format: Systolic/Diastolic (e.g., 120/80)</p>
               </div>
 
               {/* Instructions Card */}
-              <div className="bg-blue-100 border-l-4 border-blue-500 p-4 rounded-lg">
-                <p className="text-sm text-blue-800 font-semibold flex items-center gap-2">
+              <div className="bg-blue-100 dark:bg-blue-900/30 border-l-4 border-blue-500 p-4 rounded-lg">
+                <p className="text-sm text-blue-800 dark:text-blue-300 font-semibold flex items-center gap-2">
                   <span className="text-xl">💡</span>
                   <span>BMI is automatically calculated when you enter height and weight. Click "Save" button above to update your health profile.</span>
                 </p>
@@ -625,18 +624,18 @@ const renderHealthSection = () => {
                 )}
               </div>
               
-              <div className="bg-white p-4 rounded-xl border-2 border-blue-200 hover:shadow-lg transition-all">
+              <div className="bg-white dark:bg-gray-700 p-4 rounded-xl border-2 border-blue-200 dark:border-blue-800 hover:shadow-lg transition-all">
                 <div className="text-2xl mb-2">📏</div>
-                <p className="text-sm text-gray-600 font-semibold">Height</p>
-                <p className="text-2xl font-bold text-gray-800">
+                <p className="text-sm text-gray-600 dark:text-gray-400 font-semibold">Height</p>
+                <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                   {values.height ? `${values.height} cm` : "Not set"}
                 </p>
               </div>
               
-              <div className="bg-white p-4 rounded-xl border-2 border-blue-200 hover:shadow-lg transition-all">
+              <div className="bg-white dark:bg-gray-700 p-4 rounded-xl border-2 border-blue-200 dark:border-blue-800 hover:shadow-lg transition-all">
                 <div className="text-2xl mb-2">⚖️</div>
-                <p className="text-sm text-gray-600 font-semibold">Weight</p>
-                <p className="text-2xl font-bold text-gray-800">
+                <p className="text-sm text-gray-600 dark:text-gray-400 font-semibold">Weight</p>
+                <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                   {values.weight ? `${values.weight} kg` : "Not set"}
                 </p>
               </div>
@@ -660,16 +659,16 @@ const renderHealthSection = () => {
           {!isEditing && (
             <>
               {values.bmi && bmiStatus.message && (
-                <div className="mt-4 p-4 bg-white rounded-xl border-2 border-gray-200 hover:shadow-md transition-all">
-                  <p className="text-sm text-gray-700 font-medium">
+                <div className="mt-4 p-4 bg-white dark:bg-gray-700 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:shadow-md transition-all">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
                     📊 {bmiStatus.message}
                   </p>
                 </div>
               )}
               
               {values.pressure && bpStatus.message && bpStatus.category !== "Invalid" && (
-                <div className="mt-4 p-4 bg-white rounded-xl border-2 border-gray-200 hover:shadow-md transition-all">
-                  <p className="text-sm text-gray-700 font-medium">
+                <div className="mt-4 p-4 bg-white dark:bg-gray-700 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:shadow-md transition-all">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
                     ❤️ {bpStatus.message}
                   </p>
                 </div>
@@ -679,16 +678,16 @@ const renderHealthSection = () => {
         </div>
 
         {/* Health Plan Generator */}
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border-2 border-green-200 shadow-lg hover:shadow-xl transition-all">
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 p-6 rounded-2xl border-2 border-green-200 dark:border-green-800 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center gap-3 mb-4">
             <div className="bg-green-500 p-2 rounded-lg">
               <FaChartLine className="text-white text-xl" />
             </div>
-            <h3 className="text-xl font-bold text-gray-800">
+            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
               Personalized Health Plan
             </h3>
           </div>
-          <p className="text-gray-700 mb-6 leading-relaxed">
+          <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
             Generate a comprehensive, personalized health management plan based on your recent diagnosis. 
             Our AI will create a detailed 4-week plan tailored to your specific health condition.
           </p>
@@ -715,11 +714,11 @@ const renderHealthSection = () => {
   };
 
   return (
-    <div className="w-full min-h-screen font-text bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8">
+    <div className="w-full min-h-screen font-text bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 py-8 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-5">
         {/* Header */}
         <div className="mb-8">
-          <div className="bg-gradient-to-r from-btn2 to-sky-500 rounded-2xl p-8 shadow-xl text-white">
+          <div className="bg-gradient-to-r from-btn2 to-btn1 rounded-2xl p-8 shadow-xl text-white">
             <h1 className="text-4xl md:text-5xl font-extrabold mb-3">My Profile</h1>
             <p className="text-lg text-white/90">Manage your personal information and health data</p>
           </div>
@@ -728,13 +727,13 @@ const renderHealthSection = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left side - Profile Card */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-2xl p-6 border-2 border-gray-100 sticky top-8 hover:shadow-3xl transition-all duration-300 overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl dark:shadow-gray-900/50 p-6 border-2 border-gray-100 dark:border-gray-700 sticky top-8 hover:shadow-3xl transition-all duration-300 overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/30 dark:via-purple-950/30 dark:to-pink-950/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               
               <div className="relative z-10">
                 <div className="flex flex-col w-full justify-center items-center">
                   <div className="relative mb-6">
-                    <div className="absolute inset-0 bg-gradient-to-r from-btn2 to-sky-500 rounded-full blur-xl opacity-30 group-hover:opacity-50 transition-opacity"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-btn2 to-btn1 rounded-full blur-xl opacity-30 group-hover:opacity-50 transition-opacity"></div>
                     <img
                       className="rounded-full w-32 h-32 object-cover shadow-2xl border-4 border-white relative z-10 group-hover:scale-110 transition-transform duration-300"
                       src={values.image}
@@ -743,8 +742,8 @@ const renderHealthSection = () => {
                     <div className="absolute bottom-2 right-2 bg-gradient-to-br from-green-400 to-green-600 w-8 h-8 rounded-full border-4 border-white shadow-lg animate-pulse"></div>
                     <div className="absolute -top-2 -right-2 bg-gradient-to-br from-yellow-400 to-orange-500 w-6 h-6 rounded-full border-2 border-white shadow-md"></div>
                   </div>
-                  <h1 className="font-extrabold text-2xl mt-2 text-gray-800 group-hover:text-btn2 transition-colors">{values.name || "User"}</h1>
-                  <p className="text-sm text-gray-600 font-medium flex items-center gap-2 mt-1">
+                  <h1 className="font-extrabold text-2xl mt-2 text-gray-800 dark:text-gray-100 group-hover:text-btn2 transition-colors">{values.name || "User"}</h1>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium flex items-center gap-2 mt-1">
                     <FaEnvelope className="text-btn2" />
                     {values.email}
                   </p>
@@ -756,16 +755,16 @@ const renderHealthSection = () => {
                     { field: "phoneNumber", icon: FaPhone, colorClass: "bg-green-100", iconClass: "text-green-600" },
                     { field: "address", icon: FaMapMarkerAlt, colorClass: "bg-red-100", iconClass: "text-red-600" },
                   ].map(({ field, icon: Icon, colorClass, iconClass }) => (
-                    <div key={field} className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border-2 border-gray-200 hover:border-btn2 hover:shadow-md transition-all duration-300 group/item">
+                    <div key={field} className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-700/50 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:border-btn2 hover:shadow-md transition-all duration-300 group/item">
                       <div className="flex items-center gap-2 mb-1">
                         <div className={`${colorClass} p-1.5 rounded-lg`}>
                           <Icon className={`${iconClass} text-sm`} />
                         </div>
-                        <p className="text-xs text-gray-500 font-bold">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-bold">
                           {field.charAt(0).toUpperCase() + field.slice(1)}
                         </p>
                       </div>
-                      <p className="text-sm text-gray-800 font-semibold ml-8">
+                      <p className="text-sm text-gray-800 dark:text-gray-200 font-semibold ml-8">
                         {values[field] || "Not set"}
                       </p>
                     </div>
@@ -777,8 +776,8 @@ const renderHealthSection = () => {
 
           {/* Right side */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-2xl shadow-2xl p-6 border-2 border-gray-100 hover:shadow-3xl transition-all duration-300">
-              <div className="flex mb-8 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 p-1.5 rounded-2xl border border-gray-200">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl dark:shadow-gray-900/50 p-6 border-2 border-gray-100 dark:border-gray-700 hover:shadow-3xl transition-all duration-300">
+              <div className="flex mb-8 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 p-1.5 rounded-2xl border border-gray-200 dark:border-gray-600">
                 {[
                   { name: "about", icon: FaUser, label: "About" },
                   { name: "reports", icon: FaFileMedical, label: "Reports" },
@@ -789,11 +788,11 @@ const renderHealthSection = () => {
                     onClick={() => setActiveSection(name)}
                     className={`flex-1 p-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 ${
                       activeSection === name
-                        ? "bg-gradient-to-r from-btn2 to-sky-500 text-white shadow-xl scale-105"
-                        : "text-gray-600 hover:text-gray-800 hover:bg-white"
+                        ? "bg-gradient-to-r from-btn2 to-btn1 text-white shadow-xl scale-105"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white dark:hover:bg-gray-700"
                     }`}
                   >
-                    <Icon className={activeSection === name ? "text-white" : "text-gray-500"} />
+                    <Icon className={activeSection === name ? "text-white" : "text-gray-500 dark:text-gray-400"} />
                     {label}
                   </button>
                 ))}

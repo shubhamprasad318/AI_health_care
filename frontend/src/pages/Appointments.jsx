@@ -7,14 +7,14 @@ import { appointmentAPI } from "../utils/api";
 
 function DoctorRecommend() {
   const [location, setLocation] = useState("");
-  const [specialization, setspecialization] = useState("");
+  const [specialization, setSpecialization] = useState("");
   const [myAppointments, setMyAppointments] = useState([]);
   const [showAppointments, setShowAppointments] = useState(false);
   const [isLoadingAppointments, setIsLoadingAppointments] = useState(false);
   const [cancellingId, setCancellingId] = useState(null);
 
   const handlespecializationChange = (event) => {
-    setspecialization(event.target.value);
+    setSpecialization(event.target.value);
   };
 
   const handleLocationChange = (event) => {
@@ -73,9 +73,9 @@ function DoctorRecommend() {
   );
 
   return (
-    <div className="w-full min-h-screen relative font-text bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="w-full min-h-screen relative font-text bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 transition-colors duration-300">
       {/* Hero Section */}
-      <div className="w-full h-[400px] bg-gradient-to-r from-btn2 via-sky-500 to-blue-600 relative overflow-hidden">
+      <div className="w-full h-[400px] bg-gradient-to-r from-btn2 via-sky-500 to-btn1 relative overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0">
           <div className="absolute top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-blob"></div>
@@ -124,18 +124,18 @@ function DoctorRecommend() {
 
       {/* Search and Filter Section */}
       <div className="max-w-7xl mx-auto px-5 -mt-10 relative z-20 animate-slideUp">
-        <div className="bg-white rounded-2xl shadow-2xl p-6 border-2 border-gray-100 hover:shadow-3xl transition-all duration-300">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl dark:shadow-gray-900/50 p-6 border-2 border-gray-100 dark:border-gray-700 hover:shadow-3xl transition-all duration-300">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="flex flex-col md:flex-row gap-4 flex-1 w-full">
               <div className="flex-1">
-                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                   <FaUserMd className="text-btn2" />
                   Specialization
                 </label>
                 <select
                   value={specialization}
                   onChange={handlespecializationChange}
-                  className="w-full border-2 border-gray-300 rounded-xl py-3 px-4 focus:outline-none focus:border-btn2 focus:ring-4 focus:ring-btn2/20 transition-all font-medium text-gray-700 bg-white hover:border-gray-400"
+                  className="w-full border-2 border-gray-300 dark:border-gray-600 rounded-xl py-3 px-4 focus:outline-none focus:border-btn2 focus:ring-4 focus:ring-btn2/20 transition-all font-medium text-gray-700 dark:text-gray-100 bg-white dark:bg-gray-700/50 hover:border-gray-400 dark:hover:border-gray-500"
                 >
                   <option value="">All Specializations</option>
                   <option value="General Physician">General Physician</option>
@@ -151,14 +151,14 @@ function DoctorRecommend() {
                 </select>
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                   <FaMapMarkerAlt className="text-btn2" />
                   Location
                 </label>
                 <select
                   value={location}
                   onChange={handleLocationChange}
-                  className="w-full border-2 border-gray-300 rounded-xl py-3 px-4 focus:outline-none focus:border-btn2 focus:ring-4 focus:ring-btn2/20 transition-all font-medium text-gray-700 bg-white hover:border-gray-400"
+                  className="w-full border-2 border-gray-300 dark:border-gray-600 rounded-xl py-3 px-4 focus:outline-none focus:border-btn2 focus:ring-4 focus:ring-btn2/20 transition-all font-medium text-gray-700 dark:text-gray-100 bg-white dark:bg-gray-700/50 hover:border-gray-400 dark:hover:border-gray-500"
                 >
                   <option value="">All Cities</option>
                   <option value="New Delhi">New Delhi</option>
@@ -175,7 +175,7 @@ function DoctorRecommend() {
               </div>
             </div>
             <div className="w-full md:w-auto">
-              <label className="block text-sm font-bold text-gray-700 mb-2 opacity-0 hidden md:block">Actions</label>
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 opacity-0 hidden md:block">Actions</label>
               <button
                 onClick={() => {
                   setShowAppointments(!showAppointments);
@@ -183,7 +183,7 @@ function DoctorRecommend() {
                     fetchAppointments();
                   }
                 }}
-                className="w-full md:w-auto bg-gradient-to-r from-btn2 to-sky-500 text-white px-6 py-3 rounded-xl font-bold hover:from-sky-500 hover:to-btn2 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 hover:scale-105"
+                className="w-full md:w-auto bg-gradient-to-r from-btn2 to-btn1 text-white px-6 py-3 rounded-xl font-bold hover:from-btn1 hover:to-btn2 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-btn2/25 flex items-center justify-center gap-2 hover:scale-105"
               >
                 <FaCalendarCheck />
                 {showAppointments ? "Hide Appointments" : "My Appointments"}
@@ -201,32 +201,32 @@ function DoctorRecommend() {
       {/* My Appointments Section */}
       {showAppointments && (
         <div className="max-w-7xl mx-auto px-5 mt-8 mb-8 animate-slideUp">
-          <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-gray-100 hover:shadow-2xl transition-all">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-gray-900/50 p-8 border-2 border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all">
             <div className="flex items-center gap-3 mb-6">
               <div className="bg-gradient-to-br from-green-400 to-green-600 p-3 rounded-xl animate-pulse">
                 <FaCalendarCheck className="text-white text-2xl" />
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-gray-800">My Appointments</h2>
-                <p className="text-sm text-gray-600">Manage your upcoming and past appointments</p>
+                <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">My Appointments</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Manage your upcoming and past appointments</p>
               </div>
             </div>
 
             {isLoadingAppointments ? (
               <div className="text-center py-12">
                 <FaSpinner className="animate-spin text-btn2 text-5xl mx-auto mb-4" />
-                <p className="text-gray-600 font-medium">Loading your appointments...</p>
+                <p className="text-gray-600 dark:text-gray-400 font-medium">Loading your appointments...</p>
               </div>
             ) : myAppointments.length === 0 ? (
               <div className="text-center py-12">
-                <div className="bg-gradient-to-br from-gray-100 to-gray-200 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-slow">
-                  <FaCalendarCheck className="text-gray-400 text-4xl" />
+                <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-slow">
+                  <FaCalendarCheck className="text-gray-400 dark:text-gray-300 text-4xl" />
                 </div>
-                <p className="text-gray-600 text-lg font-medium">No appointments booked yet.</p>
-                <p className="text-gray-500 text-sm mt-2 mb-6">Book your first appointment to get started!</p>
+                <p className="text-gray-600 dark:text-gray-300 text-lg font-medium">No appointments booked yet.</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Book your first appointment to get started!</p>
                 <button
                   onClick={() => setShowAppointments(false)}
-                  className="bg-gradient-to-r from-btn2 to-sky-500 text-white px-6 py-3 rounded-xl font-bold hover:from-sky-500 hover:to-btn2 transition-all shadow-lg hover:shadow-xl"
+                  className="bg-gradient-to-r from-btn2 to-btn1 text-white px-6 py-3 rounded-xl font-bold hover:from-btn1 hover:to-btn2 transition-all shadow-lg hover:shadow-xl hover:shadow-btn2/25"
                 >
                   Browse Doctors
                 </button>
@@ -236,32 +236,32 @@ function DoctorRecommend() {
                 {myAppointments.map((apt, index) => (
                   <div
                     key={apt._id}
-                    className="bg-gradient-to-br from-blue-50 to-sky-50 p-6 rounded-xl border-2 border-blue-200 hover:border-blue-400 hover:shadow-lg transition-all duration-300 group animate-scaleIn"
+                    className="bg-gradient-to-br from-blue-50 to-sky-50 dark:from-blue-950/30 dark:to-sky-950/30 p-6 rounded-xl border-2 border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-300 group animate-scaleIn"
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h3 className="font-bold text-xl text-gray-800 mb-2 group-hover:text-btn2 transition-colors">
+                        <h3 className="font-bold text-xl text-gray-800 dark:text-gray-100 mb-2 group-hover:text-btn2 transition-colors">
                           Dr. {apt.doctorName || apt.doctor_name}
                         </h3>
-                        <p className="text-sm text-gray-600 font-semibold bg-white px-3 py-1 rounded-full inline-block">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-semibold bg-white dark:bg-gray-700 px-3 py-1 rounded-full inline-block">
                           {apt.doctorSpecialization || apt.doctor_specialization}
                         </p>
                       </div>
-                      <div className="bg-green-100 p-2 rounded-lg group-hover:scale-110 transition-transform">
+                      <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg group-hover:scale-110 transition-transform">
                         <FaCheckCircle className="text-green-600 text-xl" />
                       </div>
                     </div>
                     <div className="space-y-3">
-                      <div className="flex items-center gap-3 text-gray-700">
+                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
                         <FaClock className="text-btn2" />
                         <span className="font-semibold">{apt.date} at {apt.time}</span>
                       </div>
-                      <div className="flex items-center gap-3 text-gray-700">
+                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
                         <FaMapMarkerAlt className="text-red-500" />
                         <span className="font-medium text-sm">{apt.doctorLocation || apt.doctor_location}, {apt.doctorCity || apt.doctor_city}</span>
                       </div>
-                      <div className="pt-3 border-t border-blue-200 flex items-center justify-between">
+                      <div className="pt-3 border-t border-blue-200 dark:border-blue-800 flex items-center justify-between">
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
                           (apt.status || "confirmed") === "confirmed" 
                             ? "bg-green-100 text-green-800" 
@@ -305,10 +305,10 @@ function DoctorRecommend() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="animate-slideLeft">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-100 mb-2">
                 Available Doctors
               </h2>
-              <p className="text-gray-600 flex items-center gap-2">
+              <p className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
                 <FaSearch className="text-btn2" />
                 <span className="font-semibold">{filteredDoctors.length}</span> doctors found
                 {(specialization || location) && (
@@ -335,16 +335,16 @@ function DoctorRecommend() {
         </div>
         
         {filteredDoctors.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl shadow-lg border-2 border-gray-100 animate-scaleIn">
-            <FaSearch className="text-gray-300 text-6xl mx-auto mb-4 animate-pulse" />
-            <p className="text-gray-600 text-xl font-semibold mb-2">No doctors found</p>
-            <p className="text-gray-500 mb-6">Try adjusting your filters to see more results</p>
+          <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-lg dark:shadow-gray-900/50 border-2 border-gray-100 dark:border-gray-700 animate-scaleIn">
+            <FaSearch className="text-gray-300 dark:text-gray-600 text-6xl mx-auto mb-4 animate-pulse" />
+            <p className="text-gray-600 dark:text-gray-300 text-xl font-semibold mb-2">No doctors found</p>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">Try adjusting your filters to see more results</p>
             <button
               onClick={() => {
                 setSpecialization("");
                 setLocation("");
               }}
-              className="bg-gradient-to-r from-btn2 to-sky-500 text-white px-6 py-3 rounded-xl font-bold hover:from-sky-500 hover:to-btn2 transition-all shadow-lg hover:shadow-xl"
+              className="bg-gradient-to-r from-btn2 to-btn1 text-white px-6 py-3 rounded-xl font-bold hover:from-btn1 hover:to-btn2 transition-all shadow-lg hover:shadow-xl hover:shadow-btn2/25"
             >
               Show All Doctors
             </button>

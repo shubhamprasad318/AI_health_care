@@ -53,7 +53,7 @@ const HealthPlanGenerator = () => {
 
       {isOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 p-4">
-          <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             {/* Header */}
             <div className="bg-gradient-to-r from-green-500 to-green-700 text-white p-6 rounded-t-2xl relative sticky top-0 z-10">
               <button
@@ -85,13 +85,13 @@ const HealthPlanGenerator = () => {
             <div className="p-6">
               {!plan ? (
                 <div className="text-center py-12">
-                  <div className="bg-green-50 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+                  <div className="bg-green-50 dark:bg-green-900/30 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
                     <FaFileMedical className="text-green-500 text-5xl" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-3">
+                  <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3">
                     Ready to Create Your Health Plan?
                   </h3>
-                  <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                  <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-2xl mx-auto">
                     Get a personalized 4-week health management plan based on
                     your recent diagnosis. This plan includes daily routines,
                     dietary recommendations, and lifestyle modifications.
@@ -124,7 +124,7 @@ const HealthPlanGenerator = () => {
               ) : (
                 <div className="space-y-6">
                   {/* Success Badge */}
-                  <div className="flex items-center gap-2 text-green-600 bg-green-50 p-4 rounded-xl border-2 border-green-200">
+                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 p-4 rounded-xl border-2 border-green-200 dark:border-green-800">
                     <FaCheckCircle size={24} />
                     <span className="font-semibold">
                       Your personalized health plan is ready!
@@ -133,7 +133,7 @@ const HealthPlanGenerator = () => {
 
                   {/* Plan Content */}
                   {plan.plan && (
-                    <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl border-2 border-green-200 p-8 shadow-lg">
+                    <div className="bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950/30 dark:to-blue-950/30 rounded-xl border-2 border-green-200 dark:border-green-800 p-8 shadow-lg">
                       <div className="prose prose-base max-w-none 
                         prose-headings:text-green-800 
                         prose-h1:text-3xl prose-h1:font-bold prose-h1:mb-6 prose-h1:mt-8 prose-h1:pb-3 prose-h1:border-b-2 prose-h1:border-green-300
@@ -160,21 +160,21 @@ const HealthPlanGenerator = () => {
 
                   {/* Disclaimer */}
                   {plan.note && (
-                    <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
+                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 dark:border-yellow-600 rounded-lg">
                       <div className="flex gap-3">
                         <span className="text-2xl">⚠️</span>
                         <div>
-                          <h4 className="font-bold text-yellow-800 mb-1">
+                          <h4 className="font-bold text-yellow-800 dark:text-yellow-300 mb-1">
                             Important Disclaimer
                           </h4>
-                          <p className="text-sm text-yellow-700">{plan.note}</p>
+                          <p className="text-sm text-yellow-700 dark:text-yellow-400">{plan.note}</p>
                         </div>
                       </div>
                     </div>
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex gap-3 pt-4 border-t border-gray-200">
+                  <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button
                       onClick={() => window.print()}
                       className="flex-1 bg-blue-500 text-white px-6 py-3 rounded-xl hover:bg-blue-600 transition shadow-md hover:shadow-lg font-semibold"

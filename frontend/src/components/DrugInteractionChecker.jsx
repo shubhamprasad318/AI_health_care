@@ -304,7 +304,7 @@ const DrugInteractionChecker = () => {
 
       {isOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 p-4">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             {/* Header */}
             <div className="bg-gradient-to-r from-purple-500 to-purple-700 text-white p-6 rounded-t-2xl relative">
               <button
@@ -336,7 +336,7 @@ const DrugInteractionChecker = () => {
             {/* Content */}
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
                   Enter Medications (at least 2 required):
                 </label>
                 
@@ -349,20 +349,20 @@ const DrugInteractionChecker = () => {
                           value={med}
                           onChange={(e) => handleMedicationChange(index, e.target.value)}
                           placeholder={`Medication ${index + 1}`}
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-purple-500 transition"
+                          className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-100 rounded-xl focus:outline-none focus:border-purple-500 transition"
                         />
                         
                         {/* ✅ Autocomplete dropdown */}
                         {activeSuggestionIndex === index && suggestions.length > 0 && (
-                          <div className="absolute z-10 w-full mt-1 bg-white border-2 border-purple-300 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border-2 border-purple-300 dark:border-purple-600 rounded-xl shadow-xl max-h-48 overflow-y-auto">
                             {suggestions.map((suggestion, idx) => (
                               <div
                                 key={idx}
                                 onClick={() => selectSuggestion(index, suggestion)}
-                                className="px-4 py-2 hover:bg-purple-50 cursor-pointer transition flex items-center gap-2"
+                                className="px-4 py-2 hover:bg-purple-50 dark:hover:bg-purple-900/30 cursor-pointer transition flex items-center gap-2"
                               >
                                 <FaPills className="text-purple-500 text-sm" />
-                                <span className="text-gray-800">{suggestion}</span>
+                                <span className="text-gray-800 dark:text-gray-200">{suggestion}</span>
                               </div>
                             ))}
                           </div>
@@ -384,7 +384,7 @@ const DrugInteractionChecker = () => {
                 {medications.length < 10 && (
                   <button
                     onClick={handleAddMedication}
-                    className="w-full mt-2 px-4 py-3 border-2 border-dashed border-purple-300 text-purple-600 rounded-xl hover:bg-purple-50 transition flex items-center justify-center gap-2 font-semibold"
+                    className="w-full mt-2 px-4 py-3 border-2 border-dashed border-purple-300 dark:border-purple-600 text-purple-600 dark:text-purple-400 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/30 transition flex items-center justify-center gap-2 font-semibold"
                   >
                     <FaPlus />
                     Add Another Medication
@@ -429,7 +429,7 @@ const DrugInteractionChecker = () => {
                   </div>
 
                   {/* Analysis content */}
-                  <div className="p-6 bg-gray-50 rounded-xl border-2 border-gray-200">
+                  <div className="p-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl border-2 border-gray-200 dark:border-gray-600">
                     <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
                       <FaInfoCircle className="text-purple-600" />
                       Analysis Results:
@@ -460,9 +460,14 @@ const DrugInteractionChecker = () => {
                     </button>
                   </div>
 
-                  <p className="text-xs text-gray-500 text-center">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
                     Generated on {new Date().toLocaleString()}
                   </p>
+                  <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-xs text-red-700 dark:text-red-400 font-medium">
+                      ⚕️ This AI-generated interaction analysis is for informational purposes only and does NOT replace a professional pharmacist consultation. Always verify drug interactions with your pharmacist or physician before combining medications.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>

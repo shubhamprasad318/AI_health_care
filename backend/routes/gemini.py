@@ -1,6 +1,7 @@
 """
 Gemini AI Routes - Updated for 2026 SDK
 """
+
 from fastapi import APIRouter, HTTPException, Request, Form
 from fastapi.responses import StreamingResponse
 from database.models import ChatRequest, DrugInteractionRequest, SymptomAnalysisRequest
@@ -11,7 +12,7 @@ from services.gemini_service import (
     gemini_drug_interaction_checker,
     gemini_personalized_health_plan,
     gemini_chat_stream,
-    is_gemini_available
+    is_gemini_available,
 )
 from database.connection import db
 from utils.security import require_auth, get_current_user
@@ -28,48 +29,49 @@ async def health_chatbot(chat: ChatRequest, request: Request):
     """Interactive health chatbot"""
     if not is_gemini_available():
         raise HTTPException(status_code=503, detail="Gemini unavailable")
-    
+
     try:
         context = chat.context or {}
         email = await get_current_user(request)
-        
+
         # Add user context
         if email:
             user_data = await db.store.find_one({"email": email})
             if user_data:
                 context["user_age"] = user_data.get("age")
                 context["user_gender"] = user_data.get("gender")
-            
+
             # Get recent prediction
             recent = await db.predictions.find_one(
-                {"email": email},
-                sort=[("created_at", -1)]
+                {"email": email}, sort=[("created_at", -1)]
             )
             if recent:
                 context["recent_prediction"] = recent.get("ml_prediction")
-        
+
         response_text = await gemini_health_chat(chat.message, context)
-        
+
         # Store chat history
         if email:
             try:
-                await db.chat_history.insert_one({
-                    "email": email,
-                    "message": chat.message,
-                    "response": response_text,
-                    "created_at": datetime.utcnow()
-                })
+                await db.chat_history.insert_one(
+                    {
+                        "email": email,
+                        "message": chat.message,
+                        "response": response_text,
+                        "created_at": datetime.utcnow(),
+                    }
+                )
             except:
                 pass
-        
+
         return standard_response(
             message="Chat response generated",
             data={
                 "response": response_text,
-                "timestamp": datetime.utcnow().isoformat()
-            }
+                "timestamp": datetime.utcnow().isoformat(),
+            },
         )
-        
+
     except Exception as e:
         logger.error(f"Chat error: {e}")
         raise HTTPException(status_code=500, detail="Chat failed")
@@ -80,146 +82,147 @@ async def health_chatbot_stream(chat: ChatRequest, request: Request):
     """Streaming chatbot - NEW 2026 SDK feature"""
     if not is_gemini_available():
         raise HTTPException(status_code=503, detail="Gemini unavailable")
-    
+
     try:
         context = chat.context or {}
         email = await get_current_user(request)
-        
+
         if email:
             user_data = await db.store.find_one({"email": email})
             if user_data:
                 context["user_age"] = user_data.get("age")
-        
+
         async def generate():
             async for chunk in gemini_chat_stream(chat.message, context):
                 yield chunk
-        
+
         return StreamingResponse(generate(), media_type="text/plain")
-        
+
     except Exception as e:
         logger.error(f"Stream error: {e}")
         raise HTTPException(status_code=500, detail="Streaming failed")
 
 
 @router.get("/medical/explain/{term}")
-async def explain_medical_term(term: str):
+async def explain_medical_term(request: Request, term: str):
     """Explain medical terminology"""
+    await require_auth(request)
+
     if not is_gemini_available():
         raise HTTPException(status_code=503, detail="Gemini unavailable")
-    
+
     explanation = await gemini_explain_medical_term(term)
-    
+
     return standard_response(
         message=f"Explanation for '{term}'",
-        data={
-            "term": term,
-            "explanation": explanation
-        }
+        data={"term": term, "explanation": explanation},
     )
 
 
 @router.post("/symptom/analyze")
-async def analyze_symptoms(request: SymptomAnalysisRequest):
+async def analyze_symptoms(http_request: Request, request: SymptomAnalysisRequest):
     """Symptom analysis"""
+    await require_auth(http_request)
+
     if not is_gemini_available():
         raise HTTPException(status_code=503, detail="Gemini unavailable")
-    
+
     # ✅ Changed from symptoms_text to request.symptoms
     analysis = await gemini_symptom_checker(request.symptoms)
     return standard_response(message="Analysis completed", data=analysis)
 
 
 @router.post("/drugs/interactions")
-async def check_drug_interactions(drug_request: DrugInteractionRequest):
+async def check_drug_interactions(
+    request: Request, drug_request: DrugInteractionRequest
+):
     """Drug interaction checker"""
+    await require_auth(request)
+
     if not is_gemini_available():
         raise HTTPException(status_code=503, detail="Gemini unavailable")
-    
+
     if len(drug_request.medications) < 2:
         raise HTTPException(status_code=400, detail="Need at least 2 medications")
-    
+
     analysis = await gemini_drug_interaction_checker(drug_request.medications)
-    
+
     return standard_response(
         message="Interaction analysis completed",
-        data={
-            "medications": drug_request.medications,
-            "analysis": analysis
-        }
+        data={"medications": drug_request.medications, "analysis": analysis},
     )
 
 
 # In routes/gemini.py
+
 
 @router.post("/health/personalized-plan")
 async def generate_health_plan(request: Request):
     """Generate Hybrid Health Plan (Prediction + Reports)"""
     if not is_gemini_available():
         raise HTTPException(status_code=503, detail="Gemini unavailable")
-    
+
     email = await require_auth(request)
-    
+
     # 1. Fetch User Profile
     user_data = await db.store.find_one({"email": email})
-    
+
     # 2. Fetch Latest Prediction (ML Model)
     recent_pred = await db.predictions.find_one(
-        {"email": email},
-        sort=[("created_at", -1)]
+        {"email": email}, sort=[("created_at", -1)]
     )
-    
+
     # 3. ✅ FETCH LATEST REPORT ANALYSIS (Your PDF Data)
     recent_report = await db.files.find_one(
         {
-            "email": email,      # Matches user email
-            "analyzed": True     # Must be already analyzed
-        }, 
-        sort=[("uploaded_at", -1)] # Get the newest one
+            "email": email,  # Matches user email
+            "analyzed": True,  # Must be already analyzed
+        },
+        sort=[("uploaded_at", -1)],  # Get the newest one
     )
-    
+
     # Check if we have enough data (Need at least one source)
     if not recent_pred and not recent_report:
         raise HTTPException(
             status_code=404,
-            detail="No health data found. Please run a Prediction or Upload a Report first."
+            detail="No health data found. Please run a Prediction or Upload a Report first.",
         )
-    
+
     # Prepare Data for the AI
     condition = recent_pred.get("ml_prediction") if recent_pred else "General Wellness"
-    
+
     user_profile = {
         "age": user_data.get("age", "Unknown"),
         "gender": user_data.get("gender", "Unknown"),
         "weight": user_data.get("weight", "Unknown"),
-        "height": user_data.get("height", "Unknown")
+        "height": user_data.get("height", "Unknown"),
     }
-    
+
     # Get the analysis from the file (if it exists)
     report_data = recent_report.get("analysis") if recent_report else None
-    
+
     # 🚀 GENERATE THE HYBRID PLAN
     health_plan = await gemini_personalized_health_plan(
-        condition, 
+        condition,
         user_profile,
-        report_analysis=report_data # Passing the PDF data here!
+        report_analysis=report_data,  # Passing the PDF data here!
     )
-    
+
     # Save the plan
     try:
-        await db.health_plans.insert_one({
-            "email": email,
-            "condition": condition,
-            "used_report": bool(report_data),
-            "plan": health_plan,
-            "created_at": datetime.utcnow()
-        })
+        await db.health_plans.insert_one(
+            {
+                "email": email,
+                "condition": condition,
+                "used_report": bool(report_data),
+                "plan": health_plan,
+                "created_at": datetime.utcnow(),
+            }
+        )
     except:
         pass
-    
-    return standard_response(
-        message="Hybrid Health Plan Generated",
-        data=health_plan
-    )
+
+    return standard_response(message="Hybrid Health Plan Generated", data=health_plan)
 
 
 @router.get("/status")
@@ -237,8 +240,7 @@ async def gemini_status():
                 "medical_explanations": is_gemini_available(),
                 "symptom_analysis": is_gemini_available(),
                 "drug_interactions": is_gemini_available(),
-                "health_plans": is_gemini_available()
-            }
-        }
+                "health_plans": is_gemini_available(),
+            },
+        },
     )
-
