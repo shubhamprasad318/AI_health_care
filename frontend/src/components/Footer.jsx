@@ -1,37 +1,88 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { FaHeartPulse } from "react-icons/fa6";
+
+const columns = [
+  {
+    title: "Features",
+    links: [
+      { name: "Symptom checker", to: "/predict" },
+      { name: "Voice AI doctor", to: "/virtual-doctor" },
+      { name: "Report analysis", to: "/report" },
+      { name: "Health tools", to: "/tools" },
+    ],
+  },
+  {
+    title: "Care",
+    links: [
+      { name: "Find doctors", to: "/doctors" },
+      { name: "Appointments", to: "/book" },
+      { name: "Medications", to: "/medications" },
+      { name: "Family profiles", to: "/family" },
+    ],
+  },
+  {
+    title: "Learn",
+    links: [
+      { name: "Health articles", to: "/article" },
+      { name: "FAQ", to: "/#faq" },
+      { name: "Contact", to: "/#contact" },
+    ],
+  },
+];
+
+const linkClass =
+  "text-sm text-slate-600 transition hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400";
 
 function Footer() {
   return (
-    <div className="w-full md:h-[200px] h-[250px] bg-lightText dark:bg-gray-900 dark:border-t dark:border-gray-800 font-text  ">
-      <div className="w-full h-[80%] flex flex-col md:flex-row">
-        <div className="md:w-1/3 w-full h-full flex flex-col justify-center items-center ">
-          <h1 className="text-lg md:text-3xl font-bold text-white">
-            Subscribe to our newsletter
-          </h1>
-          <p className="text-sm text-white px-5 mx-5 font-medium">
-            Get exclusive health updates and articles delivered to your inbox.
-            Subscribe now!
+    <footer className="font-text border-t border-slate-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 md:grid-cols-5 md:px-10">
+        <div className="md:col-span-2">
+          <Link to="/" className="inline-flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
+              <FaHeartPulse />
+            </span>
+            <span className="font-display text-lg font-extrabold text-slate-900 dark:text-white">
+              AI HealthEngine
+            </span>
+          </Link>
+          <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+            AI-powered symptom checking, voice consultations and health records for you
+            and your family.
           </p>
         </div>
-        <div className="md:w-2/3 w-full flex justify-center items-center h-full ">
-          <form action="">
-            <input
-              type="email"
-              placeholder="Email"
-              className="px-10 py-3 bg-white rounded focus:outline-none "
-            />
-            <button className="bg-btn2 px-3 py-2 md:mx-3 mx-1 rounded-lg">
-              Subscribe
-            </button>
-          </form>
+
+        {columns.map((col) => (
+          <div key={col.title}>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">{col.title}</p>
+            <ul className="mt-4 space-y-3">
+              {col.links.map((l) => (
+                <li key={l.name}>
+                  {/* Hash links need a plain anchor so the browser scrolls to the section */}
+                  {l.to.includes("#") ? (
+                    <a href={l.to} className={linkClass}>
+                      {l.name}
+                    </a>
+                  ) : (
+                    <Link to={l.to} className={linkClass}>
+                      {l.name}
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <div className="border-t border-slate-200 dark:border-gray-800">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-5 py-6 text-xs text-slate-500 md:flex-row md:px-10 dark:text-slate-500">
+          <p>© {new Date().getFullYear()} AI HealthEngine. All rights reserved.</p>
+          <p>For informational purposes only. Not a substitute for professional medical advice.</p>
         </div>
       </div>
-      <div className="w-full justify-center items-center flex">
-        <p className="text-xs font-bold text-white">
-          © AI-HealthEngine 2024. All Rights Reserved.
-        </p>
-      </div>
-    </div>
+    </footer>
   );
 }
 

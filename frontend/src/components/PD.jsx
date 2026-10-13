@@ -1,65 +1,46 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { FaHandPointRight } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import { FaArrowRight } from "react-icons/fa6";
 
 function PageDivider() {
   return (
-    <div className="hidden md:flex relative overflow-hidden">
-      <div className="h-[400px] flex w-full justify-start items-center relative">
-        <div className="bg-img1 w-full flex h-full justify-start items-center bg-fixed bg-cover bg-center relative">
-          {/* Gradient overlay with animation */}
-          <motion.div 
-            className="absolute inset-0 bg-gradient-to-r from-sky-900/70 via-sky-900/60 to-sky-900/70"
-            animate={{
-              background: [
-                "linear-gradient(to right, rgba(14, 116, 144, 0.7), rgba(14, 116, 144, 0.6), rgba(14, 116, 144, 0.7))",
-                "linear-gradient(to right, rgba(14, 116, 144, 0.6), rgba(14, 116, 144, 0.7), rgba(14, 116, 144, 0.6))",
-                "linear-gradient(to right, rgba(14, 116, 144, 0.7), rgba(14, 116, 144, 0.6), rgba(14, 116, 144, 0.7))",
-              ]
-            }}
-            transition={{ duration: 5, repeat: Infinity }}
-          />
-          
-          {/* Animated particles effect */}
-          <div className="absolute inset-0 overflow-hidden">
-            {[...Array(20)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-2 h-2 bg-white/30 rounded-full"
-                initial={{
-                  x: Math.random() * window.innerWidth,
-                  y: Math.random() * 400,
-                  opacity: 0,
-                }}
-                animate={{
-                  y: [null, -400],
-                  opacity: [0, 1, 0],
-                }}
-                transition={{
-                  duration: Math.random() * 3 + 2,
-                  repeat: Infinity,
-                  delay: Math.random() * 2,
-                }}
-              />
-            ))}
-          </div>
-          
-          {/* Content overlay */}
-          <div className="relative z-10 p-4 text-gray-200 font-medium text-4xl font-playfair w-full h-full flex items-center justify-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="text-center"
-            >
-              <h3 className="text-5xl font-bold mb-4 drop-shadow-lg">Your Health Journey Starts Here</h3>
-              <p className="text-xl font-light">Empowering you with AI-driven healthcare solutions</p>
-            </motion.div>
-          </div>
+    <section className="font-text px-5 py-10 md:px-10">
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.6 }}
+        className="relative mx-auto max-w-7xl overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-700 to-sky-800 px-8 py-14 text-center shadow-2xl shadow-brand-900/20 md:px-16"
+      >
+        {/* Decorative rings */}
+        <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full border-[40px] border-white/5" />
+        <div className="pointer-events-none absolute -bottom-24 -left-16 h-80 w-80 rounded-full border-[48px] border-white/5" />
+
+        <h2 className="relative font-display text-3xl font-extrabold tracking-tight text-white md:text-4xl">
+          Your health journey starts here
+        </h2>
+        <p className="relative mx-auto mt-4 max-w-xl text-brand-50/90">
+          Create a free account to save your predictions, consultations and reports,
+          and share them with your doctor.
+        </p>
+        <div className="relative mt-8 flex flex-wrap justify-center gap-3">
+          <Link
+            to="/signup"
+            className="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 font-semibold text-brand-700 shadow-lg transition hover:bg-brand-50"
+          >
+            Create free account
+            <FaArrowRight className="transition-transform group-hover:translate-x-1" />
+          </Link>
+          <Link
+            to="/predict"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/30 px-6 py-3.5 font-semibold text-white transition hover:bg-white/10"
+          >
+            Try a symptom check
+          </Link>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </section>
   );
 }
 

@@ -5,17 +5,30 @@ export default {
   theme: {
     fontFamily: {
       logo: ["Tac One", "sans-serif"],
-      text: ["Nunito"],
+      text: ["Nunito", "sans-serif"],
+      display: ["Plus Jakarta Sans", "Nunito", "sans-serif"],
     },
     extend: {
       colors: {
+        brand: {
+          50: "#effcfb",
+          100: "#d6f6f3",
+          200: "#b0ece7",
+          300: "#7bdcd5",
+          400: "#45c3bc",
+          500: "#22a7a2",
+          600: "#178784",
+          700: "#166c6b",
+          800: "#165656",
+          900: "#164848",
+          950: "#072a2b",
+        },
         lightBackground: "#FAFAFA",
         darkBackground: "#1E293B",
         lightText: "#0F172A",
         darkText: "#475569",
         btn2: "#2563EB",
         btn1: "#0891B2",
-        accent: "#0D9488",
         primary: "#1E40AF",
         secondary: "#64748B",
         dark: {

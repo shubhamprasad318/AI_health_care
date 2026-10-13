@@ -1,68 +1,94 @@
 import React from "react";
-// import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { fadeIn } from "../variants";
+import { Link } from "react-router-dom";
+import {
+  FaArrowRight,
+  FaCalendarCheck,
+  FaFileMedical,
+  FaMicrophone,
+  FaPills,
+  FaStethoscope,
+  FaUsers,
+} from "react-icons/fa6";
+
+const features = [
+  {
+    title: "Disease prediction",
+    details:
+      "Answer a few questions about your symptoms and get a ranked list of likely conditions from a model trained on over a million DDXPlus patient cases.",
+    icon: FaStethoscope,
+    link: "/predict",
+    tint: "bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-300",
+  },
+  {
+    title: "Voice AI doctor",
+    details:
+      "Describe how you feel out loud. The AI doctor asks follow-up questions and saves a summary of every consultation.",
+    icon: FaMicrophone,
+    link: "/virtual-doctor",
+    tint: "bg-sky-50 text-sky-600 dark:bg-sky-900/40 dark:text-sky-300",
+  },
+  {
+    title: "Report analysis",
+    details:
+      "Upload lab reports and get a plain-language explanation of what each value means and what to ask your doctor.",
+    icon: FaFileMedical,
+    link: "/report",
+    tint: "bg-violet-50 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300",
+  },
+  {
+    title: "Medications & interactions",
+    details:
+      "Track your medicines with reminders and check for drug interactions before you take something new.",
+    icon: FaPills,
+    link: "/medications",
+    tint: "bg-rose-50 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300",
+  },
+  {
+    title: "Doctors & appointments",
+    details:
+      "Find the right specialist for your symptoms and book and manage appointments from your calendar.",
+    icon: FaCalendarCheck,
+    link: "/doctors",
+    tint: "bg-amber-50 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300",
+  },
+  {
+    title: "Family profiles",
+    details:
+      "Keep allergies, conditions and medications for everyone in your family, and export records as FHIR or PDF.",
+    icon: FaUsers,
+    link: "/family",
+    tint: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300",
+  },
+];
 
 const Service = () => {
   return (
-    <section className="font-text my-10 relative py-12">
-      {/* Background decorative elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-btn2/10 dark:bg-btn2/5 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-20 right-10 w-40 h-40 bg-btn1/10 dark:bg-btn1/5 rounded-full blur-2xl"></div>
-      </div>
-      
-      <div className="container mx-auto relative z-10">
-        <div className="-mx-2 flex flex-wrap">
-          <div className="w-full px-4 font-nunito text-light_text dark:text-dark_text">
-            <motion.div 
-              initial={{ opacity: 0, y: -20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="mx-auto mb-12 max-w-[510px] text-center lg:mb-10"
-            >
-              <h2 className="text-lightText mb-3 text-3xl font-extrabold sm:text-4xl md:text-[40px] font-playfair bg-gradient-to-r from-lightText via-btn2 to-lightText dark:from-blue-400 dark:via-btn2 dark:to-blue-400 bg-clip-text text-transparent">
-                What We Offer?
-              </h2>
-              <p className="text-xs md:text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
-                Elevate well-being with our AI HealthEngine module: personalized
-                insights, proactive guidance, and seamless wellness at your
-                fingertips.
-              </p>
-            </motion.div>
-          </div>
-        </div>
+    <section id="features" className="font-text py-20">
+      <div className="mx-auto max-w-7xl px-5 md:px-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.5 }}
+          className="mx-auto max-w-2xl text-center"
+        >
+          <p className="text-sm font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+            Everything in one place
+          </p>
+          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl dark:text-white">
+            Your complete health toolkit
+          </h2>
+          <p className="mt-4 text-slate-600 dark:text-slate-400">
+            From the first symptom to the follow-up appointment, AI HealthEngine helps
+            at every step.
+          </p>
+        </motion.div>
 
-        <div className="-mx-4 flex flex-wrap">
-          <ServiceCard
-            title="Disease Prediction Model"
-            details="Our system, driven by advanced algorithms, foresees potential diseases through thorough health data analysis. This foresight enables proactive interventions, reshaping preventive healthcare for personalized and optimal well-being."
-            icon="/health-report.gif"
-          />
-
-          <ServiceCard
-            title="Chatbot Assistant"
-            details="Introducing your personalized health assistant: Our chatbot utilizes advanced algorithms to provide instant health insights and guidance. Seamlessly interactive, it's your dedicated partner for a healthier, more informed lifestyle."
-            icon="/chat-bot.gif"
-          />
-          <ServiceCard
-            title="Medical Reports Storage"
-            details="Empower yourself with easy access to your health history, effortlessly organize and secure your medical reports. Our advanced system ensures easy access, empowering you to take control of your health history for informed decision-making."
-            icon="/server.gif"
-          />
-
-          <ServiceCard
-            title="Book an Appointment "
-            details="Effortlessly schedule your next appointment with our streamlined booking system. Take control of your health journey – book, confirm, and manage appointments with ease, ensuring timely access to personalized care."
-            icon="/appointment.gif"
-          />
-
-          <ServiceCard
-            title="AI Health Tools"
-            details="Advanced AI-powered health tools including symptom analysis, drug interaction checker, medical term explanations, and personalized health plans powered by Google Gemini AI."
-            icon="/chat-bot.gif"
-          />
+        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {features.map((f, i) => (
+            <ServiceCard key={f.title} feature={f} index={i} />
+          ))}
         </div>
       </div>
     </section>
@@ -71,41 +97,33 @@ const Service = () => {
 
 export default Service;
 
-const ServiceCard = ({ icon, title, details }) => {
+const ServiceCard = ({ feature, index }) => {
+  const Icon = feature.icon;
   return (
-    <>
-      <motion.div
-        variants={fadeIn("up", 0)}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: false, amount: 0.9 }}
-        className="w-full md:px-10 px-5 md:w-1/2"
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.5, delay: (index % 3) * 0.08 }}
+    >
+      <Link
+        to={feature.link}
+        className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-xl hover:shadow-slate-200/60 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-brand-800 dark:hover:shadow-black/30"
       >
-        <motion.div
-          whileHover={{ y: -10, scale: 1.02 }}
-          className="mx-6 md:mx-0 mb-9 rounded-[20px] border-2 border-lightText/30 dark:border-gray-700 shadow-xl shadow-gray-400/50 dark:shadow-gray-900/50 p-10 transform transition-all duration-500 hover:shadow-2xl hover:shadow-btn2/30 hover:border-btn2 md:px-7 font-nunito flex flex-col md:flex-row items-center justify-center bg-gradient-to-br from-white via-lightBackground/50 to-white dark:from-gray-800 dark:via-gray-800/80 dark:to-gray-800 relative overflow-hidden group"
-        >
-          {/* Animated background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-btn2/10 via-transparent to-btn1/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          
-          {/* Decorative corner element */}
-          <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-btn2/20 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          
-          <div className="relative z-10 my-2 flex justify-between h-[50px] md:w-full items-center rounded-2xl">
-            <motion.img 
-              src={icon} 
-              alt="" 
-              className="w-20 mix-blend-multiply group-hover:scale-110 transition-transform duration-500" 
-              whileHover={{ rotate: [0, -10, 10, -10, 0] }}
-              transition={{ duration: 0.5 }}
-            />
-          </div>
-          <div className="relative z-10">
-            <h4 className="text-2xl font-semibold text-dark dark:text-gray-100 mb-2 group-hover:text-lightText dark:group-hover:text-btn2 transition-colors duration-300">{title}</h4>
-            <p className="text-gray-800 dark:text-gray-300 text-justify text-xs leading-relaxed">{details}</p>
-          </div>
-        </motion.div>
-      </motion.div>
-    </>
+        <span className={`flex h-12 w-12 items-center justify-center rounded-xl text-xl ${feature.tint}`}>
+          <Icon />
+        </span>
+        <h3 className="mt-5 font-display text-lg font-bold text-slate-900 dark:text-white">
+          {feature.title}
+        </h3>
+        <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+          {feature.details}
+        </p>
+        <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-brand-600 dark:text-brand-400">
+          Open
+          <FaArrowRight className="text-xs transition-transform group-hover:translate-x-1" />
+        </span>
+      </Link>
+    </motion.div>
   );
 };

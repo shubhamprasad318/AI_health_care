@@ -1,20 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CiMenuFries } from "react-icons/ci";
 import { RxCross2 } from "react-icons/rx";
-import { FaHome } from "react-icons/fa";  // ✅ FaHome is in 'fa', not 'fa6'
-import { FaMoon, FaSun } from "react-icons/fa6";
+import { FaHeartPulse, FaMoon, FaSun } from "react-icons/fa6";
 import { MdLanguage } from "react-icons/md";
-import { Link } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useTranslation } from "react-i18next";
 import NotificationBell from "./NotificationBell";
 
+const iconBtn =
+  "flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800";
+
 function NavBar() {
   const { loggedIn, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const { t, i18n } = useTranslation();
+  const location = useLocation();
+  const menuRef = useRef(null);
 
   const menuItems = [
     { id: 0, name: t("nav.home"), link: "/" },
@@ -37,199 +41,160 @@ function NavBar() {
     { id: 17, name: t("nav.admin"), link: "/admin" },
   ];
 
+  // Most-used pages, shown inline on desktop
+  const quickLinks = [
+    { name: t("nav.predictDisease"), link: "/predict" },
+    { name: t("nav.virtualDoctor"), link: "/virtual-doctor" },
+    { name: t("nav.healthTools"), link: "/tools" },
+    { name: t("nav.doctors"), link: "/doctors" },
+  ];
+
   const [isOpen, setIsOpen] = useState(false);
 
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
+  // Close the menu on navigation and on outside click
+  useEffect(() => setIsOpen(false), [location.pathname]);
+  useEffect(() => {
+    if (!isOpen) return;
+    const onClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [isOpen]);
 
-  const menuSlide = {
-    initial: {
-      x: "-100%",
-    },
-    enter: {
-      x: "0%",
-      transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] },
-    },
-    exit: {
-      x: "-100%",
-      transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] },
-    },
-  };
-
-  const slide = {
-    initial: {
-      x: "-100%",
-    },
-    enter: {
-      x: "0%",
-      transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] },
-    },
-    exit: {
-      x: "-100%",
-      transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] },
-    },
-  };
+  const toggleLanguage = () => i18n.changeLanguage(i18n.language === "en" ? "hi" : "en");
 
   return (
-    <div className="w-full h-[70px] flex justify-between items-center z-50 font-text sticky top-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl p-5 shadow-md dark:shadow-gray-900/50 transition-all duration-300 border-b border-gray-100 dark:border-gray-800/50">
-      <div className="flex items-center space-x-3 mx-1 md:mx-5">
-        <div>
-          <motion.button
-            onClick={toggleMenu}
-            whileTap={{ scale: 0.8 }}
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200/70 bg-white/80 font-text backdrop-blur-xl transition-colors duration-300 dark:border-gray-800/70 dark:bg-gray-950/80">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 md:px-10">
+        {/* Left: menu + logo */}
+        <div className="flex items-center gap-3" ref={menuRef}>
+          <button
+            onClick={() => setIsOpen(!isOpen)}
             aria-expanded={isOpen}
             aria-controls="main-menu"
             aria-label={isOpen ? "Close menu" : "Open menu"}
-            className="flex items-center border-2 md:px-3 md:py-2 px-2 py-1 rounded-full border-btn1 cursor-pointer text-sm hover:bg-btn1 hover:text-white dark:text-gray-200 dark:border-btn1/50 dark:hover:bg-btn1 transition-all duration-200"
+            className={iconBtn}
           >
             {isOpen ? <RxCross2 /> : <CiMenuFries />}
-            <h1 className="capitalize px-2">{t("nav.menu")}</h1>
-          </motion.button>
+          </button>
 
-          <AnimatePresence mode="wait">
+          <Link to="/" className="flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-sky-600 text-white shadow-md shadow-brand-600/30">
+              <FaHeartPulse />
+            </span>
+            <span className="hidden font-display text-lg font-extrabold tracking-tight text-slate-900 sm:inline dark:text-white">
+              AI<span className="text-brand-600 dark:text-brand-400">HealthEngine</span>
+            </span>
+          </Link>
+
+          <AnimatePresence>
             {isOpen && (
-              <motion.ul
+              <motion.nav
                 id="main-menu"
-                role="menu"
-                variants={menuSlide}
-                animate="enter"
-                exit="exit"
-                initial="initial"
-                className="absolute top-20 left-0 z-50 bg-btn1/95 dark:bg-gray-800/95 backdrop-blur-xl text-white rounded-r-2xl shadow-2xl dark:shadow-black/50 overflow-hidden min-w-[250px] border-r border-t border-b border-white/10 dark:border-gray-700/50"
+                initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                transition={{ duration: 0.18 }}
+                className="absolute left-4 top-[4.25rem] z-50 max-h-[75vh] w-[min(92vw,520px)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-300/40 md:left-10 dark:border-gray-800 dark:bg-gray-900 dark:shadow-black/50"
               >
-                {menuItems.map((item, index) => (
-                  <motion.li
-                    variants={slide}
-                    animate="enter"
-                    exit="exit"
-                    initial="initial"
-                    className={`flex items-center py-3 px-5 cursor-pointer capitalize hover:bg-white/20 hover:text-white dark:hover:bg-white/10 dark:hover:text-white transition-all duration-200 border-b border-white/10 dark:border-gray-700/30 ${
-                      item.id === 0 ? "bg-white/15 font-bold" : ""
-                    }`}
-                    key={item.id}
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    {/* ✅ Show Home icon for first item */}
-                    {item.id === 0 && <FaHome className="mr-2" />}
-                    
-                    <Link
-                      to={item.link}
-                      onClick={() => {
-                        setIsOpen(!isOpen);
-                      }}
-                      className="w-full"
-                    >
-                      {item.name}
-                    </Link>
-                  </motion.li>
-                ))}
-              </motion.ul>
+                <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+                  {menuItems.map((item) => (
+                    <li key={item.id}>
+                      <NavLink
+                        to={item.link}
+                        end={item.link === "/"}
+                        className={({ isActive }) =>
+                          `block rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                            isActive
+                              ? "bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300"
+                              : "text-slate-700 hover:bg-slate-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                          }`
+                        }
+                      >
+                        {item.name}
+                      </NavLink>
+                    </li>
+                  ))}
+                </ul>
+              </motion.nav>
             )}
           </AnimatePresence>
         </div>
-      </div>
 
-      <div className="">
-        <Link to="/">
-          <motion.h1
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{
-              duration: 0.3,
-              ease: [0, 0.71, 0.2, 1.01],
-              scale: {
-                type: "spring",
-                damping: 5,
-                stiffness: 100,
-                restDelta: 0.001,
-              },
-            }}
-            className="cursor-pointer uppercase md:text-4xl text-3xl font-semibold tracking-wider font-logo text-lightText dark:text-gray-100 hover:scale-110 transition-all duration-200"
-          >
-            ai-he
-          </motion.h1>
-        </Link>
-      </div>
-
-      {loggedIn ? (
-        <div className="flex items-center">
-          <NotificationBell />
-          <Link to="/profile">
-            <motion.button 
-              whileTap={{ scale: 0.8 }}
-              className="hover:scale-110 transition-transform"
+        {/* Center: quick links (desktop) */}
+        <nav className="hidden items-center gap-1 lg:flex">
+          {quickLinks.map((l) => (
+            <NavLink
+              key={l.link}
+              to={l.link}
+              className={({ isActive }) =>
+                `rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                  isActive
+                    ? "text-brand-700 dark:text-brand-300"
+                    : "text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white"
+                }`
+              }
             >
-              <img 
-                src="/user.png" 
-                alt="Profile" 
-                className="w-10 h-10 rounded-full border-2 border-btn1 dark:border-btn1/60 object-cover ring-2 ring-transparent hover:ring-btn1/30 transition-all duration-200" 
-              />
-            </motion.button>
-          </Link>
-          <motion.button
-            onClick={logout}
-            whileTap={{ scale: 0.8 }}
-            className="md:mx-2 mx-1 border-2 md:px-3 md:py-2 px-2 py-1 rounded-full border-btn1 cursor-pointer text-sm hover:bg-red-500 hover:text-white hover:border-red-500 dark:text-gray-200 dark:border-btn1/50 dark:hover:border-red-500 transition-all duration-200 font-semibold"
-          >
-            {t("nav.logout")}
-          </motion.button>
-          <motion.button
-            onClick={() => i18n.changeLanguage(i18n.language === "en" ? "hi" : "en")}
-            whileTap={{ scale: 0.9 }}
-            className="md:mx-1 mx-0.5 border-2 md:px-2.5 md:py-2 px-2 py-1 rounded-full border-gray-300 dark:border-gray-600 cursor-pointer text-xs hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-all duration-200 font-semibold flex items-center gap-1"
+              {l.name}
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* Right: actions */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleLanguage}
+            className={`${iconBtn} w-auto gap-1 px-2.5 text-xs font-semibold`}
             title={i18n.language === "en" ? "हिन्दी में बदलें" : "Switch to English"}
           >
             <MdLanguage className="text-sm" />
             {i18n.language === "en" ? "HI" : "EN"}
-          </motion.button>
-          <motion.button
+          </button>
+          <button
             onClick={toggleTheme}
-            whileTap={{ scale: 0.9 }}
-            className="md:mx-1 mx-0.5 border-2 md:px-2.5 md:py-2 px-2 py-1 rounded-full border-gray-300 dark:border-gray-600 cursor-pointer text-xs hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-all duration-200 font-semibold"
+            className={iconBtn}
             title={isDark ? "Switch to light mode" : "Switch to dark mode"}
           >
-            {isDark ? <FaSun className="text-sm text-yellow-400" /> : <FaMoon className="text-sm" />}
-          </motion.button>
+            {isDark ? <FaSun className="text-yellow-400" /> : <FaMoon />}
+          </button>
+
+          {loggedIn ? (
+            <>
+              <NotificationBell />
+              <Link to="/profile" title={t("nav.profile")}>
+                <img
+                  src="/user.png"
+                  alt="Profile"
+                  className="h-9 w-9 rounded-full object-cover ring-2 ring-brand-500/40 transition hover:ring-brand-500"
+                />
+              </Link>
+              <button
+                onClick={logout}
+                className="rounded-lg px-2 py-2 text-sm font-semibold text-slate-600 transition hover:bg-red-50 hover:text-red-600 sm:px-3 dark:text-gray-300 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+              >
+                {t("nav.logout")}
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="rounded-lg px-2 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:px-3 dark:text-gray-200 dark:hover:bg-gray-800"
+              >
+                {t("nav.login")}
+              </Link>
+              <Link
+                to="/signup"
+                className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-md shadow-brand-600/25 transition hover:bg-brand-700 sm:px-4"
+              >
+                {t("nav.register")}
+              </Link>
+            </>
+          )}
         </div>
-      ) : (
-        <div className="flex items-center">
-          <Link to="/login">
-            <motion.button
-              whileTap={{ scale: 0.8 }}
-              className="font-bold md:mx-2 mx-1 md:px-3 md:py-2 px-2 py-1 rounded-full bg-btn1 cursor-pointer text-white text-sm hover:bg-btn1/90 hover:shadow-lg transition-all duration-200"
-            >
-              {t("nav.login")}
-            </motion.button>
-          </Link>
-          <Link to="/signup">
-            <motion.button
-              whileTap={{ scale: 0.8 }}
-              className="md:mx-2 mx-1 border-2 md:px-3 md:py-2 px-2 py-1 rounded-full border-btn1 cursor-pointer text-sm hover:bg-btn1 hover:text-white dark:text-gray-200 dark:border-btn1/50 transition-all duration-200"
-            >
-              {t("nav.register")}
-            </motion.button>
-          </Link>
-          <motion.button
-            onClick={() => i18n.changeLanguage(i18n.language === "en" ? "hi" : "en")}
-            whileTap={{ scale: 0.9 }}
-            className="md:mx-1 mx-0.5 border-2 md:px-2.5 md:py-2 px-2 py-1 rounded-full border-gray-300 dark:border-gray-600 cursor-pointer text-xs hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-all duration-200 font-semibold flex items-center gap-1"
-            title={i18n.language === "en" ? "हिन्दी में बदलें" : "Switch to English"}
-          >
-            <MdLanguage className="text-sm" />
-            {i18n.language === "en" ? "HI" : "EN"}
-          </motion.button>
-          <motion.button
-            onClick={toggleTheme}
-            whileTap={{ scale: 0.9 }}
-            className="md:mx-1 mx-0.5 border-2 md:px-2.5 md:py-2 px-2 py-1 rounded-full border-gray-300 dark:border-gray-600 cursor-pointer text-xs hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-all duration-200 font-semibold"
-            title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {isDark ? <FaSun className="text-sm text-yellow-400" /> : <FaMoon className="text-sm" />}
-          </motion.button>
-        </div>
-      )}
-    </div>
+      </div>
+    </header>
   );
 }
 

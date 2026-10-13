@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import ReactMarkdown from "react-markdown";
+import { useSearchParams } from "react-router-dom";
 import {
   FaStar,
   FaStethoscope,
@@ -95,10 +96,17 @@ function ClinicalName({ name, size = "sm" }) {
   );
 }
 
+const SEARCH_STOPWORDS = new Set([
+  "have", "having", "with", "since", "from", "that", "this", "feel", "feeling",
+  "very", "some", "also", "days", "today", "yesterday", "week", "morning", "night",
+]);
+
 function PredictDisease() {
   const [catalog, setCatalog] = useState([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  // Landing page hands off a symptom via ?q= so the search starts pre-filled
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get("q") || "");
   const [tab, setTab] = useState("symptoms");
 
   const [selectedTokens, setSelectedTokens] = useState(new Set());
@@ -144,8 +152,13 @@ function PredictDisease() {
 
   const { symptomEvidences, antecedentEvidences } = useMemo(() => {
     const lower = search.trim().toLowerCase();
-    const filter = (e) =>
-      !lower || e.question.toLowerCase().includes(lower) || e.code.toLowerCase().includes(lower);
+    // Free text ("fever and cough since yesterday") matches on any meaningful word
+    const words = lower.split(/[^a-z\u0900-\u097f]+/).filter((w) => w.length >= 4 && !SEARCH_STOPWORDS.has(w));
+    const filter = (e) => {
+      if (!lower) return true;
+      const q = e.question.toLowerCase();
+      return q.includes(lower) || e.code.toLowerCase().includes(lower) || words.some((w) => q.includes(w));
+    };
     return {
       symptomEvidences: catalog.filter((e) => !e.is_antecedent).filter(filter),
       antecedentEvidences: catalog.filter((e) => e.is_antecedent).filter(filter),

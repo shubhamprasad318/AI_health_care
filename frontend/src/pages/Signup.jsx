@@ -5,6 +5,8 @@ import { signupSchema } from "../schema";
 import { toast } from "react-toastify";
 import { authAPI } from "../utils/api";
 import { useAuth } from "../context/AuthContext"; //  ADD THIS
+import { FaSpinner } from "react-icons/fa6";
+import AuthLayout, { authButtonClass, authInputClass, authLabelClass } from "../components/AuthLayout";
 
 function Signup() {
   const initialValues = {
@@ -111,228 +113,101 @@ function Signup() {
       },
     });
 
+  // Renders one labelled formik-bound field with its validation message
+  const field = (name, label, props = {}) => (
+    <div>
+      <label htmlFor={name} className={authLabelClass}>
+        {label}
+      </label>
+      <input
+        name={name}
+        id={name}
+        className={authInputClass}
+        value={values[name]}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        autoComplete="off"
+        disabled={isLoading}
+        {...props}
+      />
+      {errors[name] && touched[name] ? (
+        <p className="mt-1.5 text-sm font-medium text-red-600 dark:text-red-400">{errors[name]}</p>
+      ) : null}
+    </div>
+  );
+
   return (
-    <div className="relative flex flex-col justify-center items-center w-full font-text min-h-screen py-12 mt-20 md:mt-0 dark:bg-gray-950 transition-colors duration-300">
-      <div className="w-full max-w-3xl rounded-2xl shadow-xl shadow-gray-300 dark:shadow-gray-900/50 mx-10 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 pb-6">
-        <div className="">
-          <h1 className="font-semibold capitalize text-4xl justify-center items-center flex p-4 text-lightText dark:text-gray-100">
-            register
-          </h1>
-          <p className="text-xs px-3 py-2 text-gray-700 dark:text-gray-400 font-semibold flex justify-center">
-            Join AIHealth Engine for personalized wellness with just a click –
-            Register today!
-          </p>
+    <AuthLayout
+      wide
+      title="Create your account"
+      subtitle="Join AI HealthEngine for personalised, AI-assisted care. It's free."
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {field("first_name", "First name", { type: "text", placeholder: "Asha" })}
+          {field("last_name", "Last name", { type: "text", placeholder: "Sharma" })}
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="flex flex-col justify-center px-2">
-            <div className="md:flex rounded-md mb-5 px-4 text-gray-500">
-              <div className="flex flex-col px-2 py-2">
-                <input
-                  name="first_name"
-                  id="first_name"
-                  type="text"
-                  placeholder="First Name"
-                  value={values.first_name}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  autoComplete="off"
-                  disabled={isLoading}
-                  className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
-                />
-                {errors.first_name && touched.first_name ? (
-                  <p className="text-sm text-red-600 dark:text-red-400">{errors.first_name}</p>
-                ) : null}
-              </div>
-              <div className="flex flex-col px-2 py-2">
-                <input
-                  name="last_name"
-                  id="last_name"
-                  type="text"
-                  placeholder="Last Name"
-                  value={values.last_name}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  autoComplete="off"
-                  disabled={isLoading}
-                  className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
-                />
-                {errors.last_name && touched.last_name ? (
-                  <p className="text-sm text-red-600 dark:text-red-400">{errors.last_name}</p>
-                ) : null}
-              </div>
-            </div>
-            <div className="px-6 mb-5">
-              <input
-                name="phone_number"
-                id="phone_number"
-                type="number"
-                placeholder="Phone Number"
-                className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 w-full rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
-                value={values.phone_number}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                autoComplete="off"
-                disabled={isLoading}
-              />
-              {errors.phone_number && touched.phone_number ? (
-                <p className="text-sm text-red-600 dark:text-red-400">{errors.phone_number}</p>
-              ) : null}
-            </div>
-            <div className="px-6 mb-5">
-              <input
-                name="email"
-                id="email"
-                type="email"
-                placeholder="Email"
-                className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 w-full rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
-                value={values.email}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                autoComplete="off"
-                disabled={isLoading}
-              />
-              {errors.email && touched.email ? (
-                <p className="text-sm text-red-600 dark:text-red-400">{errors.email}</p>
-              ) : null}
-            </div>
-            <div className="md:flex rounded-md mb-5 px-4 text-gray-500">
-              <div className="flex flex-col px-2 py-2">
-                <input
-                  name="age"
-                  id="age"
-                  type="number"
-                  placeholder="Age"
-                  className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 w-full rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
-                  value={values.age}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  autoComplete="off"
-                  disabled={isLoading}
-                />
-                {errors.age && touched.age ? (
-                  <p className="text-sm text-red-600 dark:text-red-400">{errors.age}</p>
-                ) : null}
-              </div>
-              <div className="flex flex-col px-2 py-2">
-                <select
-                  name="gender"
-                  id="gender"
-                  className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 w-full rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
-                  value={values.gender}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  disabled={isLoading}
-                >
-                  <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-                {errors.gender && touched.gender ? (
-                  <p className="text-sm text-red-600 dark:text-red-400">{errors.gender}</p>
-                ) : null}
-              </div>
-            </div>
-            <div className="md:flex rounded-md mb-5 px-4 text-gray-500">
-              <div className="flex flex-col px-2 py-2">
-                <input
-                  name="city"
-                  id="city"
-                  type="text"
-                  placeholder="City"
-                  className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 w-full rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
-                  value={values.city}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  autoComplete="off"
-                  disabled={isLoading}
-                />
-                {errors.city && touched.city ? (
-                  <p className="text-sm text-red-600 dark:text-red-400">{errors.city}</p>
-                ) : null}
-              </div>
-              <div className="flex flex-col px-2 py-2">
-                <input
-                  name="state"
-                  id="state"
-                  type="text"
-                  placeholder="State"
-                  className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 w-full rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
-                  value={values.state}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  autoComplete="off"
-                  disabled={isLoading}
-                />
-                {errors.state && touched.state ? (
-                  <p className="text-sm text-red-600 dark:text-red-400">{errors.state}</p>
-                ) : null}
-              </div>
-            </div>
-            <div className="md:flex rounded-md mb-5 px-4">
-              <div className="flex flex-col px-2 py-2">
-                <input
-                  name="password"
-                  id="password"
-                  type="password"
-                  placeholder="Password"
-                  className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
-                  value={values.password}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  autoComplete="off"
-                  disabled={isLoading}
-                />
-                {errors.password && touched.password ? (
-                  <p className="text-sm text-red-600 dark:text-red-400">{errors.password}</p>
-                ) : null}
-              </div>
-              <div className="flex flex-col px-2 py-2">
-                <input
-                  name="confirm_password"
-                  id="confirm_password"
-                  type="password"
-                  placeholder="Confirm Password"
-                  className="bg-transparent dark:bg-gray-700/50 shadow-sm focus:outline-none shadow-gray-300 dark:shadow-gray-700 font-medium px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:text-gray-100 focus:ring-2 focus:ring-btn2/20 focus:border-btn2 transition-all"
-                  value={values.confirm_password}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  autoComplete="off"
-                  disabled={isLoading}
-                />
-                {errors.confirm_password && touched.confirm_password ? (
-                  <p className="text-sm text-red-600 dark:text-red-400">
-                    {errors.confirm_password}
-                  </p>
-                ) : null}
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-center text-gray-500 dark:text-gray-400">
-            <p>
-              Already have an account?
-              <Link to="/login">
-                <span className="p-2 capitalize text-btn1 dark:text-btn1 font-semibold">
-                  log in
-                </span>
-              </Link>
-            </p>
-          </div>
-          <div className="flex justify-center p-4">
-            <button
-              type="submit"
+        <div className="grid gap-4 sm:grid-cols-2">
+          {field("email", "Email", { type: "email", placeholder: "you@example.com" })}
+          {field("phone_number", "Phone number", { type: "number", placeholder: "10-digit mobile" })}
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {field("age", "Age", { type: "number", placeholder: "e.g. 32" })}
+          <div>
+            <label htmlFor="gender" className={authLabelClass}>
+              Gender
+            </label>
+            <select
+              name="gender"
+              id="gender"
+              className={authInputClass}
+              value={values.gender}
+              onChange={handleChange}
+              onBlur={handleBlur}
               disabled={isLoading}
-              className={`capitalize font-semibold text-white bg-gradient-to-r from-btn2 to-btn1 px-8 py-2.5 rounded-xl shadow-lg hover:shadow-xl hover:shadow-btn2/20 transition-all duration-300 ${
-                isLoading ? "opacity-70 cursor-not-allowed" : "hover:scale-105"
-              }`}
             >
-              {isLoading ? "Registering..." : "Register"}
-            </button>
+              <option value="">Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+            {errors.gender && touched.gender ? (
+              <p className="mt-1.5 text-sm font-medium text-red-600 dark:text-red-400">{errors.gender}</p>
+            ) : null}
           </div>
-        </form>
-      </div>
-    </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {field("city", "City", { type: "text", placeholder: "Mumbai" })}
+          {field("state", "State", { type: "text", placeholder: "Maharashtra" })}
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {field("password", "Password", { type: "password", placeholder: "Create a password" })}
+          {field("confirm_password", "Confirm password", { type: "password", placeholder: "Repeat password" })}
+        </div>
+
+        <button type="submit" disabled={isLoading} className={authButtonClass}>
+          {isLoading ? (
+            <>
+              <FaSpinner className="animate-spin" />
+              <span>Creating account...</span>
+            </>
+          ) : (
+            <span>Create account</span>
+          )}
+        </button>
+
+        <p className="text-center text-sm text-slate-600 dark:text-gray-400">
+          Already have an account?{" "}
+          <Link to="/login" className="font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400">
+            Log in
+          </Link>
+        </p>
+      </form>
+    </AuthLayout>
   );
 }
 

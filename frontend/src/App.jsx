@@ -89,13 +89,18 @@ function PageLoader() {
 // ✅ PROTECTED ROUTE COMPONENT
 function ProtectedRoute({ children }) {
   const { loggedIn } = useAuth();
-  return loggedIn ? children : <Navigate to="/login" replace />;
+  const location = useLocation();
+  // Remember where the user was heading so login can send them back there
+  return loggedIn ? children : <Navigate to="/login" replace state={{ from: location }} />;
 }
 
 // ✅ PUBLIC ROUTE COMPONENT (Redirects if logged in)
 function PublicRoute({ children }) {
   const { loggedIn } = useAuth();
-  return !loggedIn ? children : <Navigate to="/dashboard" replace />;
+  const location = useLocation();
+  const from = location.state?.from;
+  const target = from ? `${from.pathname}${from.search || ""}` : "/dashboard";
+  return !loggedIn ? children : <Navigate to={target} replace />;
 }
 
 // ✅ PAGE TRANSITION WRAPPER
