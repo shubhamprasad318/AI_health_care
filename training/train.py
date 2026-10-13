@@ -20,15 +20,14 @@ suitable for rendering a ranked differential diagnosis with confidence
 scores at ~1 ms inference per request.
 
 Outputs (written to ../backend/models/):
-    lgbm_model.pkl              CalibratedClassifierCV(LGBMClassifier)
+    lgbm_model.pkl.gz           CalibratedClassifierCV(LGBMClassifier), gzipped
     feature_map.pkl             dict: feature_name -> column_index
     label_map.pkl               dict: pathology_code -> class_index
     release_evidences.json      E_xx -> {question, type, possible_values, ...}
     release_conditions.json     patho_code -> {name, severity, icd10, ...}
 
-The old rf_model.pkl / nb_model.pkl / svm_model.pkl files are left in
-place but will be ignored once backend/services/ml_service.py is
-updated to load lgbm_model.pkl.
+backend/services/ml_service.py loads these at startup. The repo ships a
+trained lgbm_model.pkl.gz, so running this script is only needed to retrain.
 
 One-time install:
     pip install -r requirements.txt
@@ -41,6 +40,7 @@ Run:
 from __future__ import annotations
 
 import ast
+import gzip
 import json
 import logging
 import pickle
@@ -263,9 +263,12 @@ def save_artifacts(
 ) -> None:
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
-    log.info("Writing lgbm_model.pkl (calibrated LightGBM)")
-    with open(MODELS_DIR / "lgbm_model.pkl", "wb") as f:
+    # Gzipped so the ~150 MB model fits under GitHub's 100 MB file limit (~50 MB)
+    log.info("Writing lgbm_model.pkl.gz (calibrated LightGBM, gzipped)")
+    with gzip.open(MODELS_DIR / "lgbm_model.pkl.gz", "wb", compresslevel=9) as f:
         pickle.dump(model, f)
+    # Remove an uncompressed model from older runs so it can't go stale
+    (MODELS_DIR / "lgbm_model.pkl").unlink(missing_ok=True)
 
     log.info("Writing feature_map.pkl (%d features)", len(feature_map))
     with open(MODELS_DIR / "feature_map.pkl", "wb") as f:

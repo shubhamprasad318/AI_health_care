@@ -4,9 +4,9 @@ This folder builds the model behind the **Predict Disease** feature. It download
 [DDXPlus](https://huggingface.co/datasets/aai530-group6/ddxplus) dataset, trains a
 calibrated LightGBM classifier and writes the model files into `backend/models/`.
 
-> **You must run this once after cloning.** The trained model (`lgbm_model.pkl`) is
-> too large for GitHub (over 100 MB), so it is not in the repo. Until you generate it,
-> the backend starts normally but disease prediction is unavailable.
+> **You don't need this to run the app.** The repo already includes a trained model
+> (`backend/models/lgbm_model.pkl.gz`). Use this folder to retrain it, change the
+> model, or reproduce the results.
 
 ## Quick start
 
@@ -28,7 +28,7 @@ Then restart the backend so it loads the new model.
 
 | Option | What it does |
 |---|---|
-| *(none)* | Train, unless `backend/models/lgbm_model.pkl` already exists |
+| *(none)* | Train, unless a trained model already exists in `backend/models/` |
 | `--force` | Retrain even if the model already exists |
 | `--download-only` | Only download and cache the dataset, don't train |
 
@@ -62,14 +62,14 @@ All files go to `backend/models/`:
 
 | File | Size | In git? | Purpose |
 |---|---|---|---|
-| `lgbm_model.pkl` | ~150 MB | No (too large) | The trained, calibrated LightGBM classifier |
+| `lgbm_model.pkl.gz` | ~50 MB | Yes | The trained, calibrated LightGBM classifier, gzipped (~150 MB uncompressed, over GitHub's 100 MB limit) |
 | `feature_map.pkl` | ~7 KB | Yes | Maps each feature (symptom, age, sex) to a column index |
 | `label_map.pkl` | ~1 KB | Yes | Maps each of the 49 conditions to a class index |
 | `release_evidences.json` | ~150 KB | Yes | The symptom questions shown in the UI |
 | `release_conditions.json` | ~30 KB | Yes | Condition names, severity and ICD-10 codes |
 
-The small files must stay in sync with `lgbm_model.pkl`. If you retrain and the
-feature or label maps change, commit the new versions too.
+All five files must come from the same training run. After retraining, commit them
+together.
 
 ## How training works
 
@@ -97,7 +97,7 @@ top of `train.py`.
 | `Library not loaded: libomp.dylib` | `brew install libomp` (macOS) |
 | Download is slow or rate-limited | Create a free Hugging Face token and run `export HF_TOKEN=...` first |
 | Process is killed partway through | Not enough RAM. Close other apps or use a machine with more memory |
-| Backend logs `Model files missing` | Training hasn't been run yet, or files were written elsewhere. Check `backend/models/` |
+| Backend logs `Model files missing` | `lgbm_model.pkl.gz` is missing from `backend/models/`. Pull it from git or run the setup script |
 | Predictions look wrong after retraining | Make sure all five files come from the same training run |
 
 ## Dataset licence

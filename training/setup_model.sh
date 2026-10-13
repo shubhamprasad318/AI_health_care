@@ -5,7 +5,7 @@
 # trains the model, writing all artifacts to backend/models/.
 #
 # Usage (from anywhere):
-#   bash training/setup_model.sh            # skip if lgbm_model.pkl already exists
+#   bash training/setup_model.sh            # skip if a trained model already exists
 #   bash training/setup_model.sh --force    # retrain even if it exists
 #   bash training/setup_model.sh --download-only
 
@@ -33,8 +33,9 @@ for arg in "$@"; do
   esac
 done
 
-if [[ $DOWNLOAD_ONLY -eq 0 && $FORCE -eq 0 && -f "$MODELS_DIR/lgbm_model.pkl" ]]; then
-  echo "Model already exists at backend/models/lgbm_model.pkl. Use --force to retrain."
+if [[ $DOWNLOAD_ONLY -eq 0 && $FORCE -eq 0 ]] && \
+   [[ -f "$MODELS_DIR/lgbm_model.pkl.gz" || -f "$MODELS_DIR/lgbm_model.pkl" ]]; then
+  echo "A trained model already exists in backend/models/. Use --force to retrain."
   exit 0
 fi
 

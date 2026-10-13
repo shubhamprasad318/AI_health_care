@@ -224,7 +224,7 @@ This section documents the rationale for the ML pipeline. The repo previously us
 - **One model beats the old 3-model ensemble.** A single tuned GBDT consistently matches or beats hand-built RF + NB + SVM hard-voting ensembles in every benchmark we reviewed, at ~50× faster inference and with one artifact to ship.
 - **`GaussianNB` was the wrong family.** The previous `nb_model.pkl` assumed Gaussian-distributed features but symptoms are binary (Bernoulli). LightGBM subsumes the role correctly; we removed the Naive Bayes component instead of "fixing" it.
 - **Calibrated probabilities.** Wrapped in `CalibratedClassifierCV(method="isotonic", cv=3)` so `predict_proba` reflects actual posterior likelihood. This is what lets the UI honestly say "94% confidence" and produces a meaningful top-K differential whose probabilities sum to ~1.0.
-- **Operational simplicity.** One ~150 MB `lgbm_model.pkl` + small JSON/PKL metadata replaces five inter-dependent files (RF + NB + SVM + data_dict + Doctor_Specialist). Easier to deploy, monitor, and retrain.
+- **Operational simplicity.** One `lgbm_model.pkl.gz` (~150 MB uncompressed, ~50 MB gzipped) + small JSON/PKL metadata replaces five inter-dependent files (RF + NB + SVM + data_dict + Doctor_Specialist). Easier to deploy, monitor, and retrain.
 
 ### Measured Results
 
@@ -304,7 +304,7 @@ AI_Health_Care/
 │   ├── utils/
 │   │   ├── helpers.py              # Utility functions
 │   │   └── security.py             # Security utilities (require_auth, JWT, bcrypt)
-│   ├── models/                     # DDXPlus model artifacts: lgbm_model.pkl, feature_map.pkl,
+│   ├── models/                     # DDXPlus model artifacts: lgbm_model.pkl.gz, feature_map.pkl,
 │   │                               # label_map.pkl, release_{evidences,conditions}.json
 │   └── requirements.txt
 ├── frontend/                       # React + Vite + Tailwind CSS
@@ -376,12 +376,12 @@ $EDITOR .env
 python main.py                       # API at http://localhost:8000
 ```
 
-### Training the Disease Prediction Model (required once)
+### Training the Disease Prediction Model (optional)
 
-The trained model (`lgbm_model.pkl`, ~150 MB) is too large for GitHub, so it is not in the repo. Generate it once after cloning:
+The repo ships a trained model as `backend/models/lgbm_model.pkl.gz` (gzipped to ~50 MB to fit GitHub's file limit), so prediction works right after cloning. To retrain from scratch:
 
 ```bash
-bash training/setup_model.sh
+bash training/setup_model.sh --force
 ```
 
 This creates a virtual environment in `training/`, downloads the DDXPlus dataset from Hugging Face (~1 GB, cached), trains a calibrated LightGBM classifier (about 10 minutes), prints Top-1 / Top-3 / Top-5 accuracy on a 116K held-out test set (expect ~99.7% Top-1) and writes the model files to `backend/models/`. Restart the backend to pick up the model.

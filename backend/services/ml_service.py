@@ -21,6 +21,7 @@ Public surface:
 
 from __future__ import annotations
 
+import gzip
 import json
 import logging
 import pickle
@@ -50,8 +51,15 @@ async def load_models() -> None:
 
     logger.info("[LOADING] DDXPlus LightGBM model + metadata...")
     try:
-        with open(_MODELS_DIR / "lgbm_model.pkl", "rb") as f:
-            _MODEL = pickle.load(f)
+        # The model ships gzipped so it fits under GitHub's 100 MB file limit;
+        # a plain lgbm_model.pkl from older training runs still works
+        gz_path = _MODELS_DIR / "lgbm_model.pkl.gz"
+        if gz_path.exists():
+            with gzip.open(gz_path, "rb") as f:
+                _MODEL = pickle.load(f)
+        else:
+            with open(_MODELS_DIR / "lgbm_model.pkl", "rb") as f:
+                _MODEL = pickle.load(f)
         with open(_MODELS_DIR / "feature_map.pkl", "rb") as f:
             _FEATURE_MAP = pickle.load(f)
         with open(_MODELS_DIR / "label_map.pkl", "rb") as f:

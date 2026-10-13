@@ -4,18 +4,18 @@ The disease prediction service (`backend/services/ml_service.py`) loads these fi
 
 | File | In git? | Notes |
 |---|---|---|
-| `lgbm_model.pkl` | **No** | ~150 MB, over GitHub's file limit. Generate it with the command below. |
+| `lgbm_model.pkl.gz` | Yes | Trained model, gzipped to ~50 MB to fit GitHub's 100 MB limit |
 | `feature_map.pkl` | Yes | Feature name → column index |
 | `label_map.pkl` | Yes | Condition code → class index |
 | `release_evidences.json` | Yes | Symptom questions shown in the UI |
 | `release_conditions.json` | Yes | Condition names, severity, ICD-10 codes |
 
-## Missing `lgbm_model.pkl`?
+## Retraining or missing model
 
-From the repo root, run:
+To regenerate the model, from the repo root run:
 
 ```bash
-bash training/setup_model.sh
+bash training/setup_model.sh --force
 ```
 
 It downloads the DDXPlus dataset, trains the model (about 10 minutes) and writes every file
