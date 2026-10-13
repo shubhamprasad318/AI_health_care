@@ -48,6 +48,7 @@ Skip this step to deploy without email. The app still works; emails are just not
 | `ADMIN_EMAIL` | api | Email of the account allowed into `/admin` |
 | `RESEND_API_KEY`, `RESEND_FROM` | api | From step 2 (or leave empty) |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | api | From LiveKit Cloud (or leave empty) |
+| `BACKEND_PUBLIC_URL` | api | `https://ai-healthengine-api.onrender.com` (this API's own URL). The voice agent sends call transcripts here; without it consultation summaries aren't saved |
 | `VITE_API_URL` | frontend | `https://ai-healthengine-api.onrender.com` (your backend URL) |
 
 `SECRET_KEY` is generated automatically. The service URLs follow the service names; if a

@@ -1,14 +1,9 @@
-# LiveKit Agent SDK
-livekit>=0.18.0,<2.0.0
-livekit-api>=0.6.0,<2.0.0
-livekit-agents>=0.10.0,<2.0.0
-
-# LiveKit Plugins
-livekit-plugins-google>=0.7.0,<2.0.0
-livekit-plugins-silero>=0.7.0,<2.0.0
-
-# Gemini SDK (used directly by the google plugin and our agent)
-google-genai>=0.3.0,<1.0.0
+# LiveKit Agent SDK (1.x API: AgentSession, google.realtime)
+# Agents and plugins are released together; keep them on the same version.
+livekit-agents==1.8.6
+livekit-plugins-google==1.8.6
+livekit-plugins-silero==1.8.6
+livekit-api>=1.0.0,<2.0.0
 
 # Environment
 python-dotenv>=1.0.0,<2.0.0

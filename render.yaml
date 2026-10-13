@@ -38,6 +38,10 @@ services:
         sync: false
       - key: RESEND_FROM
         sync: false
+      # This API's own public URL, e.g. https://ai-healthengine-api.onrender.com
+      # The voice agent posts call transcripts here to save consultation summaries
+      - key: BACKEND_PUBLIC_URL
+        sync: false
       - key: LIVEKIT_URL
         sync: false
       - key: LIVEKIT_API_KEY
