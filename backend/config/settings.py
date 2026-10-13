@@ -73,10 +73,15 @@ _origins_str = os.getenv("ALLOWED_ORIGINS", "")
 
 # 2. Split by comma and strip whitespace to create a clean list
 # This prevents the "unpacking string" error
-if _origins_str:
-    allow_origin = [origin.strip() for origin in _origins_str.split(",")]
-else:
-    allow_origin = []
+# Browsers send the Origin header without quotes or a trailing slash, and CORS
+# matching is exact, so normalise common copy-paste variants of each entry
+allow_origin = [
+    o.strip().strip("\"'").rstrip("/")
+    for o in _origins_str.split(",")
+    if o.strip().strip("\"'")
+]
+if IS_PRODUCTION:
+    _log.warning("CORS allowed origins: %s", allow_origin or "(none: browsers will be blocked)")
 # ------------------------------
 
 # Gemini API (2026 SDK)
