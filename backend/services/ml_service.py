@@ -78,7 +78,8 @@ async def load_models() -> None:
         )
     except FileNotFoundError as e:
         logger.error(
-            "[ERROR] Model files missing: %s. Run `python training/train.py` first.",
+            "[ERROR] Model files missing: %s. Run `bash training/setup_model.sh` to "
+            "download DDXPlus and train the model (see training/README.md).",
             e,
         )
         _MODEL = None

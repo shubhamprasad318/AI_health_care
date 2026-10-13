@@ -224,7 +224,7 @@ This section documents the rationale for the ML pipeline. The repo previously us
 - **One model beats the old 3-model ensemble.** A single tuned GBDT consistently matches or beats hand-built RF + NB + SVM hard-voting ensembles in every benchmark we reviewed, at ~50× faster inference and with one artifact to ship.
 - **`GaussianNB` was the wrong family.** The previous `nb_model.pkl` assumed Gaussian-distributed features but symptoms are binary (Bernoulli). LightGBM subsumes the role correctly; we removed the Naive Bayes component instead of "fixing" it.
 - **Calibrated probabilities.** Wrapped in `CalibratedClassifierCV(method="isotonic", cv=3)` so `predict_proba` reflects actual posterior likelihood. This is what lets the UI honestly say "94% confidence" and produces a meaningful top-K differential whose probabilities sum to ~1.0.
-- **Operational simplicity.** One ~142 MB `lgbm_model.pkl` + small JSON/PKL metadata replaces five inter-dependent files (RF + NB + SVM + data_dict + Doctor_Specialist). Easier to deploy, monitor, and retrain.
+- **Operational simplicity.** One ~150 MB `lgbm_model.pkl` + small JSON/PKL metadata replaces five inter-dependent files (RF + NB + SVM + data_dict + Doctor_Specialist). Easier to deploy, monitor, and retrain.
 
 ### Measured Results
 
@@ -333,10 +333,13 @@ AI_Health_Care/
 │   ├── Dockerfile                  # Multi-stage container image for LiveKit Cloud
 │   ├── livekit.toml                # LiveKit Cloud deployment config
 │   └── .env.example                # Required environment variables
-├── training/                       # Disease prediction model retraining
+├── training/                       # Disease prediction model training (see training/README.md)
+│   ├── setup_model.sh              # One command: venv + install + download + train
 │   ├── train.py                    # Downloads DDXPlus, trains calibrated LightGBM,
 │   │                               # writes artifacts to backend/models/
-│   └── requirements.txt            # datasets, lightgbm, scikit-learn, pandas, numpy
+│   ├── download_dataset.py         # Downloads and caches DDXPlus only
+│   ├── requirements.txt            # datasets, lightgbm, scikit-learn, pandas, numpy
+│   └── README.md                   # Requirements, steps, troubleshooting
 ├── .gitignore
 └── README.md
 ```
@@ -373,19 +376,17 @@ $EDITOR .env
 python main.py                       # API at http://localhost:8000
 ```
 
-### Training the Disease Prediction Model (optional)
+### Training the Disease Prediction Model (required once)
 
-The repo already ships with a trained `lgbm_model.pkl` in `backend/models/`. To retrain from scratch on the latest DDXPlus snapshot (~1 GB download, ~10 min on a modern laptop):
+The trained model (`lgbm_model.pkl`, ~150 MB) is too large for GitHub, so it is not in the repo. Generate it once after cloning:
 
 ```bash
-cd training
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python train.py
+bash training/setup_model.sh
 ```
 
-The script downloads `aai530-group6/ddxplus` from Hugging Face, trains a calibrated LightGBM multiclass classifier, prints Top-1 / Top-3 / Top-5 accuracy on a 116K held-out test set (expect ~99.7% Top-1), and overwrites the model files in `backend/models/`. Restart the backend to pick up the new model.
+This creates a virtual environment in `training/`, downloads the DDXPlus dataset from Hugging Face (~1 GB, cached), trains a calibrated LightGBM classifier (about 10 minutes), prints Top-1 / Top-3 / Top-5 accuracy on a 116K held-out test set (expect ~99.7% Top-1) and writes the model files to `backend/models/`. Restart the backend to pick up the model.
+
+Use `--force` to retrain or `--download-only` to just fetch the dataset. For manual steps (e.g. on Windows), hardware requirements and troubleshooting, see [`training/README.md`](training/README.md).
 
 ### LiveKit Voice Agent Setup
 

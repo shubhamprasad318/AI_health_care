@@ -336,7 +336,7 @@ def main() -> None:
     save_artifacts(model, feature_map, label_map, evidences_meta, conditions_meta)
 
     log.info(
-        "Done. Next step: update backend/services/ml_service.py to load lgbm_model.pkl."
+        "Done. Restart the backend to load the new model."
     )
 
 
