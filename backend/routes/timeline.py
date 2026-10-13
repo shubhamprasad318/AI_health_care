@@ -21,7 +21,8 @@ async def get_timeline(
     request: Request,
     days: int = Query(90, ge=1, le=365),
     event_type: str = Query(
-        None, pattern="^(prediction|appointment|medication_log|journal)$"
+        None,
+        pattern="^(prediction|appointment|medication_log|journal|consultation)$",
     ),
     limit: int = Query(100, ge=1, le=500),
 ):
@@ -136,6 +137,40 @@ async def get_timeline(
                         "severity": "low" if not log.get("skipped") else "medium",
                         "icon": "pill",
                         "date": serialize_date(log.get("logged_at")),
+                    }
+                )
+
+        # --- Voice Consultations ---
+        if event_type is None or event_type == "consultation":
+            cursor = db.consultations.find(
+                {"email": email, "started_at": {"$gte": cutoff}}
+            ).sort("started_at", -1)
+            async for c in cursor:
+                summary = c.get("summary") if isinstance(c.get("summary"), dict) else {}
+                complaint = summary.get("chief_complaint") if summary else None
+                duration = c.get("duration_seconds")
+                desc = (
+                    complaint
+                    or (f"{duration}s session with Dr. AI" if duration else "Voice consultation")
+                )
+                events.append(
+                    {
+                        "id": str(c["_id"]),
+                        "type": "consultation",
+                        "title": "Voice Consultation with Dr. AI",
+                        "description": (desc or "")[:200],
+                        "details": {
+                            "consultation_id": str(c["_id"]),
+                            "status": c.get("status"),
+                            "duration_seconds": duration,
+                            "summary": summary or None,
+                            "conditions_discussed": summary.get("conditions_discussed", []),
+                            "recommendations": summary.get("recommendations", []),
+                            "red_flags": summary.get("red_flags", []),
+                        },
+                        "severity": "info",
+                        "icon": "phone",
+                        "date": serialize_date(c.get("started_at")),
                     }
                 )
 

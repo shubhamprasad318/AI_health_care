@@ -3,7 +3,8 @@ import { useAuth } from "./AuthContext";
 
 const NotificationContext = createContext();
 
-const WS_BASE = (import.meta.env.VITE_API_URL || "http://localhost:8000").replace(/^http/, "ws");
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const WS_BASE = API_BASE.replace(/^http/, "ws");
 
 export default function NotificationProvider({ children }) {
   const { loggedIn } = useAuth();
@@ -93,15 +94,17 @@ export default function NotificationProvider({ children }) {
 
   const markAllRead = useCallback(async () => {
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
-      await fetch(`${API_BASE}/notifications/read-all`, {
+      const response = await fetch(`${API_BASE}/notifications/read-all`, {
         method: "PATCH",
         credentials: "include",
       });
+      if (!response.ok) {
+        throw new Error(`mark-all-read failed: HTTP ${response.status}`);
+      }
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
-    } catch {
-      // silent fail
+    } catch (err) {
+      console.warn("Failed to mark all notifications as read:", err);
     }
   }, []);
 

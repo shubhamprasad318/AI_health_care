@@ -13,8 +13,8 @@ from config.settings import SECRET_KEY
 
 logger = logging.getLogger(__name__)
 
-# CONFIGURATION — SECRET_KEY imported from central settings (single source of truth)
 ALGORITHM = "HS256"
+BCRYPT_ROUNDS = 12
 
 
 def hash_password(password: str) -> str:
@@ -24,7 +24,7 @@ def hash_password(password: str) -> str:
         if len(password_bytes) > 72:
             password_bytes = password_bytes[:72]
 
-        hashed = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
+        hashed = bcrypt.hashpw(password_bytes, bcrypt.gensalt(rounds=BCRYPT_ROUNDS))
         return hashed.decode("utf-8")
     except Exception as e:
         logger.error(f"Password hashing error: {e}")
@@ -55,22 +55,24 @@ async def get_current_user(request: Request) -> Optional[str]:
     Checks Authorization header first, then cookies.
     Returns: Email string or None
     """
-    # 1. Check Authorization Header (Standard)
     auth_header = request.headers.get("Authorization")
     token = None
 
     if auth_header and auth_header.startswith("Bearer "):
-        token = auth_header.replace("Bearer ", "")
+        token = auth_header[7:].strip()
     else:
-        # 2. Check Cookie (Fallback)
         token = request.cookies.get("session_token")
 
     if not token:
         return None
 
     try:
-        # ✅ Decode JWT token
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM],
+            options={"verify_exp": True, "verify_signature": True},
+        )
         email = payload.get("sub")
         return email
     except JWTError:

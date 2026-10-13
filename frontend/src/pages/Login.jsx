@@ -129,7 +129,7 @@ function Login() {
 
   if (requires2FA) {
     return (
-      <div className="relative flex flex-col justify-center items-center w-full min-h-[500px] bg-lightBackground dark:bg-gray-900 font-text mt-20 md:mt-0">
+      <div className="relative flex flex-col justify-center items-center w-full bg-lightBackground dark:bg-gray-900 font-text min-h-screen py-12 mt-20 md:mt-0">
         <div className="rounded-2xl shadow-xl shadow-gray-300 dark:shadow-gray-800 mx-10 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 overflow-hidden max-w-md w-full">
           <div className="bg-gradient-to-r from-btn2 to-sky-500 p-8 text-center">
             <FaShieldHalved className="text-4xl text-white mx-auto mb-2" />
@@ -214,8 +214,8 @@ function Login() {
   }
 
   return (
-    <div className="relative flex flex-col justify-center items-center w-full md:h-[500px] bg-lightBackground dark:bg-gray-950 font-text h-[700px] mt-20 md:mt-0">
-      <div className="rounded-2xl shadow-xl shadow-gray-300 dark:shadow-gray-900/50 mx-10 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-2xl transition-all duration-300">
+    <div className="relative flex flex-col justify-center items-center w-full bg-lightBackground dark:bg-gray-950 font-text min-h-screen py-12 mt-20 md:mt-0">
+      <div className="w-full max-w-md rounded-2xl shadow-xl shadow-gray-300 dark:shadow-gray-900/50 mx-10 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-2xl transition-all duration-300">
         <div className="bg-gradient-to-r from-btn2 to-btn1 p-8">
           <h1 className="font-extrabold capitalize text-4xl justify-center items-center flex text-white mb-2">
             Welcome Back

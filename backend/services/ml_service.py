@@ -1,195 +1,210 @@
-"""
-ML Model Service
-Disease prediction using ensemble models
+"""DDXPlus disease prediction service.
+
+Loads the calibrated LightGBM model produced by ../../training/train.py
+and exposes top-K differential diagnosis. The previous RF + GaussianNB +
+SVC ensemble was replaced because DDXPlus (NeurIPS 2022) is the SOTA
+dataset for this task and gradient-boosted decision trees outperform
+both traditional ML ensembles and tabular deep-learning on it.
+
+Public surface:
+    load_models()                       async, called at app startup
+    are_models_loaded() -> bool
+    predict_disease(evidences, age, sex, top_k) -> list[dict]
+                                        each dict has rank, pathology,
+                                        probability, icd10
+    get_available_evidences(language)   evidence catalog for the UI
+    get_evidence_label(token, language) human-readable label for one
+                                        evidence token, used to translate
+                                        E_xx[_@_V_yy] into prompts for
+                                        the LLM enhancement step
 """
 
+from __future__ import annotations
+
+import json
 import logging
 import pickle
-import csv
-import numpy as np
-import pandas as pd
 from pathlib import Path
-from typing import Dict, List, Tuple
-from collections import Counter
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
-# Global ML models
-svm_model = None
-nb_model = None
-rf_model = None
-data_dict = {}
-specialization = {}
-disease_descriptions = {}
-disease_precautions = {}
+_MODELS_DIR = Path(__file__).parent.parent / "models"
+
+_MODEL = None
+_FEATURE_MAP: Dict[str, int] = {}
+_LABEL_MAP: Dict[str, int] = {}
+_INDEX_TO_LABEL: Dict[int, str] = {}
+_EVIDENCES_META: Dict[str, Any] = {}
+_CONDITIONS_META: Dict[str, Any] = {}
+
+_FEATURE_AGE = "__AGE__"
+_FEATURE_SEX_F = "__SEX_F__"
 
 
-async def load_models():
-    """Load ML models and CSV data"""
-    global svm_model, nb_model, rf_model, data_dict, specialization
-    global disease_descriptions, disease_precautions
+async def load_models() -> None:
+    global _MODEL, _FEATURE_MAP, _LABEL_MAP, _INDEX_TO_LABEL
+    global _EVIDENCES_META, _CONDITIONS_META
 
+    logger.info("[LOADING] DDXPlus LightGBM model + metadata...")
     try:
-        base_dir = Path(__file__).parent.parent
-        models_dir = base_dir / "models"
+        with open(_MODELS_DIR / "lgbm_model.pkl", "rb") as f:
+            _MODEL = pickle.load(f)
+        with open(_MODELS_DIR / "feature_map.pkl", "rb") as f:
+            _FEATURE_MAP = pickle.load(f)
+        with open(_MODELS_DIR / "label_map.pkl", "rb") as f:
+            _LABEL_MAP = pickle.load(f)
+        _INDEX_TO_LABEL = {v: k for k, v in _LABEL_MAP.items()}
 
-        logger.info("[LOADING] ML models...")
+        evidences_path = _MODELS_DIR / "release_evidences.json"
+        if evidences_path.exists():
+            with open(evidences_path, "r", encoding="utf-8") as f:
+                _EVIDENCES_META = json.load(f)
 
-        # Load models
-        with open(models_dir / "svm_model.pkl", "rb") as f:
-            svm_model = pickle.load(f)
+        conditions_path = _MODELS_DIR / "release_conditions.json"
+        if conditions_path.exists():
+            with open(conditions_path, "r", encoding="utf-8") as f:
+                _CONDITIONS_META = json.load(f)
 
-        with open(models_dir / "nb_model.pkl", "rb") as f:
-            nb_model = pickle.load(f)
-
-        with open(models_dir / "rf_model.pkl", "rb") as f:
-            rf_model = pickle.load(f)
-
-        with open(models_dir / "data_dict.pkl", "rb") as f:
-            data_dict = pickle.load(f)
-
-        with open(models_dir / "Doctor_Specialist_Model.pkl", "rb") as f:
-            specialization = pickle.load(f)
-
-        # Fix RF model estimators
-        if rf_model:
-            for estimator in rf_model.estimators_:
-                if not hasattr(estimator, "monotonic_cst"):
-                    estimator.monotonic_cst = None
-
-        logger.info("[LOADING] CSV data...")
-
-        # Load disease descriptions
-        desc_path = models_dir / "symptom_Description.csv"
-        with open(desc_path, "r", newline="", encoding="utf-8") as csvfile:
-            reader = csv.reader(csvfile)
-            next(reader)
-            for row in reader:
-                if len(row) >= 2:
-                    disease_descriptions[row[0]] = row[1]
-
-        # Load disease precautions
-        prec_path = models_dir / "symptom_precaution.csv"
-        with open(prec_path, "r", newline="", encoding="utf-8") as csvfile:
-            reader = csv.reader(csvfile)
-            next(reader)
-            for row in reader:
-                if len(row) >= 5:
-                    disease_precautions[row[0]] = [row[1], row[2], row[3], row[4]]
-
-        logger.info("[OK] All ML models loaded successfully")
-        logger.info(f"[OK] Diseases: {len(disease_descriptions)}")
-        logger.info(f"[OK] Symptoms: {len(data_dict.get('symptom_index', {}))}")
-
+        logger.info(
+            "[OK] DDXPlus model loaded: %d features, %d pathologies, "
+            "%d evidence definitions, %d condition definitions",
+            len(_FEATURE_MAP),
+            len(_LABEL_MAP),
+            len(_EVIDENCES_META),
+            len(_CONDITIONS_META),
+        )
     except FileNotFoundError as e:
         logger.error(
-            f"[ERROR] ML model files not found: {e}. Ensure model files exist in backend/models/"
+            "[ERROR] Model files missing: %s. Run `python training/train.py` first.",
+            e,
         )
-        svm_model = None
-        nb_model = None
-        rf_model = None
+        _MODEL = None
     except Exception as e:
-        logger.error(
-            f"[ERROR] Failed to load ML models: {e}. Prediction endpoints will be unavailable.",
-            exc_info=True,
-        )
-        svm_model = None
-        nb_model = None
-        rf_model = None
-
-
-def mode(arr: List[str]) -> str:
-    """Get most common element"""
-    counter = Counter(arr)
-    max_count = max(counter.values())
-    return next(k for k, v in counter.items() if v == max_count)
-
-
-def normalize_symptom_name(symptom: str) -> str:
-    """
-    Convert symptom name to match training format
-    'Abdominal Pain' -> 'abdominal_pain'
-    'Vomiting' -> 'vomiting'
-    """
-    return symptom.lower().replace(" ", "_").replace("-", "_")
-
-
-async def predict_disease(symptoms: List[str]) -> Tuple[str, str, List[str], str]:
-    """
-    Predict disease from symptoms using ensemble models
-    Returns: (prediction, description, precautions, specialist)
-    """
-    if not all([svm_model, nb_model, rf_model]):
-        raise RuntimeError("ML models not loaded - prediction service unavailable")
-
-    # Prepare input vector
-    input_data = [0] * len(data_dict["symptom_index"])
-
-    for symptom in symptoms:
-        index = data_dict["symptom_index"].get(symptom, -1)
-        if index != -1:
-            input_data[index] = 1
-
-    # ✅ FIX: Get feature names from the trained model
-    # The models were trained with lowercase + underscores
-    if hasattr(rf_model, "feature_names_in_"):
-        # Use actual feature names from training
-        feature_names = rf_model.feature_names_in_.tolist()
-    else:
-        # Fallback: normalize the symptom names from data_dict
-        feature_names = [
-            normalize_symptom_name(s) for s in data_dict["symptom_index"].keys()
-        ]
-
-    # Create DataFrame with correct feature names
-    input_df = pd.DataFrame([input_data], columns=feature_names)
-
-    logger.info(
-        f"[PREDICT] Input shape: {input_df.shape}, Active symptoms: {sum(input_data)}"
-    )
-    logger.info(
-        f"[PREDICT] Using feature names: {feature_names[:5]}..."
-    )  # Show first 5
-
-    # Get predictions from all models
-    rf_pred = data_dict["predictions_classes"][rf_model.predict(input_df)[0]]
-    nb_pred = data_dict["predictions_classes"][nb_model.predict(input_df)[0]]
-    svm_pred = data_dict["predictions_classes"][svm_model.predict(input_df)[0]]
-
-    logger.info(f"[PREDICT] RF: {rf_pred}, NB: {nb_pred}, SVM: {svm_pred}")
-
-    # Ensemble prediction (mode/majority voting)
-    final_prediction = mode([rf_pred, nb_pred, svm_pred])
-
-    logger.info(f"[OK] Final prediction: {final_prediction}")
-
-    # Get additional info
-    description = disease_descriptions.get(final_prediction, "No description available")
-    precautions = disease_precautions.get(final_prediction, [])
-    specialist = specialization.get(final_prediction, "General Physician")
-
-    return final_prediction, description, precautions, specialist
+        logger.error("[ERROR] Failed to load DDXPlus model: %s", e, exc_info=True)
+        _MODEL = None
 
 
 def are_models_loaded() -> bool:
-    """Check if ML models are loaded"""
-    return all([svm_model, nb_model, rf_model, data_dict])
+    return _MODEL is not None and bool(_FEATURE_MAP) and bool(_LABEL_MAP)
 
 
-def get_available_symptoms() -> List[str]:
-    """Get list of all available symptoms"""
-    if data_dict and "symptom_index" in data_dict:
-        return list(data_dict["symptom_index"].keys())
-    return []
+def _vectorize(
+    evidences: List[str], age: Optional[int], sex: Optional[str]
+) -> np.ndarray:
+    x = np.zeros((1, len(_FEATURE_MAP)), dtype=np.float32)
+    for tok in evidences:
+        if not tok:
+            continue
+        col = _FEATURE_MAP.get(tok)
+        if col is not None:
+            x[0, col] = 1.0
+    if age is not None and _FEATURE_AGE in _FEATURE_MAP:
+        x[0, _FEATURE_MAP[_FEATURE_AGE]] = float(age)
+    if sex and _FEATURE_SEX_F in _FEATURE_MAP:
+        x[0, _FEATURE_MAP[_FEATURE_SEX_F]] = 1.0 if sex.upper() == "F" else 0.0
+    return x
 
 
-def get_disease_info(disease_name: str) -> Dict:
-    """Get complete information about a disease"""
-    return {
-        "disease": disease_name,
-        "description": disease_descriptions.get(
-            disease_name, "No description available"
-        ),
-        "precautions": disease_precautions.get(disease_name, []),
-        "specialist": specialization.get(disease_name, "General Physician"),
-    }
+async def predict_disease(
+    evidences: List[str],
+    age: Optional[int] = None,
+    sex: Optional[str] = None,
+    top_k: int = 5,
+) -> List[Dict[str, Any]]:
+    if not are_models_loaded():
+        raise RuntimeError("ML model not loaded - prediction service unavailable")
+
+    x = _vectorize(evidences, age, sex)
+    probs = _MODEL.predict_proba(x)[0]
+    top_k = max(1, min(top_k, len(probs)))
+    top_indices = np.argsort(probs)[::-1][:top_k]
+
+    differential = []
+    for rank, idx in enumerate(top_indices, start=1):
+        pathology = _INDEX_TO_LABEL.get(int(idx), "Unknown")
+        meta = _CONDITIONS_META.get(pathology, {})
+        differential.append(
+            {
+                "rank": rank,
+                "pathology": pathology,
+                "probability": float(probs[idx]),
+                "icd10": meta.get("icd10-id"),
+                "severity": meta.get("severity"),
+            }
+        )
+
+    logger.info(
+        "[PREDICT] top-1=%s (%.4f), evidences=%d, top-5 sum=%.4f",
+        differential[0]["pathology"],
+        differential[0]["probability"],
+        len(evidences),
+        sum(d["probability"] for d in differential),
+    )
+    return differential
+
+
+def get_evidence_label(token: str, language: str = "en") -> str:
+    """Translate `E_xx` or `E_xx_@_V_yy` into a human-readable string
+    suitable for inclusion in prompts or UI labels. Falls back to the
+    raw token when the evidence metadata file is missing."""
+    if not token or token.startswith("__"):
+        return token
+    if "_@_" in token:
+        base, value = token.split("_@_", 1)
+    else:
+        base, value = token, None
+
+    meta = _EVIDENCES_META.get(base, {})
+    question = (
+        meta.get(f"question_{language}") or meta.get("question_en") or base
+    )
+    if value is None:
+        return question
+    value_meta = (meta.get("value_meaning") or {}).get(value, {})
+    value_label = (
+        value_meta.get(language) or value_meta.get("en") or value
+    )
+    return f"{question} - {value_label}"
+
+
+def get_available_evidences(language: str = "en") -> List[Dict[str, Any]]:
+    """Catalog of distinct evidence questions for the symptom picker.
+    Each entry collapses all `E_xx_@_V_yy` variants of the same `E_xx`
+    into a single record with its possible values."""
+    catalog: Dict[str, Dict[str, Any]] = {}
+    for token in _FEATURE_MAP:
+        if token.startswith("__"):
+            continue
+        base = token.split("_@_", 1)[0]
+        meta = _EVIDENCES_META.get(base, {})
+        entry = catalog.setdefault(
+            base,
+            {
+                "code": base,
+                "question": meta.get(f"question_{language}")
+                or meta.get("question_en")
+                or base,
+                "type": meta.get("data_type", "B"),
+                "is_antecedent": bool(meta.get("is_antecedent")),
+                "possible_values": [],
+            },
+        )
+        if "_@_" in token:
+            value_code = token.split("_@_", 1)[1]
+            value_meta = (meta.get("value_meaning") or {}).get(value_code, {})
+            entry["possible_values"].append(
+                {
+                    "code": value_code,
+                    "token": token,
+                    "label": value_meta.get(language)
+                    or value_meta.get("en")
+                    or value_code,
+                }
+            )
+
+    for entry in catalog.values():
+        entry["possible_values"].sort(key=lambda v: v["label"].lower())
+    return sorted(catalog.values(), key=lambda e: e["question"].lower())

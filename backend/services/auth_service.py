@@ -5,7 +5,7 @@ File Path: services/auth_service.py
 
 import logging
 from typing import Optional, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import os
 
 # FastAPI & Security Imports
@@ -55,7 +55,7 @@ def serialize_user_data(user: Dict[str, Any]) -> Dict[str, Any]:
 
 def create_access_token(email: str) -> str:
     """Create JWT access token with numeric exp/iat timestamps"""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     expire = now + timedelta(days=TOKEN_EXPIRE_DAYS)
     to_encode = {
         "sub": email,
@@ -74,7 +74,7 @@ async def register_user(user_data: Dict) -> Dict:
             return {"success": False, "message": "Email already registered"}
 
         user_data["password"] = hash_password(user_data["password"])
-        user_data["created_at"] = datetime.utcnow()
+        user_data["created_at"] = datetime.now(timezone.utc)
 
         # Insert user (MongoDB adds _id to user_data automatically here)
         new_user = await db.store.insert_one(user_data)

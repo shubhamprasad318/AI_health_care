@@ -134,10 +134,8 @@ async def login(credentials: LoginRequest):
 
 
 @router.post("/logout")
-async def logout(request: Request):
+async def logout():
     """User logout"""
-    token = request.cookies.get("session_token")
-
     response = JSONResponse(
         content=standard_response(message="Logged out successfully")
     )

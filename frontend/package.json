@@ -3,7 +3,6 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "proxy": "http://127.0.0.1:5000/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -11,9 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@livekit/components-react": "^2.9.20",
     "@livekit/components-styles": "^1.2.0",
-    "emailjs-com": "^3.2.0",
     "formik": "^2.4.5",
     "framer-motion": "^11.0.24",
     "i18next": "^26.0.3",

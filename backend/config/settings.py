@@ -4,6 +4,7 @@ Configuration and environment variables
 
 import os
 import sys
+import logging as _log
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -13,8 +14,22 @@ load_dotenv()
 ENV = os.environ.get("ENV", "development").lower()
 IS_PRODUCTION = ENV in ("production", "prod")
 
+
+def _fail_in_production(name: str, hint: str = "") -> None:
+    if IS_PRODUCTION:
+        msg = f"FATAL: {name} environment variable is required in production."
+        if hint:
+            msg += f" {hint}"
+        print(msg, file=sys.stderr)
+        sys.exit(1)
+    _log.warning(f"{name} not set — using insecure default for development only.")
+
+
 # MongoDB Configuration
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/helloai")
+MONGO_URI = os.environ.get("MONGO_URI", "")
+if not MONGO_URI:
+    _fail_in_production("MONGO_URI", "Set it to a MongoDB connection string.")
+    MONGO_URI = "mongodb://localhost:27017/helloai"
 MONGO_DBNAME = os.environ.get("MONGO_DBNAME", "helloai")
 
 # Security — SECRET_KEY is MANDATORY in production
@@ -29,7 +44,6 @@ if not SECRET_KEY:
         sys.exit(1)
     else:
         import secrets as _secrets
-        import logging as _log
 
         SECRET_KEY = _secrets.token_hex(32)
         _log.warning(
@@ -37,10 +51,14 @@ if not SECRET_KEY:
         )
 
 # Email Configuration
-ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL")
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "")
+if not ADMIN_EMAIL and IS_PRODUCTION:
+    _log.warning("ADMIN_EMAIL not set — admin endpoints will be inaccessible.")
 SMTP_EMAIL = os.environ.get("SMTP_EMAIL", "")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
 SMTP_FROM_NAME = os.environ.get("SMTP_FROM_NAME", "AI Health Care Platform")
+if (not SMTP_EMAIL or not SMTP_PASSWORD) and IS_PRODUCTION:
+    _log.warning("SMTP credentials not fully set — outbound email will be disabled.")
 
 # --- CORS CONFIGURATION FIX ---
 # 1. Get the string from .env
@@ -55,12 +73,16 @@ else:
 # ------------------------------
 
 # Gemini API (2026 SDK)
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+if not GEMINI_API_KEY and IS_PRODUCTION:
+    _log.warning("GEMINI_API_KEY not set — AI features will be disabled in production.")
 
 # LiveKit Configuration
 LIVEKIT_URL = os.environ.get("LIVEKIT_URL", "")
 LIVEKIT_API_KEY = os.environ.get("LIVEKIT_API_KEY", "")
 LIVEKIT_API_SECRET = os.environ.get("LIVEKIT_API_SECRET", "")
+if IS_PRODUCTION and not all([LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET]):
+    _log.warning("LiveKit credentials not fully set — Virtual Doctor voice feature will be disabled.")
 
 # File Upload Configuration
 UPLOAD_FOLDER = Path("uploads")

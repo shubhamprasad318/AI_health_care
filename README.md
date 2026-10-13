@@ -1,158 +1,268 @@
-# **AI Health Care Platform**
+# AI Health Care Platform
 
-## **Project Overview**
+A comprehensive AI-driven health platform that combines a **calibrated LightGBM model trained on the DDXPlus benchmark** (NeurIPS 2022) for differential disease prediction with **Google Gemini AI** for clinical reasoning, medical-report analysis, and voice consultations. Built as a full-stack web application with a FastAPI backend, React frontend, and a dedicated LiveKit voice agent.
 
-The **AI Health Care Platform** is a comprehensive health application that predicts diseases based on symptoms, provides AI-powered medical assistance, and manages health records. It uses machine learning models (**Random Forest**, **Naive Bayes**, **SVM**) for disease prediction and integrates **Google Gemini AI** for intelligent health consultations, medical report analysis, drug interaction checks, and personalized health plans.
+> ⚕️ **Medical disclaimer.** This platform is for educational and informational purposes only. It is not a diagnosis, treatment plan, or substitute for in-person medical evaluation. Always consult a qualified healthcare provider for medical decisions. For emergencies, call your local emergency number (112 / 911).
 
-The platform includes 15+ feature modules: medication tracking, health journaling, PDF report generation, family profiles, real-time notifications, doctor directory with reviews, appointment calendar, gamification, dark mode, data export (CSV/FHIR), two-factor authentication, admin dashboard, voice-to-text symptom input, and offline PWA support.
+---
 
-The backend is built with **FastAPI** (async) and connects to **MongoDB** via the **Motor** async driver. The frontend is built with **React 18** + **Vite 5** + **Tailwind CSS 3** with full dark mode support and multi-language (i18n) capabilities.
+## Table of Contents
 
-## **Features**
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Architecture](#architecture)
+- [Disease Prediction Model — Why This Choice](#disease-prediction-model--why-this-choice)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Environment Variables](#environment-variables)
+- [Usage Guide](#usage-guide)
+- [Citation & Attribution](#citation--attribution)
+
+---
+
+## Overview
+
+The platform offers 20+ feature modules across four runtime processes:
+
+| Process | Role |
+|---|---|
+| **Backend** (FastAPI + MongoDB) | Auth, ML inference, REST + WebSocket APIs, Gemini orchestration |
+| **Frontend** (React + Vite + Tailwind) | PWA UI, 21 lazy-loaded pages, real-time notifications |
+| **LiveKit Voice Agent** (Python) | Standalone process running the Dr. AI voice consultation |
+| **Training** (Python, optional) | Reproducible LightGBM training pipeline on DDXPlus |
+
+Disease prediction is backed by a calibrated LightGBM classifier trained on the **DDXPlus dataset** (~1.16M synthetic patient records, 49 pathologies, ~223 evidences with binary + categorical + multi-choice types), achieving **99.71% top-1 / 100% top-3 accuracy** on a 116K held-out test set with **~1ms inference**. See the [model design notes](#disease-prediction-model--why-this-choice) for the rationale.
+
+---
+
+## Key Features
 
 ### AI & Machine Learning
 
-* **Disease Prediction** — Ensemble ML prediction (Random Forest, Naive Bayes, SVM) with majority voting. Select up to 3 symptoms and get disease name, description, precautions, and specialist recommendation.
-* **Enhanced AI Prediction** — ML prediction augmented with Gemini AI analysis for deeper insights, markdown-rendered results (PRO feature).
-* **AI Health Chat** — Gemini AI-powered chatbot with both standard and streaming response modes for real-time medical consultations. Available as a global floating widget on every page.
-* **Symptom Analyzer** — Gemini-powered symptom analysis with detailed explanations and recommendations.
-* **Drug Interaction Checker** — Check interactions between 2+ medications with severity indicators, autocomplete suggestions, PDF export (jspdf), and save-to-profile functionality.
-* **Medical Term Explainer** — Plain-language explanations of complex medical terminology via `/gemini/medical/explain/{term}`.
-* **Personalized Health Plans** — AI-generated 4-week health plans tailored to user profile and medical history, with print support.
-* **Voice-to-Text Symptom Input** — Hands-free symptom entry using the Web Speech API. Spoken words are fuzzy-matched against the 152-symptom list and auto-filled into the prediction form.
-* **Multi-Model Fallback** — Gemini service automatically falls back across 3 Gemini models (`gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-2.0-flash-lite`) for high availability.
-
-### Medical Reports & Files
-
-* **Medical Report Upload** — Upload PDF and image medical reports with file type/size validation.
-* **AI Report Analysis** — Automatic Gemini AI analysis on upload, extracting risk levels, summary, key findings, abnormal values, and recommendations.
-* **Report Management** — List, view, analyze, and delete uploaded medical reports from the profile page.
-* **Report Analysis Modal** — Detailed view of analysis results with risk level indicators.
-* **PDF Health Report Generation** — Server-side PDF generation via ReportLab aggregating data from 6 collections (profile, predictions, appointments, medications, medication logs, journal entries). Includes patient info, health metrics, active medications with adherence stats, disease predictions, appointments, and journal entries with medical disclaimer.
-
-### Health Monitoring & Dashboard
-
-* **Health Dashboard** — Centralized dashboard with BMI, blood pressure, and health score metrics with color-coded indicators.
-* **Dashboard Statistics** — Total predictions, appointments, uploaded reports, recent predictions, upcoming appointments, and most common health issue.
-* **Health Metrics** — BMI auto-calculation, blood pressure analysis, height/weight tracking via `/health/metrics`.
-* **Prediction History** — Full history of past predictions with statistics (total count, most common disease, recent activity) and detail modal showing individual model scores (RF/NB/SVM).
-* **Quick Actions** — Dashboard shortcuts to predict disease, book appointment, upload report, and access health tools.
-* **Health Score Gamification** — 14 achievable badges (first prediction, streak milestones, medication adherence, profile completion, etc.), XP/level system (6 levels from Beginner to Health Champion), consecutive week streak tracking, and rotating weekly health tips.
-
-### Medication Tracker
-
-* **Medication Management** — Full CRUD for medications with name, dosage, frequency (daily/twice daily/thrice daily/weekly/as needed), time slots, date range, notes, and reminder toggle.
-* **Medication Logging** — Quick take/skip logging per medication with timestamps.
-* **Adherence Statistics** — Track active count, total taken, total skipped, and adherence percentage.
-* **Soft Delete** — Medications are deactivated rather than permanently deleted, preserving history.
-
-### Symptom Timeline & Health Journal
-
-* **Unified Health Timeline** — Aggregates 4 event sources (predictions, appointments, medication logs, journal entries) into a chronological timeline with date grouping, type filtering, and configurable date range (7-365 days).
-* **Health Journal** — CRUD for journal entries with title, content, mood (great/good/okay/bad/terrible), pain level (0-10), symptoms, and tags.
-* **Severity Mapping** — Automatic severity classification for predictions and moods with color-coded indicators.
-
-### Family & Dependent Profiles
-
-* **Family Profile Management** — CRUD for up to 10 family member profiles per account.
-* **Relationship Types** — Spouse, child, parent, sibling, grandparent, other.
-* **Medical Information** — Track allergies, conditions, medications, blood type, age, and gender per family member.
-* **Health Summary** — Per-member summary endpoint for quick overview.
-
-### Appointments
-
-* **Doctor Directory** — Browse doctors with filters (specialization, city, search, min rating, sort by) and paginated results. Admin-only doctor creation and seed endpoint with 10 pre-populated doctors.
-* **Doctor Reviews** — Star rating (1-5) and comment system, one review per user per doctor, auto-calculated average ratings via MongoDB aggregation pipeline.
-* **Appointment Booking** — Book appointments with doctors, with email confirmation sent automatically.
-* **Appointment Management** — View upcoming appointments and cancel with email notification.
-* **Appointment Calendar** — Monthly calendar grid with appointment dots (color-coded by status), day detail panel, list view toggle, and appointment detail modal with cancel support.
-
-### Real-time Notifications
-
-* **WebSocket Notifications** — Persistent WebSocket connection per authenticated user with automatic reconnection (exponential backoff, max 5 attempts).
-* **Notification Bell** — In-app notification bell with unread count badge, dropdown panel, and mark-read support.
-* **Notification Types** — info, success, warning, error, appointment, prediction, medication.
-* **REST Endpoints** — List, mark read, mark all read, and delete notifications.
-
-### Data Export
-
-* **CSV Export** — Download CSV files per data type (predictions, appointments, medications, journal entries, family profiles) for any time period.
-* **FHIR R4 Export** — Export health data as a FHIR R4 Transaction Bundle with Patient, Condition, Encounter, MedicationStatement, Observation, and RelatedPerson resources.
-* **Export Summary** — Preview record counts before downloading.
-
-### User Management
-
-* **User Authentication** — JWT-based auth with HTTP-only secure cookies. Signup, login, logout, and auth status check.
-* **Two-Factor Authentication (2FA)** — TOTP-based 2FA via pyotp with QR code setup, 6-digit OTP verification, 8 single-use recovery codes, and enable/disable toggle.
-* **Welcome Emails** — Automated welcome email on registration via Gmail SMTP.
-* **User Profile** — View and edit profile with health metrics (BMI, blood pressure, height, weight), profile picture update, language preference, and health plan integration.
-* **Protected Routes** — Frontend route guards (ProtectedRoute/PublicRoute) with AuthContext managing login state via cookie-based authentication.
-
-### Admin Dashboard
-
-* **Platform Statistics** — Overview counts across 9 collections, 30-day activity trends, 7-day active users, 2FA adoption rate.
-* **User Management** — Search users by name/email, paginated list, detailed user profiles with activity stats, cascade delete (removes user data from 12 collections).
-* **System Health** — Database connectivity, ML model status, Gemini availability, per-collection document counts.
-* **Activity Feed** — Recent platform activity aggregating predictions, appointments, and signups.
-* **Admin Guard** — All admin endpoints require `ADMIN_EMAIL` match with RBAC enforcement.
-
-### Content & Communication
-
-* **Health Articles** — Browse health articles with search and category filtering (Wellness, Mental Health, Cardiology, Diabetes, Nutrition, Sleep, Fitness, Women's Health). Links to external resources (Healthline, WebMD, Mayo Clinic).
-* **Contact Form** — Submit inquiries with email confirmation. Admin-only endpoints for viewing and managing submissions with RBAC guard.
-* **Email Notifications** — Automated emails for registration, appointment confirmation, appointment cancellation, and contact form submissions via Gmail SMTP.
+- **Differential Disease Prediction** — Calibrated LightGBM returns a ranked **top-5 differential diagnosis** with calibrated probabilities and ICD-10 codes. Inputs: any number of symptoms and antecedents (binary, categorical, multi-choice) plus optional age and sex. Frontend renders the top prediction with a confidence bar, every diagnosis with a layperson-explanation tooltip, and the full differential.
+- **AI-Enhanced Clinical Assessment** — Toggle-gated Gemini analysis adds pathophysiology, differential diagnoses to consider, red flags, expected clinical course, recommended workup, and questions to ask a physician.
+- **AI Health Chat** — Streaming and non-streaming Gemini chatbot widget available on every page.
+- **Symptom Analyzer** — Triage classification (Emergency / Urgent / Routine / Self-care) with structured clinical assessment.
+- **Drug Interaction Checker** — Pharmacological analysis between 2+ medications with severity classification, autocomplete suggestions, jsPDF export, and localStorage save (quota-aware).
+- **Medical Term Explainer** — Plain-language explanations of clinical terminology with medical accuracy preserved.
+- **Personalized Health Plans** — 4-week hybrid plans synthesizing ML prediction + uploaded report data + user profile.
+- **Voice-to-Text Symptom Search** — Hands-free symptom search via the Web Speech API; spoken phrases populate the live filter over the evidence catalog (`GET /predict/evidences`).
+- **Multi-Model Fallback** — Gemini service auto-falls-back across `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-2.0-flash-lite` per request.
 
 ### Virtual Doctor (Voice AI)
 
-* **AI Voice Consultation** — Real-time voice-based medical consultations powered by LiveKit + Gemini 2.5 Flash native audio. Talk to an AI doctor naturally with voice input/output.
-* **Voice Activity Detection** — Silero VAD for accurate speech detection and natural turn-taking during conversations.
-* **Session Management** — Secure room-based sessions with JWT-authenticated token generation. Each consultation gets a unique room.
-* **Consultation UI** — Full consultation flow with pre-call info screen, animated in-call interface (pulsing visuals, session timer, mute control), and post-call summary.
-* **Medical Safety Guardrails** — AI doctor provides health guidance but recommends real doctors for serious concerns, with emergency awareness built into the system prompt.
+- **AI Voice Consultation** — Real-time bidirectional voice with Dr. AI powered by **LiveKit Agents + Gemini 2.5 Flash realtime audio**.
+- **Pre-loaded Patient Chart** — Agent receives sanitized patient context (profile, recent diagnoses, active medications, journal, appointments, family history) at session start.
+- **Voice Activity Detection** — Silero VAD for accurate turn-taking.
+- **Persisted Consultations** — Every voice call is recorded as a `db.consultations` document. The agent subscribes to LiveKit's `conversation_item_added` event to capture finalized turns into an in-memory transcript, then POSTs to the backend on disconnect via `ctx.add_shutdown_callback`. The backend asks Gemini to extract a structured summary (chief_complaint, symptoms_mentioned, conditions_discussed, recommendations, red_flags, follow_up_advised).
+- **Medical Safety Guardrails** — Hard-coded refusal to prescribe controlled substances, explicit emergency-call escalation prompts, allergy + medication-interaction cross-checks against the patient's chart.
 
-### UI/UX
+### Medical Reports & Files
 
-* **Dark Mode** — Full dark mode support across all 21+ pages and components. Class-based toggle (`darkMode: "class"`) with ThemeContext, system preference detection, and localStorage persistence. Sun/moon toggle in navbar.
-* **Multi-language Support (i18n)** — English and Hindi translations via i18next with browser language detection. Language toggle in navbar. User language preference stored in profile.
-* **Responsive Design** — Tailwind CSS responsive layout across all devices.
-* **Glassmorphism** — Backdrop-blur glass effects on navbar, cards, and overlays with enhanced dark mode variants.
-* **Animations** — Framer Motion page transitions and intersection observer scroll animations.
-* **Toast Notifications** — Real-time feedback via react-toastify with theme-aware styling.
-* **Markdown Rendering** — ReactMarkdown for AI-generated content display with dark mode prose support.
-* **Lazy Loading** — Code-split pages with React lazy loading for performance.
-* **Error Boundary** — React class-based ErrorBoundary wrapping all lazy routes with reload recovery UI.
-* **SVG Progress Circles** — Custom health metric visualizations without external chart libraries.
-* **Offline PWA Support** — Service worker via vite-plugin-pwa with workbox caching (NetworkFirst for API, StaleWhileRevalidate for fonts, CacheFirst for static assets). Installable as a Progressive Web App.
-* **Accessibility** — ARIA attributes on interactive elements (navbar menu toggle with aria-expanded, aria-controls, role="menu").
+- **Medical Report Upload** — PDF and image uploads with file-type and size validation.
+- **AI Report Analysis** — Automatic Gemini analysis on upload extracts risk levels, summary, key findings, abnormal values, and recommendations.
+- **Report Management** — List, view, analyze, and delete uploaded reports from the profile page.
+- **PDF Health Report** — Server-side ReportLab PDF aggregating profile, predictions, appointments, medications, medication logs, and journal entries.
 
-### Security Features
+### Health Monitoring & Dashboard
 
-* **Rate Limiting** — slowapi with configurable limits (default 100/minute) on all endpoints.
-* **Security Headers** — Middleware adding X-Content-Type-Options (nosniff), X-Frame-Options (DENY), X-XSS-Protection, Referrer-Policy (strict-origin-when-cross-origin), and HSTS in production.
-* **HTTP-Only Secure Cookies** — JWT stored in HTTP-only cookies with Secure flag in production.
-* **Two-Factor Authentication** — TOTP-based 2FA with recovery codes.
-* **Admin RBAC** — Admin endpoints guarded by email-based role check.
-* **CORS** — Configurable allowed origins via environment variable.
-* **Mandatory SECRET_KEY** — Application exits in production if SECRET_KEY is not set.
+- **Health Dashboard** — BMI, blood pressure, and health score metrics with color-coded indicators.
+- **Dashboard Statistics** — Counts and trends across predictions, appointments, uploaded reports.
+- **Health Metrics** — BMI auto-calculation, blood pressure analysis, height/weight tracking.
+- **Prediction History** — Full history with statistics, detail modal showing the stored differential with probabilities and ICD-10 codes.
+- **Health Score Gamification** — 14 badges, XP/levels (Beginner → Health Champion), streak tracking, rotating weekly health tips.
 
-## **Technologies Used**
+### Medication Tracker
 
-* **Frontend**: React 18, Vite 5, Tailwind CSS 3, JavaScript, Framer Motion, ReactMarkdown, react-toastify, jspdf, LiveKit React SDK, i18next, react-i18next, Formik, Yup, react-select, react-icons
-* **Backend**: Python, FastAPI, Uvicorn, slowapi (rate limiting)
-* **AI/ML**: Google Gemini AI (google-genai SDK), Scikit-learn (Random Forest, Naive Bayes, SVM)
-* **Voice AI**: LiveKit Agents, Gemini 2.5 Flash Realtime Audio, Silero VAD
-* **Voice Input**: Web Speech API (browser-native)
-* **Database**: MongoDB (Motor async driver)
-* **Authentication**: JWT (python-jose), bcrypt, HTTP-only cookies, pyotp + qrcode (2FA)
-* **Email**: Gmail SMTP (smtplib + email.mime)
-* **File Processing**: Pillow, PyPDF2, aiofiles
-* **PDF Generation**: ReportLab
-* **Real-time**: WebSocket (FastAPI native)
-* **PWA**: vite-plugin-pwa, Workbox
-* **Data Validation**: Pydantic, email-validator
-* **Other**: python-dotenv, pandas, numpy
+- Full CRUD for medications (name, dosage, frequency, time slots, date range, notes, reminders).
+- Take/skip logging with timestamps.
+- Adherence statistics (active count, total taken, total skipped, percentage).
+- Soft delete preserves history.
 
-## **Project Structure**
+### Symptom Timeline & Health Journal
+
+- **Unified Health Timeline** — Aggregates **5 event sources** (predictions, appointments, medication logs, journal entries, voice consultations) into a chronological timeline with date grouping, type filtering, and 7–365 day range.
+- **Health Journal** — CRUD entries with title, content, mood, pain level (0–10), symptoms, tags.
+
+### Family & Dependent Profiles
+
+- CRUD for up to 10 family profiles per account.
+- Relationship types: spouse, child, parent, sibling, grandparent, other.
+- Per-member medical data: allergies, conditions, medications, blood type, age, gender.
+- Per-member health summary endpoint.
+
+### Appointments
+
+- **Doctor Directory** — Browse with filters (specialization, city, search, min rating, sort), paginated, admin-only seeding.
+- **Doctor Reviews** — 1–5 star rating + comment, one review per user per doctor, auto-calculated average via MongoDB aggregation.
+- **Booking & Cancellation** — With automatic email notifications (Gmail SMTP via `aiosmtplib`).
+- **Appointment Calendar** — Monthly grid with appointment dots, day detail panel, list-view toggle.
+
+### Real-time Notifications
+
+- Persistent WebSocket connection per authenticated user.
+- Automatic reconnection with exponential backoff (max 5 attempts).
+- Notification bell with unread badge.
+- REST endpoints for list / mark read / mark all read / delete.
+
+### Data Export
+
+- **CSV Export** per data type (predictions, appointments, medications, journal, family).
+- **FHIR R4 Bundle** with Patient, Condition, Encounter, MedicationStatement, Observation, RelatedPerson resources.
+- **Export Summary** previewing record counts.
+
+### User Management
+
+- **JWT Authentication** with HTTP-only cookies (Bearer header fallback) and explicit `verify_exp` + `verify_signature` JWT decoding.
+- **Two-Factor Authentication (2FA)** — TOTP via `pyotp`, QR-code setup, 6-digit OTP, 8 single-use recovery codes, enable/disable toggle.
+- **bcrypt password hashing** with explicit `rounds=12`.
+- **Welcome emails** on registration.
+- **Cookie-based AuthContext** with route guards (ProtectedRoute / PublicRoute).
+
+### Admin Dashboard
+
+- Platform-wide statistics across collections; 30-day activity trends; 7-day active users; 2FA adoption rate.
+- User management with search, pagination, detailed profiles with activity stats, cascade-delete across 12 collections.
+- System health check (DB connectivity, ML model status, Gemini availability, per-collection counts).
+- Recent activity feed.
+- All admin endpoints guarded by `ADMIN_EMAIL` env variable.
+
+### Content & Communication
+
+- **Health Articles** with search and category filtering (links to Healthline, WebMD, Mayo Clinic, CDC, MedlinePlus, WHO).
+- **Contact Form** with email confirmation; admin-only review endpoints.
+
+### UI / UX
+
+- **Dark Mode** — Class-based toggle, system preference detection, localStorage persistence.
+- **Multi-language (i18n)** — English + Hindi via i18next with browser language detection.
+- **Responsive Design** — Tailwind responsive layout.
+- **Glassmorphism** — Backdrop-blur effects with enhanced dark-mode variants.
+- **Animations** — Framer Motion page transitions, intersection-observer scroll animations.
+- **Toast Notifications** — Theme-aware `react-toastify`.
+- **Markdown Rendering** — `react-markdown` for AI-generated content.
+- **Lazy Loading** — Code-split pages with React lazy.
+- **Error Boundary** — Class-based ErrorBoundary wrapping all lazy routes.
+- **PWA** — `vite-plugin-pwa` with Workbox runtime caching.
+- **Accessibility** — ARIA attributes on interactive elements, keyboard navigation, tooltips wired with focus-within for mobile.
+
+### Security
+
+- **Rate Limiting** — `slowapi` (default 100/minute) on all endpoints.
+- **Security Headers** — `X-Content-Type-Options`, `X-Frame-Options: DENY`, `X-XSS-Protection`, `Referrer-Policy`, HSTS in production.
+- **CSP** — `connect-src` permits dev backends; `frame-ancestors 'none'`.
+- **CORS** — Strict configurable origin list (no wildcard with credentials).
+- **SECRET_KEY** mandatory in production — application exits if missing.
+- **`HTTPException` passthrough** — Status codes preserved through the global exception handler.
+- **Prompt-injection defense** — Every user input sanitized (control chars, bidi overrides, markdown fences) before interpolation into Gemini prompts.
+- **Patient-data sanitization** — LiveKit metadata fields sanitized before injection into the agent's system prompt.
+
+---
+
+## Architecture
+
+```
+                   ┌──────────────────────────────────────┐
+                   │   Browser (React + Vite + Tailwind)  │
+                   │   - 21 lazy-loaded pages             │
+                   │   - PWA + ErrorBoundary              │
+                   │   - WebSocket /ws/notifications      │
+                   │   - LiveKit Voice Client             │
+                   └──────────────────┬───────────────────┘
+                                      │ HTTPS + WebSocket
+                                      │
+┌─────────────────────────────────────▼────────────────────────────┐
+│                        FastAPI Backend                           │
+│  ┌────────────┐  ┌────────────┐  ┌────────────────┐              │
+│  │ auth/2fa   │  │ predict    │  │ gemini         │  ...20 routes│
+│  │ require_   │  │ DDXPlus    │  │ chat/stream    │              │
+│  │ auth + JWT │  │ LightGBM   │  │ symptom/drugs  │              │
+│  └─────┬──────┘  └─────┬──────┘  └─────┬──────────┘              │
+│        │               │                │                        │
+│        ▼               ▼                ▼                        │
+│  ┌────────────────────────────────────────────────────┐          │
+│  │   MongoDB (Motor async)                            │          │
+│  │   users, predictions, appointments, medications,   │          │
+│  │   journal_entries, family_profiles, notifications, │          │
+│  │   doctors, doctor_reviews, files, contacts,        │          │
+│  │   chat_history, health_plans, consultations        │          │
+│  └────────────────────────────────────────────────────┘          │
+└───────────┬──────────────────────────────────────┬───────────────┘
+            │ /livekit/token                       │ /consultations/{id}/summary
+            │ (mints JWT, creates consultation)    │
+            ▼                                      ▲
+┌─────────────────────────────────────────────────┴────────────────┐
+│              LiveKit Voice Agent (separate process)              │
+│  - Joins room as "Dr. AI" participant                            │
+│  - Receives sanitized patient chart in metadata                  │
+│  - Gemini 2.5 Flash realtime audio (bidirectional voice)         │
+│  - Silero VAD for turn-taking                                    │
+│  - Subscribes to `conversation_item_added` events                │
+│  - On disconnect: ctx.add_shutdown_callback posts the captured   │
+│    transcript + duration back to the backend (httpx)             │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Disease Prediction Model — Why This Choice
+
+This section documents the rationale for the ML pipeline. The repo previously used a 3-model ensemble (Random Forest + GaussianNB + SVC) on a 4,920-row Kaggle dataset; this is what replaced it and why.
+
+### Dataset: DDXPlus
+
+- **Scale.** 1.29M synthetic patient records vs ~5K rows in the prior Kaggle dataset (260× more data).
+- **Realism.** Each patient has age, sex, region, and travel history; evidences come in **binary, categorical, and multi-choice** types (110 symptoms + 113 antecedents). Prior datasets were binary-only.
+- **Differential ground truth.** DDXPlus ships the full ranked differential diagnosis with probabilities per patient — matches how physicians actually reason instead of forcing a single guess.
+- **Peer-reviewed.** NeurIPS 2022 Datasets & Benchmarks Track ([arXiv:2205.09148](https://arxiv.org/abs/2205.09148)).
+- **License.** CC-BY 4.0 — production use allowed with attribution (see [citation](#citation--attribution) below).
+
+### Model: Single Calibrated LightGBM
+
+- **GBDT beats deep learning on tabular medical data.** Comprehensive 2024 benchmarks (Yıldız & Kalayci, *Gradient Boosting Decision Trees on Medical Diagnosis over Tabular Data*; Shmuel et al., *A Comprehensive Benchmark of Machine and Deep Learning Across Diverse Tabular Datasets*) confirm XGBoost / LightGBM / CatBoost outperform tabular deep-learning architectures (TabNet, TabTransformer, FT-Transformer, SAINT) **with ~100× less compute** on tabular medical classification.
+- **One model beats the old 3-model ensemble.** A single tuned GBDT consistently matches or beats hand-built RF + NB + SVM hard-voting ensembles in every benchmark we reviewed, at ~50× faster inference and with one artifact to ship.
+- **`GaussianNB` was the wrong family.** The previous `nb_model.pkl` assumed Gaussian-distributed features but symptoms are binary (Bernoulli). LightGBM subsumes the role correctly; we removed the Naive Bayes component instead of "fixing" it.
+- **Calibrated probabilities.** Wrapped in `CalibratedClassifierCV(method="isotonic", cv=3)` so `predict_proba` reflects actual posterior likelihood. This is what lets the UI honestly say "94% confidence" and produces a meaningful top-K differential whose probabilities sum to ~1.0.
+- **Operational simplicity.** One ~142 MB `lgbm_model.pkl` + small JSON/PKL metadata replaces five inter-dependent files (RF + NB + SVM + data_dict + Doctor_Specialist). Easier to deploy, monitor, and retrain.
+
+### Measured Results
+
+- **99.71% Top-1 accuracy** on a 116K held-out test set (stratified split from DDXPlus).
+- **100.00% Top-3 accuracy** — the correct pathology is always in the top 3 candidates.
+- **~1 ms inference** per request on a single CPU core, no GPU required.
+
+### Considered but Rejected
+
+| Alternative | Top-1 | Why not |
+|---|---|---|
+| DDxT (transformer on DDXPlus) | 99.98% | +0.3% accuracy at the cost of GPU inference and a more complex serving stack. |
+| LoRA-tuned LLaMA-3 on DDXPlus | 99.94% | ~16 GB base model + ~500 ms latency. Wrong tradeoff for a self-hostable MVP. |
+| Bio_ClinicalBERT on free-text symptoms | n/a | Lets users type symptoms in plain English, but the structured DDXPlus picker is more reliable and runs on CPU. Possible future direction. |
+| Keep RF + NB + SVM, just retrain on DDXPlus | unknown | The ensemble architecture is dominated by GBDT in every published benchmark; retraining wouldn't have closed the gap. |
+
+---
+
+## Tech Stack
+
+- **Frontend:** React 18, Vite 5, Tailwind CSS 3, Framer Motion, ReactMarkdown, react-toastify, jsPDF, LiveKit React SDK, i18next, react-i18next, Formik, Yup, react-select, react-icons.
+- **Backend:** Python 3.10+, FastAPI, Uvicorn, slowapi (rate limiting).
+- **AI / ML:** Google Gemini AI (`google-genai` SDK), **LightGBM** (calibrated multiclass classifier on DDXPlus), Scikit-learn (`CalibratedClassifierCV` for probability calibration).
+- **Voice AI:** LiveKit Agents (Python), Gemini 2.5 Flash realtime audio, Silero VAD, httpx (consultation summary POST).
+- **Voice Input (browser):** Web Speech API.
+- **Database:** MongoDB (Motor async driver).
+- **Authentication:** JWT (`python-jose`), bcrypt, HTTP-only cookies, `pyotp` + `qrcode` (2FA).
+- **Email:** Gmail SMTP via `aiosmtplib` (async, non-blocking).
+- **File Processing:** Pillow, PyPDF2, aiofiles.
+- **PDF Generation:** ReportLab.
+- **Real-time:** WebSocket (FastAPI native).
+- **PWA:** vite-plugin-pwa, Workbox.
+- **Data Validation:** Pydantic v2, email-validator.
+- **Misc:** python-dotenv, pandas, numpy.
+
+---
+
+## Project Structure
 
 ```
 AI_Health_Care/
@@ -162,417 +272,240 @@ AI_Health_Care/
 │   │   └── settings.py             # Environment variables & configuration
 │   ├── database/
 │   │   ├── connection.py           # MongoDB (Motor) connection & indexes
-│   │   └── models.py              # Pydantic data models (20+ models)
+│   │   └── models.py               # Pydantic data models (20+ models)
 │   ├── routes/
 │   │   ├── auth.py                 # Signup, login, logout, auth status
-│   │   ├── two_factor.py          # 2FA setup, verify, disable, status
-│   │   ├── gemini.py              # AI chat, streaming, symptom analysis, drugs, health plans
-│   │   ├── prediction.py          # Disease prediction (standard & enhanced)
-│   │   ├── profile.py             # User profile management
-│   │   ├── appointments.py        # Appointment booking & management
-│   │   ├── predictions_history.py # Prediction history & statistics
-│   │   ├── files.py               # File upload, analysis & management
-│   │   ├── contact.py             # Contact form & admin management (RBAC)
-│   │   ├── dashboard.py           # Health dashboard & metrics
-│   │   ├── livekit_token.py       # LiveKit room token generation
-│   │   ├── medications.py         # Medication CRUD, logging, adherence stats
-│   │   ├── timeline.py            # Unified health timeline & journal CRUD
-│   │   ├── reports.py             # PDF report generation & summary
-│   │   ├── family.py              # Family/dependent profile management
-│   │   ├── notifications.py       # WebSocket notifications & REST CRUD
-│   │   ├── doctors.py             # Doctor directory, reviews, admin seed
-│   │   ├── gamification.py        # Badges, XP/levels, streaks, health tips
-│   │   ├── export.py              # CSV & FHIR R4 data export
-│   │   └── admin.py               # Admin dashboard, user mgmt, system health
+│   │   ├── two_factor.py           # 2FA setup, verify, disable, status
+│   │   ├── gemini.py               # AI chat, streaming, symptom analysis, drugs, health plans
+│   │   ├── prediction.py           # Disease prediction (standard & enhanced)
+│   │   ├── profile.py              # User profile management
+│   │   ├── appointments.py         # Appointment booking & management
+│   │   ├── predictions_history.py  # Prediction history & statistics
+│   │   ├── files.py                # File upload, analysis & management
+│   │   ├── contact.py              # Contact form & admin management (RBAC)
+│   │   ├── dashboard.py            # Health dashboard & metrics
+│   │   ├── livekit_token.py        # LiveKit room token + agent dispatch + consultation creation
+│   │   ├── consultations.py        # Voice consultation persistence (CRUD + summary endpoint)
+│   │   ├── medications.py          # Medication CRUD, logging, adherence stats
+│   │   ├── timeline.py             # Unified health timeline (5 event sources) & journal CRUD
+│   │   ├── reports.py              # PDF report generation & summary
+│   │   ├── family.py               # Family/dependent profile management
+│   │   ├── notifications.py        # WebSocket notifications & REST CRUD
+│   │   ├── doctors.py              # Doctor directory, reviews, admin seed
+│   │   ├── gamification.py         # Badges, XP/levels, streaks, health tips
+│   │   ├── export.py               # CSV & FHIR R4 data export
+│   │   └── admin.py                # Admin dashboard, user mgmt, system health
 │   ├── services/
-│   │   ├── auth_service.py        # Authentication, JWT, cookie/header auth
-│   │   ├── email_service.py       # Email notifications (Gmail SMTP)
-│   │   ├── gemini_service.py      # Gemini AI integration (multi-model fallback)
-│   │   └── ml_service.py          # ML model loading & ensemble prediction
+│   │   ├── auth_service.py         # Authentication, JWT, cookie/header auth
+│   │   ├── email_service.py        # Email notifications (Gmail SMTP via aiosmtplib)
+│   │   ├── gemini_service.py       # Gemini AI integration (multi-model fallback + prompt-injection defense)
+│   │   ├── consultation_service.py # Voice consultation transcript summarization (Gemini)
+│   │   └── ml_service.py           # DDXPlus LightGBM loader, top-K differential, evidence catalog
 │   ├── utils/
-│   │   ├── helpers.py             # Utility functions
-│   │   ├── security.py            # Security utilities (require_auth)
-│   │   └── validators.py          # Input validation
-│   ├── models/                    # ML model files (.pkl) & data (.csv)
+│   │   ├── helpers.py              # Utility functions
+│   │   └── security.py             # Security utilities (require_auth, JWT, bcrypt)
+│   ├── models/                     # DDXPlus model artifacts: lgbm_model.pkl, feature_map.pkl,
+│   │                               # label_map.pkl, release_{evidences,conditions}.json
 │   └── requirements.txt
-├── frontend/                      # React + Vite + Tailwind CSS
+├── frontend/                       # React + Vite + Tailwind CSS
 │   ├── src/
-│   │   ├── components/            # Reusable UI components
-│   │   │   ├── NavBar.jsx         # Navigation with dark mode & language toggles
-│   │   │   ├── NotificationBell.jsx # Real-time notification dropdown
-│   │   │   ├── VoiceInput.jsx     # Web Speech API voice input component
-│   │   │   ├── DoctorCard.jsx     # Doctor card with booking modal
-│   │   │   ├── Chatbox.jsx        # AI chat floating widget
-│   │   │   └── ...                # 20+ components
-│   │   ├── pages/                 # Route pages (21 pages, all lazy-loaded)
+│   │   ├── components/             # Reusable UI components (NavBar, NotificationBell, VoiceInput,
+│   │   │                           # DoctorCard, Chatbox, ErrorBoundary, etc.)
+│   │   ├── pages/                  # 21 lazy-loaded route pages
 │   │   ├── context/
-│   │   │   ├── AuthContext.jsx    # Cookie-based auth state management
-│   │   │   ├── ThemeContext.jsx   # Dark mode toggle & persistence
+│   │   │   ├── AuthContext.jsx     # Cookie-based auth state management
+│   │   │   ├── ThemeContext.jsx    # Dark mode toggle & persistence
 │   │   │   └── NotificationContext.jsx # WebSocket notification management
 │   │   ├── i18n/
-│   │   │   ├── i18n.js           # i18next configuration
-│   │   │   ├── en.json           # English translations
-│   │   │   └── hi.json           # Hindi translations
+│   │   │   ├── i18n.js             # i18next configuration
+│   │   │   ├── en.json             # English translations
+│   │   │   └── hi.json             # Hindi translations
 │   │   ├── utils/
-│   │   │   └── api.js            # Centralized API layer (15+ namespaces)
-│   │   ├── App.jsx                # Router, ErrorBoundary, layout
-│   │   └── main.jsx              # Entry point with providers
-│   ├── tailwind.config.js         # Custom colors, dark mode, animations
-│   ├── index.html                 # PWA meta tags
-│   └── vite.config.js             # Vite + PWA plugin config
-├── livekit-agent/                 # LiveKit Voice Agent (separate service)
-│   ├── agent.py                   # Voice agent with Gemini realtime audio
-│   ├── requirements.txt           # Agent-specific Python dependencies
-│   ├── Dockerfile                 # Container image for LiveKit Cloud
-│   ├── livekit.toml               # LiveKit Cloud deployment config
-│   └── .env.example               # Required environment variables
-├── .gitignore                     # Excludes .env, __pycache__, node_modules, .pkl, uploads
+│   │   │   └── api.js              # Centralized API layer (15+ namespaces, AbortController support)
+│   │   ├── App.jsx                 # Router, ErrorBoundary, layout
+│   │   └── main.jsx                # Entry point with providers
+│   ├── tailwind.config.js          # Custom colors, dark mode, animations
+│   ├── index.html                  # PWA meta tags + Content Security Policy
+│   └── vite.config.js              # Vite + PWA plugin config
+├── livekit-agent/                  # LiveKit Voice Agent (separate service)
+│   ├── agent.py                    # Voice agent with Gemini realtime audio + consultation save hook
+│   ├── requirements.txt            # Agent-specific Python dependencies (incl. httpx)
+│   ├── Dockerfile                  # Multi-stage container image for LiveKit Cloud
+│   ├── livekit.toml                # LiveKit Cloud deployment config
+│   └── .env.example                # Required environment variables
+├── training/                       # Disease prediction model retraining
+│   ├── train.py                    # Downloads DDXPlus, trains calibrated LightGBM,
+│   │                               # writes artifacts to backend/models/
+│   └── requirements.txt            # datasets, lightgbm, scikit-learn, pandas, numpy
+├── .gitignore
 └── README.md
 ```
 
-## **API Endpoints**
+---
 
-### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/auth/status` | Check authentication status |
-| POST | `/auth/signup` | Register new user |
-| POST | `/auth/login` | Login user (returns 2FA challenge if enabled) |
-| POST | `/auth/logout` | Logout user |
+## Installation
 
-### Two-Factor Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/auth/2fa/setup` | Generate TOTP secret & QR code |
-| POST | `/auth/2fa/verify-setup` | Verify OTP & enable 2FA |
-| POST | `/auth/2fa/verify-login` | Verify OTP/recovery code during login |
-| POST | `/auth/2fa/disable` | Disable 2FA (requires OTP) |
-| GET | `/auth/2fa/status` | Check 2FA enabled status |
-
-### Gemini AI
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/gemini/chat` | AI health chat (non-streaming) |
-| POST | `/gemini/chat/stream` | AI health chat (streaming) |
-| GET | `/gemini/medical/explain/{term}` | Explain medical terminology |
-| POST | `/gemini/symptom/analyze` | AI symptom analysis |
-| POST | `/gemini/drugs/interactions` | Drug interaction check (2+ medications) |
-| POST | `/gemini/health/personalized-plan` | Generate personalized health plan |
-| GET | `/gemini/status` | Gemini service health check |
-
-### Disease Prediction
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/predict/disease` | Ensemble ML disease prediction |
-| POST | `/predict/enhanced` | ML + Gemini AI enhanced prediction |
-
-### Health Dashboard
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health/dashboard` | Comprehensive user dashboard |
-| GET | `/health/metrics` | BMI, blood pressure analysis |
-
-### Prediction History
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/predictions/history` | Get prediction history |
-| GET | `/predictions/statistics` | Get prediction statistics |
-
-### Medications
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/medications` | Create medication |
-| GET | `/medications` | List medications (filter by active) |
-| GET | `/medications/{id}` | Get medication detail |
-| PATCH | `/medications/{id}` | Update medication |
-| DELETE | `/medications/{id}` | Soft-delete medication |
-| POST | `/medications/log` | Log take/skip action |
-| GET | `/medications/{id}/logs` | Get medication logs |
-| GET | `/medications/adherence/stats` | Get adherence statistics |
-
-### Health Timeline & Journal
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/timeline` | Unified health timeline (days, event_type, limit params) |
-| POST | `/timeline/journal` | Create journal entry |
-| GET | `/timeline/journal` | List journal entries |
-| PATCH | `/timeline/journal/{id}` | Update journal entry |
-| DELETE | `/timeline/journal/{id}` | Delete journal entry |
-
-### Health Reports
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/reports/generate` | Generate & download PDF health report |
-| GET | `/reports/summary` | Get report data preview (JSON) |
-
-### Family Profiles
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/family` | Create family member (max 10) |
-| GET | `/family` | List family members |
-| GET | `/family/{id}` | Get family member detail |
-| PATCH | `/family/{id}` | Update family member |
-| DELETE | `/family/{id}` | Delete family member |
-| GET | `/family/{id}/summary` | Get family member health summary |
-
-### Appointments
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/appointments/book` | Book an appointment |
-| GET | `/appointments` | Get user appointments |
-| DELETE | `/appointments/{id}` | Cancel an appointment |
-
-### Doctors
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/doctors` | List doctors (filters: specialization, city, search, min_rating, sort_by) |
-| GET | `/doctors/specializations` | List available specializations |
-| GET | `/doctors/cities` | List available cities |
-| GET | `/doctors/{id}` | Get doctor detail with reviews |
-| POST | `/doctors` | Create doctor (admin only) |
-| POST | `/doctors/seed` | Seed sample doctors (admin only) |
-| POST | `/doctors/{id}/reviews` | Add review (1 per user per doctor) |
-| PATCH | `/doctors/{id}/reviews` | Update own review |
-| DELETE | `/doctors/{id}/reviews` | Delete own review |
-
-### Notifications
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| WS | `/ws/notifications` | WebSocket connection for real-time notifications |
-| GET | `/notifications` | List notifications (limit, unread_only params) |
-| PATCH | `/notifications/{id}/read` | Mark notification as read |
-| PATCH | `/notifications/read-all` | Mark all notifications as read |
-| DELETE | `/notifications/{id}` | Delete notification |
-
-### Gamification
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/gamification` | Get badges, XP, level, streak, adherence, health tips |
-
-### Data Export
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/export/csv/{data_type}` | Download CSV (predictions/appointments/medications/journal/family) |
-| GET | `/export/fhir` | Download FHIR R4 Transaction Bundle (JSON) |
-| GET | `/export/summary` | Get record counts preview |
-
-### Admin Dashboard
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/admin/stats` | Platform-wide statistics |
-| GET | `/admin/users` | List users (search, pagination) |
-| GET | `/admin/users/{id}` | Detailed user info with activity |
-| DELETE | `/admin/users/{id}` | Cascade delete user & all data |
-| GET | `/admin/system` | System health (DB, ML, Gemini, collections) |
-| GET | `/admin/activity` | Recent platform activity feed |
-
-### Files
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/files/upload` | Upload medical report (auto-analyzed) |
-| GET | `/files` | List uploaded files |
-| GET | `/files/{id}` | Get file details |
-| GET | `/files/{id}/analysis` | Get file AI analysis |
-| GET | `/files/metrics/history` | Get file metrics history |
-| DELETE | `/files/{id}` | Delete a file |
-
-### Profile
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/profile` | Get user profile |
-| PATCH | `/profile/update` | Update user profile (incl. language preference) |
-
-### Contact
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/contact` | Submit contact form |
-| GET | `/contact/submissions` | Get all submissions (admin only) |
-| PATCH | `/contact/submissions/{id}/status` | Update submission status (admin only) |
-
-### LiveKit (Virtual Doctor)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/livekit/token` | Generate room token for voice consultation |
-| GET | `/livekit/status` | Check LiveKit configuration status |
-
-### System
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | API home |
-| GET | `/health` | Health check (DB, ML models, Gemini, routes) |
-
-## **Frontend Pages**
-
-| Route | Page | Access |
-|-------|------|--------|
-| `/` | Home — Hero, About, Services, Articles, Testimonials, FAQs, Contact | Public |
-| `/login` | Login — with 2FA OTP flow | Public |
-| `/signup` | Signup | Public |
-| `/dashboard` | Health Dashboard — Metrics, stats, recent activity, quick actions | Protected |
-| `/predict` | Disease Prediction — Symptom selection, voice input, ML + AI analysis | Protected |
-| `/history` | Prediction History — Past predictions, statistics, detail modal | Protected |
-| `/book` | Appointments — Doctor search, booking, management | Protected |
-| `/calendar` | Appointment Calendar — Monthly grid, day detail, list view | Protected |
-| `/doctors` | Doctor Directory — Search, filter, reviews, ratings | Protected |
-| `/medications` | Medication Tracker — CRUD, take/skip logging, adherence stats | Protected |
-| `/timeline` | Health Timeline — Unified timeline, journal entries, mood tracking | Protected |
-| `/report` | Health Report — PDF generation, data preview, download | Protected |
-| `/export` | Export Data — CSV per type, FHIR R4 bundle download | Protected |
-| `/family` | Family Profiles — Dependent management, medical info | Protected |
-| `/achievements` | Gamification — Badges, XP/levels, streaks, health tips | Protected |
-| `/tools` | Health Tools — Symptom Analyzer, Drug Checker, Health Plan Generator | Protected |
-| `/article` | Health Articles — Search, category filtering, external resources | Protected |
-| `/profile` | Profile — Edit info, health metrics, reports, analysis, health plans | Protected |
-| `/virtual-doctor` | Virtual Doctor — AI voice consultation with LiveKit + Gemini | Protected |
-| `/security` | 2FA Settings — Setup, QR code, recovery codes, disable | Protected |
-| `/admin` | Admin Dashboard — Stats, users, system health, activity (admin only) | Protected |
-
-## **Installation**
-
-### **Prerequisites**
+### Prerequisites
 
 - Python 3.10+
 - Node.js 18+
 - MongoDB (local or Atlas)
 - Google Gemini API key
 - Gmail account with App Password (for email notifications)
-- LiveKit Cloud account or self-hosted LiveKit server (for Virtual Doctor feature)
+- LiveKit Cloud account or self-hosted LiveKit server (for Virtual Doctor)
+- **macOS only:** `brew install libomp` (required by LightGBM)
 
-### **Backend Setup**
+### Backend Setup
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/shubhamprasad318/AI_Health_Care.git
-   cd AI_Health_Care/backend
-   ```
+```bash
+git clone <repo-url>
+cd AI_Health_Care/backend
 
-2. Create and activate a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+python -m venv .venv
+source .venv/bin/activate            # Windows: .venv\Scripts\activate
 
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+pip install -r requirements.txt
 
-4. Create a `.env` file in the `backend/` directory:
-   ```env
-   # Database
-   MONGO_URI=your_mongodb_connection_string
+# Configure .env (see Environment Variables below)
+cp .env.example .env  # if available, or create from scratch
+$EDITOR .env
 
-   # Security (MANDATORY in production — app will exit without it)
-   SECRET_KEY=your_secret_key
+python main.py                       # API at http://localhost:8000
+```
 
-   # AI
-   GEMINI_API_KEY=your_gemini_api_key
+### Training the Disease Prediction Model (optional)
 
-   # CORS
-   ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+The repo already ships with a trained `lgbm_model.pkl` in `backend/models/`. To retrain from scratch on the latest DDXPlus snapshot (~1 GB download, ~10 min on a modern laptop):
 
-   # Email (Gmail SMTP)
-   SMTP_EMAIL=your_gmail@gmail.com
-   SMTP_PASSWORD=your_gmail_app_password
-   SMTP_FROM_NAME=AI Health Care
+```bash
+cd training
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python train.py
+```
 
-   # Admin
-   ADMIN_EMAIL=your_admin_email@example.com
+The script downloads `aai530-group6/ddxplus` from Hugging Face, trains a calibrated LightGBM multiclass classifier, prints Top-1 / Top-3 / Top-5 accuracy on a 116K held-out test set (expect ~99.7% Top-1), and overwrites the model files in `backend/models/`. Restart the backend to pick up the new model.
 
-   # LiveKit (for Virtual Doctor)
-   LIVEKIT_URL=your_livekit_server_url
-   LIVEKIT_API_KEY=your_livekit_api_key
-   LIVEKIT_API_SECRET=your_livekit_api_secret
+### LiveKit Voice Agent Setup
 
-   # Environment (set to "production" for secure cookies, HSTS)
-   ENV=development
-   ```
+```bash
+cd AI_Health_Care/livekit-agent
 
-5. Start the server:
-   ```bash
-   python main.py
-   ```
-   The API will be available at `http://localhost:8000`.
+python -m venv .venv
+source .venv/bin/activate
 
-### **Voice Agent Setup (Virtual Doctor)**
+pip install -r requirements.txt
 
-1. Navigate to the LiveKit agent directory:
-   ```bash
-   cd AI_Health_Care/livekit-agent
-   ```
+# Configure .env (see livekit-agent/.env.example)
+$EDITOR .env
 
-2. Create and activate a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+python agent.py console               # Run locally
+# OR deploy to LiveKit Cloud (1,000 free minutes/month):
+#   lk cloud auth
+#   lk project set-default "<your-project>"
+#   lk agent create
+#   lk agent update-secrets --secrets-file .env
+```
 
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### Frontend Setup
 
-4. Create a `.env` file (see `.env.example`):
-   ```env
-   LIVEKIT_URL=wss://your-project.livekit.cloud
-   LIVEKIT_API_KEY=your_livekit_api_key
-   LIVEKIT_API_SECRET=your_livekit_api_secret
-   GOOGLE_API_KEY=your_gemini_api_key
-   ```
+```bash
+cd AI_Health_Care/frontend
 
-5. Run locally:
-   ```bash
-   python agent.py console
-   ```
+npm install
+npm run dev                           # http://localhost:5173
+npm run build                         # production build with PWA service worker
+```
 
-6. **Deploy to LiveKit Cloud** (1,000 free minutes/month):
-   ```bash
-   lk cloud auth
-   lk project set-default "<your-project>"
-   lk agent create
-   lk agent update-secrets --secrets-file .env
-   ```
+---
 
-### **Frontend Setup**
+## Environment Variables
 
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
+### Backend (`backend/.env`)
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+```env
+# Database
+MONGO_URI=your_mongodb_connection_string
+MONGO_DBNAME=helloai
 
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
+# Security (MANDATORY in production — app will exit without it)
+SECRET_KEY=your_secret_key
+ENV=development                       # set to "production" for secure cookies & HSTS
 
-4. Open `http://localhost:5173` in your browser.
+# AI
+GEMINI_API_KEY=your_gemini_api_key
 
-5. Build for production (generates PWA service worker):
-   ```bash
-   npm run build
-   ```
+# CORS
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
 
-## **Usage**
+# Email (Gmail SMTP)
+SMTP_EMAIL=your_gmail@gmail.com
+SMTP_PASSWORD=your_gmail_app_password
+SMTP_FROM_NAME=AI Health Care
 
-1. Open the application in your browser and create an account or log in.
-2. **Predict Disease** — Select up to 3 symptoms (or use voice input), get ML-based predictions with disease info, precautions, and specialist recommendations. Toggle enhanced AI analysis for deeper Gemini-powered insights.
-3. **AI Health Chat** — Use the floating chatbot widget (available on every page) for real-time medical consultations with streaming responses.
-4. **Health Tools** — Access the Symptom Analyzer, Drug Interaction Checker (with PDF export), and Health Plan Generator (4-week AI plans with print support).
-5. **Medical Reports** — Upload PDF/image reports from the Profile page for automatic AI analysis showing risk levels, key findings, abnormal values, and recommendations. Generate comprehensive PDF health reports from the Report page.
-6. **Medications** — Track daily medications with dosage, frequency, and time schedules. Log take/skip actions and monitor adherence statistics.
-7. **Health Timeline** — View a unified chronological timeline of all health events (predictions, appointments, medications, journal entries). Write journal entries with mood and pain tracking.
-8. **Appointments** — Search the Doctor Directory with filters and reviews, book appointments, and view them on the Calendar with monthly grid and list views.
-9. **Health Dashboard** — Monitor BMI, blood pressure, health score, view prediction history, upcoming appointments, and access quick actions.
-10. **Family Profiles** — Add and manage up to 10 family member profiles with medical information.
-11. **Achievements** — Earn 14 badges, track XP/levels, maintain health streaks, and view weekly health tips.
-12. **Export Data** — Download your health data as CSV files (per category) or as a FHIR R4 bundle for interoperability.
-13. **Security** — Enable 2FA from the Security page for TOTP-based two-factor authentication with recovery codes.
-14. **Dark Mode** — Toggle dark mode from the sun/moon button in the navbar. Preference persists across sessions.
-15. **Language** — Switch between English and Hindi using the language toggle in the navbar.
-16. **Virtual Doctor** — Navigate to the Virtual Doctor page, start a voice consultation, and talk naturally with the AI doctor.
-17. **Admin** — Access the Admin Dashboard to view platform stats, manage users, monitor system health, and review activity (requires admin email).
+# Admin RBAC
+ADMIN_EMAIL=your_admin_email@example.com
+
+# LiveKit (for Virtual Doctor)
+LIVEKIT_URL=wss://your-project.livekit.cloud
+LIVEKIT_API_KEY=your_livekit_api_key
+LIVEKIT_API_SECRET=your_livekit_api_secret
+
+# Public URL the LiveKit agent will use to POST consultation summaries back
+# In dev this matches your backend; in prod set it to the public backend URL.
+BACKEND_PUBLIC_URL=http://localhost:8000
+```
+
+### LiveKit Agent (`livekit-agent/.env`)
+
+```env
+LIVEKIT_URL=wss://your-project.livekit.cloud
+LIVEKIT_API_KEY=your_livekit_api_key
+LIVEKIT_API_SECRET=your_livekit_api_secret
+GOOGLE_API_KEY=your_gemini_api_key
+```
+
+### Frontend (`frontend/.env`)
+
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+> ⚠️ Use `http://localhost:8000`, not `http://0.0.0.0:8000` — Chrome treats `0.0.0.0` as a separate origin and will refuse to send cookies or open WebSockets to it.
+
+---
+
+## Usage Guide
+
+1. **Sign up / log in.** Optionally enable 2FA from `/security`.
+2. **Predict.** Open `/predict` → search the evidence catalog (symptoms + medical history) → optionally enter age/sex (auto-filled from profile if blank) → check **Enhanced AI Analysis** for Gemini's clinical write-up → submit. View ranked top-5 differential with confidence bars, ICD-10 codes, and plain-language tooltips on each clinical name.
+3. **AI Health Chat.** Use the floating chatbot widget on every page for real-time consultations.
+4. **Health Tools.** Symptom Analyzer (triage), Drug Interaction Checker (with PDF export), Health Plan Generator (4-week plans).
+5. **Medical Reports.** Upload from `/profile` → Gemini auto-analyzes → see risk level, key findings, abnormal values, recommendations.
+6. **Medications.** Track daily medications, log take/skip, monitor adherence.
+7. **Health Timeline.** `/timeline` aggregates predictions, appointments, medication logs, journal entries, and voice consultations chronologically.
+8. **Voice Consultation.** `/virtual-doctor` → start a call with Dr. AI. Speak naturally — the agent has reviewed your chart. End the call to see "Consultation saved" — full transcript + structured summary lands in your Timeline.
+9. **Appointments.** Search the Doctor Directory, book, view on Calendar.
+10. **Family Profiles.** `/family` — add up to 10 dependents.
+11. **Achievements.** `/achievements` — earn badges, track streaks.
+12. **Export Data.** `/export` — CSV per category, FHIR R4 bundle.
+13. **Dark Mode & Language.** Sun/moon toggle + language toggle in navbar.
+14. **Admin.** `/admin` — platform stats, user mgmt, system health.
+
+---
+
+## Citation & Attribution
+
+The disease prediction model is trained on the **DDXPlus dataset**, released under the **Creative Commons Attribution 4.0 International (CC-BY-4.0)** license. If you use this model, its training script, or DDXPlus directly, please cite:
+
+> Tchango, A. F., Goel, R., Wen, Z., Martel, J., & Ghosn, J. (2022).
+> **DDXPlus: A New Dataset For Automatic Medical Diagnosis.**
+> *Advances in Neural Information Processing Systems 35* (NeurIPS Datasets & Benchmarks Track).
+> [arXiv:2205.09148](https://arxiv.org/abs/2205.09148) · [GitHub](https://github.com/mila-iqia/ddxplus)
+
+ICD-10 codes are sourced from the same dataset.
+
+---
+
+*Built with ❤️ for accessible, evidence-based health information.*

@@ -4,6 +4,7 @@ Simplified with new Gemini SDK
 """
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -14,7 +15,7 @@ from slowapi.errors import RateLimitExceeded
 import logging
 import sys
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 from config.settings import (
     GEMINI_API_KEY,
@@ -39,6 +40,7 @@ from routes.files import router as files_router
 from routes.contact import router as contact_router
 from routes.dashboard import router as dashboard_router
 from routes.livekit_token import router as livekit_router
+from routes.consultations import router as consultations_router
 from routes.medications import router as medications_router
 from routes.timeline import router as timeline_router
 from routes.reports import router as reports_router
@@ -133,24 +135,40 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SecurityHeadersMiddleware)
 
-# CORS
+_is_production_env = os.environ.get("ENV", "development").lower() in ("production", "prod")
+_dev_default_origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+]
+_cors_origins = list(dict.fromkeys(
+    [o for o in allow_origin if o and o != "*"]
+    + ([] if _is_production_env else _dev_default_origins)
+))
+if not _cors_origins:
+    logger.warning(
+        "No CORS origins configured. Set ALLOWED_ORIGINS env var to a comma-separated list."
+    )
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-        *allow_origin,
-    ],
+    allow_origins=_cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],
 )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_passthrough(request: Request, exc: HTTPException):
+    return await http_exception_handler(request, exc)
 
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    if isinstance(exc, HTTPException):
+        return await http_exception_handler(request, exc)
     logger.error(f"Unhandled error: {str(exc)}", exc_info=True)
     return JSONResponse(
         status_code=500,
@@ -169,6 +187,7 @@ app.include_router(files_router)  #  File uploads
 app.include_router(contact_router)  #  Contact form
 app.include_router(dashboard_router)  #  Health dashboard
 app.include_router(livekit_router)
+app.include_router(consultations_router)
 app.include_router(medications_router)
 app.include_router(timeline_router)
 app.include_router(reports_router)
@@ -236,7 +255,7 @@ async def health_check():
                 "database": "connected",
                 "ml_models": "loaded" if are_models_loaded() else "not loaded",
                 "gemini": "enabled" if is_gemini_available() else "disabled",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "routes_loaded": len(app.routes),
             },
         }

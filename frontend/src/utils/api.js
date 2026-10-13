@@ -5,50 +5,71 @@
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const DEFAULT_TIMEOUT_MS = 30000;
 
-/**
- * Make authenticated API request with enhanced error handling
- */
 async function apiRequest(endpoint, options = {}) {
-  try {
-    const isFormData = options.body instanceof FormData;
-    
-    const headers = {};
-    
-    if (!isFormData && options.method && options.method.toUpperCase() !== 'GET') {
-      headers['Content-Type'] = 'application/json';
-    } else if (!isFormData && !options.method) {
-      headers['Content-Type'] = 'application/json';
+  const {
+    signal: callerSignal,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    headers: callerHeaders,
+    ...fetchOptions
+  } = options;
+
+  const controller = new AbortController();
+  const timerId = timeoutMs > 0
+    ? setTimeout(() => controller.abort(new DOMException("Timeout", "TimeoutError")), timeoutMs)
+    : null;
+
+  const onCallerAbort = () => controller.abort(callerSignal.reason);
+  if (callerSignal) {
+    if (callerSignal.aborted) {
+      controller.abort(callerSignal.reason);
+    } else {
+      callerSignal.addEventListener("abort", onCallerAbort, { once: true });
     }
-    
-    Object.assign(headers, options.headers);
-    
+  }
+
+  try {
+    const isFormData = fetchOptions.body instanceof FormData;
+    const headers = {};
+    const method = fetchOptions.method ? fetchOptions.method.toUpperCase() : "GET";
+    if (!isFormData && method !== "GET") {
+      headers["Content-Type"] = "application/json";
+    }
+    Object.assign(headers, callerHeaders);
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
+      ...fetchOptions,
       credentials: "include",
       headers,
+      signal: controller.signal,
     });
 
-    // Handle different response types
     const contentType = response.headers.get("content-type");
     let data;
-    
     if (contentType && contentType.includes("application/json")) {
       data = await response.json();
     } else {
-      // For file downloads or other non-JSON responses
       data = { success: response.ok, status: response.status };
     }
-    
+
     if (!response.ok) {
       throw new Error(data.message || `HTTP error! status: ${response.status}`);
     }
-
     return data;
   } catch (error) {
-    // Enhanced error logging
+    if (error?.name === "TimeoutError" || error?.name === "AbortError") {
+      const aborted = callerSignal?.aborted ? "Request cancelled" : `Request timed out after ${timeoutMs}ms`;
+      const wrapped = new Error(aborted);
+      wrapped.name = error.name;
+      console.error(`API Error [${endpoint}]: ${aborted}`);
+      throw wrapped;
+    }
     console.error(`API Error [${endpoint}]:`, error);
     throw error;
+  } finally {
+    if (timerId !== null) clearTimeout(timerId);
+    if (callerSignal) callerSignal.removeEventListener("abort", onCallerAbort);
   }
 }
 
@@ -129,34 +150,29 @@ export const profileAPI = {
       body: JSON.stringify(updateData),
     });
   },
-
-  // Update profile picture
-  updateProfilePicture: async (file) => {
-    const formData = new FormData();
-    formData.append("profile_picture", file);
-    
-    return apiRequest("/profile/picture", {
-      method: "POST",
-      body: formData,
-    });
-  },
 };
 
 /**
  * Disease Prediction APIs
  */
 export const predictionAPI = {
-  predict: async (symptoms) => {
-    return apiRequest("/predict/disease", {
-      method: "POST",
-      body: JSON.stringify({ symptoms }),
+  getEvidences: async (language = "en") => {
+    return apiRequest(`/predict/evidences?language=${language}`, {
+      method: "GET",
     });
   },
 
-  predictEnhanced: async (symptoms, options = {}) => {
+  predict: async ({ evidences, age, sex, topK = 5 }) => {
+    return apiRequest("/predict/disease", {
+      method: "POST",
+      body: JSON.stringify({ evidences, age, sex, top_k: topK }),
+    });
+  },
+
+  predictEnhanced: async ({ evidences, age, sex, topK = 5 }) => {
     return apiRequest("/predict/enhanced", {
       method: "POST",
-      body: JSON.stringify({ symptoms, ...options }),
+      body: JSON.stringify({ evidences, age, sex, top_k: topK }),
     });
   },
 
@@ -169,13 +185,6 @@ export const predictionAPI = {
   getStatistics: async () => {
     return apiRequest("/predictions/statistics", {
       method: "GET",
-    });
-  },
-
-  // Delete prediction from history
-  deletePrediction: async (predictionId) => {
-    return apiRequest(`/predictions/${predictionId}`, {
-      method: "DELETE",
     });
   },
 };
@@ -242,25 +251,9 @@ export const appointmentAPI = {
     });
   },
 
-  // Cancel appointment
   cancelAppointment: async (appointmentId) => {
-    return apiRequest(`/appointments/${appointmentId}/cancel`, {
-      method: "POST",
-    });
-  },
-
-  // Reschedule appointment
-  rescheduleAppointment: async (appointmentId, newDate, newTime) => {
-    return apiRequest(`/appointments/${appointmentId}/reschedule`, {
-      method: "PATCH",
-      body: JSON.stringify({ date: newDate, time: newTime }),
-    });
-  },
-
-  // Get appointment by ID
-  getAppointment: async (appointmentId) => {
     return apiRequest(`/appointments/${appointmentId}`, {
-      method: "GET",
+      method: "DELETE",
     });
   },
 };
@@ -306,15 +299,18 @@ export const fileAPI = {
     const response = await fetch(`${API_BASE_URL}/files/${fileId}`, {
       credentials: 'include'
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to load file');
     }
-    
+
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
-    window.open(url, '_blank');
-    setTimeout(() => window.URL.revokeObjectURL(url), 100);
+    try {
+      window.open(url, '_blank');
+    } finally {
+      setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+    }
   }
 };
 
@@ -485,10 +481,14 @@ export const reportAPI = {
     const a = document.createElement("a");
     a.href = url;
     a.download = `health_report_${new Date().toISOString().split("T")[0]}.pdf`;
+    a.style.display = "none";
     document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+    try {
+      a.click();
+    } finally {
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }
   },
 
   getSummary: async (days = 90) => {
@@ -616,6 +616,27 @@ export const adminAPI = {
   },
 };
 
+export const consultationsAPI = {
+  list: async (limit = 20, skip = 0) =>
+    apiRequest(`/consultations?limit=${limit}&skip=${skip}`, { method: "GET" }),
+
+  get: async (id) =>
+    apiRequest(`/consultations/${id}`, { method: "GET" }),
+
+  delete: async (id) =>
+    apiRequest(`/consultations/${id}`, { method: "DELETE" }),
+
+  markRecommendationAction: async (id, recommendationIdx, actionType, linkedId = null) =>
+    apiRequest(`/consultations/${id}/recommendation-action`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        recommendation_idx: recommendationIdx,
+        action_type: actionType,
+        linked_id: linkedId,
+      }),
+    }),
+};
+
 /**
  * Notification APIs
  */
@@ -640,29 +661,6 @@ export const notificationAPI = {
 };
 
 /**
- * Articles/Blog APIs (if you implement them)
- */
-export const articleAPI = {
-  getArticles: async (limit = 10, offset = 0) => {
-    return apiRequest(`/articles?limit=${limit}&offset=${offset}`, {
-      method: "GET",
-    });
-  },
-
-  getArticle: async (articleId) => {
-    return apiRequest(`/articles/${articleId}`, {
-      method: "GET",
-    });
-  },
-
-  searchArticles: async (query) => {
-    return apiRequest(`/articles/search?q=${encodeURIComponent(query)}`, {
-      method: "GET",
-    });
-  },
-};
-
-/**
  * Utility function to check if user is authenticated
  */
 export const checkAuthentication = async () => {
@@ -678,25 +676,28 @@ export const checkAuthentication = async () => {
  * Utility function to handle file downloads
  */
 export const downloadFile = async (fileId, filename) => {
+  let url = null;
+  let anchor = null;
   try {
     const response = await fetch(`${API_BASE_URL}/files/${fileId}`, {
       credentials: "include",
     });
-    
     if (!response.ok) throw new Error("Download failed");
-    
+
     const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename || "download";
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+    url = window.URL.createObjectURL(blob);
+    anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename || "download";
+    anchor.style.display = "none";
+    document.body.appendChild(anchor);
+    anchor.click();
   } catch (error) {
     console.error("Download error:", error);
     throw error;
+  } finally {
+    if (anchor && anchor.parentNode) anchor.parentNode.removeChild(anchor);
+    if (url) window.URL.revokeObjectURL(url);
   }
 };
 
@@ -713,13 +714,13 @@ export default {
   file: fileAPI,
   contact: contactAPI,
   health: healthAPI,
-  article: articleAPI,
   livekit: livekitAPI,
   medication: medicationAPI,
   timeline: timelineAPI,
   report: reportAPI,
   family: familyAPI,
   notification: notificationAPI,
+  consultations: consultationsAPI,
   doctor: doctorAPI,
   gamification: gamificationAPI,
   admin: adminAPI,

@@ -1,70 +1,57 @@
-# This is an example Dockerfile that builds a minimal container for running LK Agents
-# For more information on the build process, see https://docs.livekit.io/agents/ops/deployment/builds/
 # syntax=docker/dockerfile:1
 
-# Use the official Python base image with Python 3.13
-# We use the slim variant to keep the image size smaller while still having essential tools
 ARG PYTHON_VERSION=3.13
-FROM python:${PYTHON_VERSION}-slim AS base
 
-# Keeps Python from buffering stdout and stderr to avoid situations where
-# the application crashes without emitting any logs due to buffering.
-ENV PYTHONUNBUFFERED=1
+FROM python:${PYTHON_VERSION}-slim AS builder
 
-# Disable pip version check to speed up builds
-ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
 
-# Create a non-privileged user that the app will run under.
-# See https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        gcc \
+        g++ \
+        python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+COPY requirements.txt ./
+RUN pip install --prefix=/install --no-cache-dir -r requirements.txt
+
+
+FROM python:${PYTHON_VERSION}-slim AS runtime
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONFAULTHANDLER=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
 ARG UID=10001
 RUN adduser \
-    --disabled-password \
-    --gecos "" \
-    --home "/app" \
-    --shell "/sbin/nologin" \
-    --uid "${UID}" \
-    appuser
+        --disabled-password \
+        --gecos "" \
+        --home "/app" \
+        --shell "/sbin/nologin" \
+        --uid "${UID}" \
+        appuser
 
-# Install build dependencies required for Python packages with native extensions
-# gcc: C compiler needed for building Python packages with C extensions
-# g++: C++ compiler needed for building Python packages with C++ extensions
-# python3-dev: Python development headers needed for compilation
-# We clean up the apt cache after installation to keep the image size down
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    python3-dev \
-  && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /install /usr/local
 
-# Create a new directory for our application code
-# And set it as the working directory
 WORKDIR /app
 
-# Copy just the dependency files first, for more efficient layer caching
-COPY requirements.txt ./
-
-# Install Python dependencies using pip
-# --no-cache-dir ensures we don't use the system cache
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy all remaining pplication files into the container
-# This includes source code, configuration files, and dependency specifications
-# (Excludes files specified in .dockerignore)
 COPY . .
 
-# Change ownership of all app files to the non-privileged user
-# This ensures the application can read/write files as needed
+# Pre-warm the Silero VAD model so the first job doesn't pay download latency.
+# If the download fails, the container should still start; runtime will retry.
+RUN python -c "from livekit.plugins import silero; silero.VAD.load()" || true
+
 RUN chown -R appuser:appuser /app
 
-# Switch to the non-privileged user for all subsequent operations
-# This improves security by not running as root
 USER appuser
 
-# Pre-download any ML models or files the agent needs
-# This ensures the container is ready to run immediately without downloading
-# dependencies at runtime, which improves startup time and reliability
-RUN python "agent.py" download-files
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)"
 
-# Run the application
-# The "start" command tells the worker to connect to LiveKit and begin waiting for jobs.
-CMD ["python", "agent.py", "start"]
+# Run unbuffered for clean log streaming. exec form ensures SIGTERM reaches Python.
+CMD ["python", "-u", "agent.py", "start"]

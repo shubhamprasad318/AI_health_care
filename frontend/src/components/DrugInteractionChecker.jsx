@@ -264,26 +264,47 @@ const DrugInteractionChecker = () => {
     toast.success("📄 PDF downloaded successfully!");
   };
 
-  // ✅ Save to profile
   const saveToProfile = () => {
-    try {
-      const validMeds = medications.filter(med => med.trim());
-      const reportData = {
-        medications: validMeds,
-        analysis: result,
-        timestamp: new Date().toISOString(),
-        severity: getSeverityInfo(result).level
-      };
+    const validMeds = medications.filter(med => med.trim());
+    const reportData = {
+      medications: validMeds,
+      analysis: result,
+      timestamp: new Date().toISOString(),
+      severity: getSeverityInfo(result).level
+    };
 
-      const existingReports = JSON.parse(
+    let existingReports = [];
+    try {
+      existingReports = JSON.parse(
         localStorage.getItem("drugInteractionReports") || "[]"
       );
-      
-      existingReports.push(reportData);
+      if (!Array.isArray(existingReports)) existingReports = [];
+    } catch {
+      existingReports = [];
+    }
+
+    existingReports.push(reportData);
+
+    try {
       localStorage.setItem("drugInteractionReports", JSON.stringify(existingReports));
-      
       toast.success("💾 Report saved to your profile!");
     } catch (error) {
+      const isQuota =
+        error &&
+        (error.name === "QuotaExceededError" ||
+          error.code === 22 ||
+          error.code === 1014);
+      if (isQuota) {
+        const trimmed = existingReports.slice(-10);
+        try {
+          localStorage.setItem("drugInteractionReports", JSON.stringify(trimmed));
+          toast.warning("Storage was full — kept the 10 most recent reports.");
+          return;
+        } catch {
+          toast.error("Browser storage is full. Please clear space and try again.");
+          return;
+        }
+      }
       console.error("Save error:", error);
       toast.error("Failed to save report");
     }

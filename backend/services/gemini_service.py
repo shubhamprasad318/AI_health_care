@@ -1,47 +1,84 @@
 """
 Gemini AI Integration Service - 2026 SDK
-Uses the new google.genai Client-based architecture
+Uses the new google.genai Client-based architecture.
 """
 
-import logging
-from typing import Dict, List, Optional, Any
-from datetime import datetime
-from pathlib import Path
+import asyncio
 import json
+import logging
+import re
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, AsyncIterator, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Global Gemini client
 gemini_client = None
 
-# ============================================
-# 📋 MODEL CONFIGURATION
-# ============================================
 GEMINI_MODELS = [
-    "gemini-2.5-flash",  # Stable 2.5 alias — best quality/speed tradeoff
-    "gemini-2.0-flash",  # Proven stable fallback
-    "gemini-2.0-flash-lite",  # Lightweight fallback
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
 ]
 
-# ============================================
-# 🔧 INITIALIZATION
-# ============================================
+GEMINI_TIMEOUT_SECONDS = 60
+GEMINI_STREAM_CHUNK_TIMEOUT_SECONDS = 30
+
+_MAX_PROMPT_FIELD = 2000
+_MAX_LIST_ITEMS = 20
+_MAX_LIST_ITEM_LEN = 200
+
+# Strip ASCII control chars (incl. NUL) except \t, \n, \r.
+_CONTROL_CHARS_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+# Bidirectional override codepoints (used in homoglyph attacks).
+_BIDI_RE = re.compile(r"[\u202a-\u202e\u2066-\u2069]")
+
+
+def _sanitize_user_input(value: Any, max_len: int = _MAX_PROMPT_FIELD) -> str:
+    """Neutralize untrusted user input before embedding in a Gemini prompt.
+
+    Prevents prompt injection by stripping control chars, bidirectional
+    overrides, and escaping markdown fence delimiters. Truncates to max_len.
+    """
+    if value is None:
+        return ""
+    text = str(value)
+    text = _CONTROL_CHARS_RE.sub("", text)
+    text = _BIDI_RE.sub("", text)
+    text = text.replace("```", "''' ")
+    text = text.strip()
+    if len(text) > max_len:
+        text = text[:max_len] + "…"
+    return text
+
+
+def _sanitize_list(
+    items: Optional[List[Any]],
+    max_items: int = _MAX_LIST_ITEMS,
+    item_max_len: int = _MAX_LIST_ITEM_LEN,
+) -> List[str]:
+    if not items:
+        return []
+    cleaned = [_sanitize_user_input(x, item_max_len) for x in list(items)[:max_items]]
+    return [c for c in cleaned if c]
 
 
 def initialize_gemini(api_key: str) -> bool:
-    """Initialize Gemini AI with the new 2026 SDK"""
     global gemini_client
     if not api_key:
-        logger.warning("⚠️ GEMINI_API_KEY not found. Gemini features disabled.")
+        logger.warning("GEMINI_API_KEY not found. Gemini features disabled.")
         return False
     try:
         from google import genai
 
         gemini_client = genai.Client(api_key=api_key)
-        logger.info("✅ Gemini AI initialized with 2026 SDK (google-genai)")
+        logger.info("Gemini AI initialized with 2026 SDK (google-genai)")
         return True
+    except ImportError as e:
+        logger.error(f"google-genai not installed: {e}")
+        return False
     except Exception as e:
-        logger.error(f"❌ Failed to initialize Gemini: {e}")
+        logger.error(f"Failed to initialize Gemini: {e}", exc_info=True)
         return False
 
 
@@ -50,7 +87,7 @@ def is_gemini_available() -> bool:
 
 
 def _extract_text(response) -> str:
-    """Extract text from response, skipping non-text parts (thought_signature, etc.)."""
+    """Extract text from a Gemini response, skipping non-text parts."""
     try:
         if response and response.candidates:
             parts = response.candidates[0].content.parts
@@ -61,105 +98,121 @@ def _extract_text(response) -> str:
     try:
         if response and response.text:
             return response.text
-    except Exception:
+    except (AttributeError, ValueError):
         pass
     return ""
 
 
-# ============================================
-# 🔄 CORE API CALL (Robust Fallback)
-# ============================================
+def _is_auth_error(err: BaseException) -> bool:
+    msg = str(err)
+    return "401" in msg or "API key" in msg or "PERMISSION_DENIED" in msg
 
 
-async def call_gemini(prompt: str, config: Optional[Dict] = None) -> str:
+async def _generate_content_async(
+    model: str, contents: Any, config: Any
+) -> Any:
+    client = gemini_client
+    if client is None:
+        raise RuntimeError("Gemini client not initialized")
+
+    def _sync_call():
+        kwargs: Dict[str, Any] = {"model": model, "contents": contents}
+        if config is not None:
+            kwargs["config"] = config
+        return client.models.generate_content(**kwargs)
+
+    return await asyncio.wait_for(
+        asyncio.to_thread(_sync_call), timeout=GEMINI_TIMEOUT_SECONDS
+    )
+
+
+async def call_gemini(prompt: str, config: Optional[Any] = None) -> str:
     if not gemini_client:
-        raise Exception("Gemini client not initialized")
+        raise RuntimeError("Gemini client not initialized")
 
-    try:
-        from google.genai import types
+    from google.genai import types
 
-        # Increase token limit for detailed health plans
-        generation_config = config or types.GenerateContentConfig(
-            temperature=0.7,
-            top_p=0.95,
-            top_k=40,
-            max_output_tokens=4000,
-        )
+    generation_config = config or types.GenerateContentConfig(
+        temperature=0.7,
+        top_p=0.95,
+        top_k=40,
+        max_output_tokens=4000,
+    )
 
-        last_error = None
+    last_error: Optional[BaseException] = None
 
-        for model_name in GEMINI_MODELS:
-            try:
-                response = gemini_client.models.generate_content(
-                    model=model_name, contents=prompt, config=generation_config
-                )
-                if response:
-                    text = _extract_text(response)
-                    if text:
-                        return text
-            except Exception as e:
-                last_error = e
-                # Don't retry on Auth errors
-                if "401" in str(e) or "API key" in str(e):
-                    raise e
-                continue
+    for model_name in GEMINI_MODELS:
+        try:
+            response = await _generate_content_async(
+                model_name, prompt, generation_config
+            )
+            if response:
+                text = _extract_text(response)
+                if text:
+                    return text
+        except asyncio.TimeoutError as e:
+            last_error = e
+            logger.warning(f"Gemini timeout on model {model_name}")
+            continue
+        except Exception as e:
+            last_error = e
+            if _is_auth_error(e):
+                logger.error(f"Gemini auth error: {e}")
+                raise
+            logger.warning(f"Gemini error on model {model_name}: {e}")
+            continue
 
-        logger.error("❌ All Gemini models failed.")
-        if last_error:
-            raise last_error
-        return ""
-    except Exception as e:
-        logger.error(f"Gemini API error: {e}")
-        raise
-
-
-# ============================================
-# 🤖 ML PREDICTION ENHANCEMENT (Pro Prompt)
-# ============================================
+    logger.error("All Gemini models failed.")
+    if last_error:
+        raise last_error
+    return ""
 
 
 async def get_gemini_enhanced_prediction(
     prediction: str,
     symptoms: List[str],
-    description: str,
-    precautions: List[str],
-    specialize: str,
+    specialize: str = "Physician",
     user_age: Optional[int] = None,
     user_gender: Optional[str] = None,
 ) -> Dict[str, Any]:
     if not gemini_client:
-        return {
-            "enhanced": False,
-            "ml_prediction": prediction,
-            "ml_description": description,
-        }
+        return {"enhanced": False, "ml_prediction": prediction}
+
+    s_prediction = _sanitize_user_input(prediction, 200)
+    s_symptoms = _sanitize_list(symptoms, max_items=15, item_max_len=120)
+    s_specialize = _sanitize_user_input(specialize, 100)
+    s_age = _sanitize_user_input(user_age, 10) if user_age is not None else ""
+    s_gender = _sanitize_user_input(user_gender, 20) if user_gender else ""
+
     try:
         context_str = ""
-        if user_age:
-            context_str += f"Age: {user_age} years"
-        if user_gender:
-            context_str += f", Sex: {user_gender}"
+        if s_age:
+            context_str += f"Age: {s_age} years"
+        if s_gender:
+            context_str += f", Sex: {s_gender}"
         if not context_str:
             context_str = "Demographics not provided — factor this uncertainty into your assessment"
+
+        symptoms_str = ", ".join(s_symptoms)
 
         prompt = f"""You are a board-certified internal medicine physician reviewing a machine learning model's provisional diagnosis. Your role is to provide a rigorous, evidence-based clinical assessment that a patient can take to their doctor.
 
 **PATIENT DEMOGRAPHICS:** {context_str}
-**PRESENTING SYMPTOMS:** {", ".join(symptoms)}
-**ML MODEL PREDICTION:** {prediction}
+**PRESENTING SYMPTOMS:** {symptoms_str}
+**ML MODEL PREDICTION:** {s_prediction}
 
 Provide your assessment in the following structure (Markdown format):
 
-### Clinical Assessment of {prediction}
+### Clinical Assessment of {s_prediction}
 
 **What This Condition Is:**
-Explain the pathophysiology of {prediction} in clear, accurate language. Include the organ systems involved, what goes wrong at a biological level, and how it manifests. Do NOT oversimplify to the point of inaccuracy. Do NOT use alarming language — be factual.
+Explain the pathophysiology of {s_prediction} in clear, accurate language. Include the organ systems involved, what goes wrong at a biological level, and how it manifests. Do NOT oversimplify to the point of inaccuracy. Do NOT use alarming language — be factual.
 
 **Why These Symptoms Occur:**
-For each reported symptom ({", ".join(symptoms)}), explain the specific pathophysiological mechanism connecting it to {prediction}. If a symptom does NOT typically correlate with this condition, explicitly state: "Note: [symptom] is not a classic presentation of {prediction} — this warrants discussion with your physician as it may indicate a co-existing condition or alternative diagnosis."
+For each reported symptom ({symptoms_str}), explain the specific pathophysiological mechanism connecting it to {s_prediction}. If a symptom does NOT typically correlate with this condition, explicitly state: "Note: [symptom] is not a classic presentation of {s_prediction} — this warrants discussion with your physician as it may indicate a co-existing condition or alternative diagnosis."
 
 **Differential Diagnoses to Consider:**
-List 2-4 alternative conditions that could explain this symptom cluster, ordered by clinical likelihood. For each, state: the condition name, the overlapping symptoms, and one distinguishing feature that differentiates it from {prediction}. This is critical — an ML model may misclassify, and the patient must be aware of alternatives.
+List 2-4 alternative conditions that could explain this symptom cluster, ordered by clinical likelihood. For each, state: the condition name, the overlapping symptoms, and one distinguishing feature that differentiates it from {s_prediction}. This is critical — an ML model may misclassify, and the patient must be aware of alternatives.
 
 **Red Flags — Seek Emergency Care Immediately If You Experience:**
 List specific, measurable warning signs (e.g., "fever above 103°F / 39.4°C that does not respond to antipyretics within 2 hours", NOT vague statements like "if symptoms worsen"). Each red flag must be an actionable observation the patient can identify.
@@ -168,60 +221,61 @@ List specific, measurable warning signs (e.g., "fever above 103°F / 39.4°C tha
 Describe the typical trajectory — what improves first, what may linger, and realistic recovery timelines. Include: when symptoms should start improving with appropriate treatment, when to become concerned if no improvement, and any expected complications.
 
 **Recommended Diagnostic Workup:**
-List specific lab tests, imaging, or examinations the {specialize} should consider to confirm or rule out this diagnosis. For each test, briefly state what it checks for.
+List specific lab tests, imaging, or examinations the {s_specialize} should consider to confirm or rule out this diagnosis. For each test, briefly state what it checks for.
 
-**Questions to Ask Your {specialize}:**
+**Questions to Ask Your {s_specialize}:**
 Provide 5 specific, high-value questions the patient should bring to their appointment. These should help differentiate the diagnosis, understand treatment options, and establish follow-up criteria.
 
 ---
 ⚕️ **Medical Disclaimer:** This analysis is generated by AI for educational and informational purposes only. It is NOT a diagnosis, NOT a treatment plan, and NOT a substitute for in-person medical evaluation. An ML model prediction has limited accuracy and must be confirmed through proper clinical examination, diagnostic testing, and physician judgment. Always consult a qualified healthcare provider before making any medical decisions."""
 
         response_text = await call_gemini(prompt)
-        return (
-            {
+        if response_text:
+            return {
                 "enhanced": True,
                 "ml_prediction": prediction,
-                "ml_description": description,
-                "ml_precautions": precautions,
-                "ml_specialist": specialize,
                 "gemini_analysis": response_text,
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
             }
-            if response_text
-            else {
-                "enhanced": False,
-                "ml_prediction": prediction,
-                "ml_description": description,
-            }
-        )
+        return {"enhanced": False, "ml_prediction": prediction}
+    except asyncio.TimeoutError:
+        logger.error("Enhanced prediction timed out")
+        return {
+            "enhanced": False,
+            "error": "AI analysis timed out",
+            "ml_prediction": prediction,
+        }
     except Exception as e:
+        logger.error(f"Enhanced prediction failed: {e}", exc_info=True)
         return {
             "enhanced": False,
             "error": str(e),
             "ml_prediction": prediction,
-            "ml_description": description,
         }
-
-
-# ============================================
-# 💬 HEALTH CHAT (Empathy + Safety)
-# ============================================
 
 
 async def gemini_health_chat(message: str, context: Optional[Dict] = None) -> str:
     if not gemini_client:
         return "AI Chat unavailable."
+
+    s_message = _sanitize_user_input(message, 4000)
+    if not s_message:
+        return "Please provide a question."
+
     try:
         context_str = ""
         if context:
-            if context.get("recent_prediction"):
-                context_str += (
-                    f"\n- Recent AI Prediction: {context['recent_prediction']}"
-                )
-            if context.get("user_age"):
-                context_str += f"\n- Patient Age: {context['user_age']}"
-            if context.get("user_gender"):
-                context_str += f"\n- Patient Sex: {context['user_gender']}"
+            recent = _sanitize_user_input(context.get("recent_prediction"), 200)
+            age = _sanitize_user_input(context.get("user_age"), 10)
+            gender = _sanitize_user_input(context.get("user_gender"), 20)
+            if recent:
+                context_str += f"\n- Recent AI Prediction: {recent}"
+            if age:
+                context_str += f"\n- Patient Age: {age}"
+            if gender:
+                context_str += f"\n- Patient Sex: {gender}"
+
+        patient_context = context_str if context_str else "New patient — no prior data available"
 
         prompt = f"""You are a clinical health assistant on the AI Health Care Platform. You provide accurate, evidence-based medical information grounded in current clinical guidelines (WHO, CDC, NIH, NICE).
 
@@ -249,8 +303,8 @@ async def gemini_health_chat(message: str, context: Optional[Dict] = None) -> st
 
 6. **CITE WHEN POSSIBLE**: Reference clinical guidelines when making recommendations (e.g., "According to WHO guidelines..." or "Current evidence suggests...").
 
-**PATIENT CONTEXT:** {context_str if context_str else "New patient — no prior data available"}
-**PATIENT QUESTION:** "{message}"
+**PATIENT CONTEXT:** {patient_context}
+**PATIENT QUESTION:** "{s_message}"
 
 **RESPONSE FORMAT:**
 - Be empathetic but clinically precise
@@ -260,49 +314,97 @@ async def gemini_health_chat(message: str, context: Optional[Dict] = None) -> st
 - Include the disclaimer: "This is AI-generated health information, not a medical diagnosis. Always consult a healthcare provider for medical decisions."
 """
         return await call_gemini(prompt)
-    except Exception:
+    except asyncio.TimeoutError:
+        logger.warning("Gemini chat timed out")
+        return "The AI is taking too long to respond right now. Please try again in a moment."
+    except Exception as e:
+        logger.error(f"Gemini chat error: {e}", exc_info=True)
         return "I'm having trouble processing that. Please try again."
 
 
-async def gemini_chat_stream(message: str, context: Optional[Dict] = None):
+async def gemini_chat_stream(
+    message: str, context: Optional[Dict] = None
+) -> AsyncIterator[str]:
     if not gemini_client:
         yield "AI Service Unavailable"
         return
-    try:
-        from google.genai import types
 
-        context_str = ""
-        if context:
-            if context.get("user_age"):
-                context_str += f"Patient Age: {context.get('user_age', 'Unknown')}"
-            if context.get("user_gender"):
-                context_str += f", Sex: {context.get('user_gender', 'Unknown')}"
+    s_message = _sanitize_user_input(message, 4000)
+    if not s_message:
+        yield "Please provide a question."
+        return
 
-        prompt = f"""You are a clinical health assistant. Provide accurate, evidence-based medical guidance. RULES: Never fabricate medical facts — say "I'm unsure, consult your doctor" if uncertain. If symptoms suggest an emergency (chest pain + breathing difficulty, stroke signs, severe bleeding, anaphylaxis), IMMEDIATELY instruct to call 112/911. Never minimize symptoms. Never prescribe prescription drugs — only suggest OTC with dosage limits and contraindications. Always end with "Consult a healthcare provider for medical decisions."{" " + context_str if context_str else ""}
-User: {message}"""
-        config = types.GenerateContentConfig(temperature=0.7)
+    from google.genai import types
 
-        for model_name in GEMINI_MODELS:
-            try:
-                for chunk in gemini_client.models.generate_content_stream(
-                    model=model_name, contents=prompt, config=config
-                ):
-                    if chunk.text:
-                        yield chunk.text
-                return
-            except Exception as e:
-                if "401" in str(e) or "API key" in str(e):
-                    yield "Authentication error. Check API key."
+    context_str = ""
+    if context:
+        age = _sanitize_user_input(context.get("user_age"), 10)
+        gender = _sanitize_user_input(context.get("user_gender"), 20)
+        if age:
+            context_str += f"Patient Age: {age}"
+        if gender:
+            context_str += f", Sex: {gender}"
+
+    prompt = (
+        "You are a clinical health assistant. Provide accurate, evidence-based "
+        "medical guidance. RULES: Never fabricate medical facts — say \"I'm "
+        "unsure, consult your doctor\" if uncertain. If symptoms suggest an "
+        "emergency (chest pain + breathing difficulty, stroke signs, severe "
+        "bleeding, anaphylaxis), IMMEDIATELY instruct to call 112/911. Never "
+        "minimize symptoms. Never prescribe prescription drugs — only suggest "
+        "OTC with dosage limits and contraindications. Always end with "
+        '"Consult a healthcare provider for medical decisions."'
+        + (" " + context_str if context_str else "")
+        + f"\nUser: {s_message}"
+    )
+    config = types.GenerateContentConfig(temperature=0.7)
+
+    sentinel = object()
+
+    def _next_chunk(it):
+        try:
+            return next(it)
+        except StopIteration:
+            return sentinel
+
+    client = gemini_client
+    if client is None:
+        yield "AI Service Unavailable"
+        return
+
+    for model_name in GEMINI_MODELS:
+        try:
+            stream = await asyncio.wait_for(
+                asyncio.to_thread(
+                    lambda mn=model_name: client.models.generate_content_stream(
+                        model=mn, contents=prompt, config=config
+                    )
+                ),
+                timeout=GEMINI_TIMEOUT_SECONDS,
+            )
+            while True:
+                chunk = await asyncio.wait_for(
+                    asyncio.to_thread(_next_chunk, stream),
+                    timeout=GEMINI_STREAM_CHUNK_TIMEOUT_SECONDS,
+                )
+                if chunk is sentinel:
                     return
-                continue
-        yield "All AI models temporarily unavailable. Please try again."
-    except Exception:
-        yield "Error generating response."
+                text = getattr(chunk, "text", None)
+                if text:
+                    yield text
+            return
+        except asyncio.TimeoutError:
+            logger.warning(f"Gemini stream timeout on {model_name}")
+            continue
+        except Exception as e:
+            if _is_auth_error(e):
+                logger.error(f"Gemini stream auth error: {e}")
+                yield "Authentication error. Check API key."
+                return
+            logger.warning(f"Gemini stream error on {model_name}: {e}")
+            continue
 
-
-# ============================================
-# 📋 HYBRID HEALTH PLAN (The Masterpiece)
-# ============================================
+    yield "All AI models temporarily unavailable. Please try again."
 
 
 async def gemini_personalized_health_plan(
@@ -310,36 +412,46 @@ async def gemini_personalized_health_plan(
     user_profile: Dict[str, Any],
     report_analysis: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """
-    Generates a 'Hybrid' plan by synthesizing:
-    1. The ML Disease Prediction (Condition)
-    2. The PDF Report Data (Blood work, etc.)
-    3. User Demographics
-    """
     if not gemini_client:
         return {"error": "Health plan unavailable"}
 
+    s_condition = _sanitize_user_input(condition, 200)
+    s_age = _sanitize_user_input(user_profile.get("age"), 10)
+    s_gender = _sanitize_user_input(user_profile.get("gender"), 20)
+    s_weight = _sanitize_user_input(user_profile.get("weight"), 20)
+    s_height = _sanitize_user_input(user_profile.get("height"), 20)
+
     try:
-        # 1. Format User Data
-        profile_str = f"{user_profile.get('age', '?')}yo {user_profile.get('gender', 'Patient')}, {user_profile.get('weight', '?')}kg, {user_profile.get('height', '?')}cm"
+        profile_str = f"{s_age or '?'}yo {s_gender or 'Patient'}, {s_weight or '?'}kg, {s_height or '?'}cm"
 
         report_str = "No laboratory reports available — recommendations should be conservative and emphasize the need for baseline testing."
         if report_analysis:
             metrics = report_analysis.get("health_metrics", {})
+            metric_list: List[str] = []
             if isinstance(metrics, dict):
-                metric_list = [f"{k}: {v}" for k, v in metrics.items() if v]
-                report_str = f"""**LABORATORY FINDINGS (from uploaded report):**
-- Report Type: {report_analysis.get("report_type", "General")}
-- Key Metrics: {", ".join(metric_list) if metric_list else "None extracted"}
-- Risk Level: {report_analysis.get("risk_level", "Not assessed")}
-- Findings: {", ".join(report_analysis.get("key_findings", []))}
-- NOTE: Interpret these values in context of the patient's demographics and condition. Flag any values outside reference ranges explicitly."""
+                for k, v in list(metrics.items())[:_MAX_LIST_ITEMS]:
+                    if v:
+                        sk = _sanitize_user_input(k, 80)
+                        sv = _sanitize_user_input(v, 120)
+                        if sk and sv:
+                            metric_list.append(f"{sk}: {sv}")
+            report_type = _sanitize_user_input(report_analysis.get("report_type"), 80) or "General"
+            risk_level = _sanitize_user_input(report_analysis.get("risk_level"), 40) or "Not assessed"
+            findings = _sanitize_list(report_analysis.get("key_findings"), max_items=10, item_max_len=240)
+            report_str = (
+                "**LABORATORY FINDINGS (from uploaded report):**\n"
+                f"- Report Type: {report_type}\n"
+                f"- Key Metrics: {', '.join(metric_list) if metric_list else 'None extracted'}\n"
+                f"- Risk Level: {risk_level}\n"
+                f"- Findings: {', '.join(findings)}\n"
+                "- NOTE: Interpret these values in context of the patient's demographics and condition. Flag any values outside reference ranges explicitly."
+            )
 
         prompt = f"""You are a board-certified physician creating an evidence-based, personalized health management plan. Your plan must be medically sound, actionable, and safe.
 
 ### PATIENT FILE
 * **Demographics:** {profile_str}
-* **Primary Condition (ML-predicted):** {condition}
+* **Primary Condition (ML-predicted):** {s_condition}
 * **Clinical Evidence:**
 {report_str}
 
@@ -385,46 +497,49 @@ async def gemini_personalized_health_plan(
 ⚕️ **IMPORTANT**: This is an AI-generated wellness plan for educational support only. It is NOT a substitute for physician-directed treatment. Do NOT alter any prescribed medications based on this plan. Consult your healthcare provider before making dietary or exercise changes, especially if you have pre-existing conditions."""
 
         response_text = await call_gemini(prompt)
-
-        return (
-            {
+        if response_text:
+            return {
                 "plan": response_text,
                 "condition": condition,
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
                 "duration": "4 weeks",
                 "source": "Hybrid (ML + Report Analysis)",
             }
-            if response_text
-            else {"error": "Plan generation failed"}
-        )
-
+        return {"error": "Plan generation failed"}
+    except asyncio.TimeoutError:
+        logger.error("Health plan generation timed out")
+        return {"error": "Plan generation timed out"}
     except Exception as e:
-        logger.error(f"Health plan error: {e}")
+        logger.error(f"Health plan error: {e}", exc_info=True)
         return {"error": str(e)}
 
 
-# ============================================
-# 📄 REPORT ANALYSIS (Strict JSON)
-# ============================================
-
-
 async def _analyze_media_content(content_parts: list, prompt: str) -> Dict[str, Any]:
+    if gemini_client is None:
+        return {"success": False, "error": "Gemini unavailable"}
+
     response_text = ""
-    last_error = None
+    last_error: Optional[BaseException] = None
+
     for model_name in GEMINI_MODELS:
         try:
-            response = gemini_client.models.generate_content(
-                model=model_name, contents=[*content_parts, prompt]
+            response = await _generate_content_async(
+                model_name, [*content_parts, prompt], None
             )
-            if hasattr(response, "candidates") or hasattr(response, "text"):
+            if response is not None:
                 response_text = _extract_text(response)
                 if response_text:
                     break
+        except asyncio.TimeoutError as e:
+            last_error = e
+            logger.warning(f"Media analysis timeout on {model_name}")
+            continue
         except Exception as e:
             last_error = e
-            if "401" in str(e) or "API key" in str(e):
+            if _is_auth_error(e):
                 logger.error(f"Auth error in media analysis: {e}")
                 return {"success": False, "error": "Authentication failed"}
+            logger.warning(f"Media analysis error on {model_name}: {e}")
             continue
 
     if not response_text:
@@ -437,6 +552,7 @@ async def _analyze_media_content(content_parts: list, prompt: str) -> Dict[str, 
     try:
         return {"success": True, "analysis": json.loads(clean_text)}
     except json.JSONDecodeError:
+        logger.info("Media analysis returned non-JSON; falling back to text summary")
         return {
             "success": True,
             "analysis": {"summary": clean_text, "health_metrics": {}},
@@ -479,7 +595,11 @@ RULES:
 4. Flag any CRITICAL values (values dangerously outside reference range) prominently in key_findings.
 5. recommendations must be evidence-based and specific to the findings — not generic health advice."""
         return await _analyze_media_content([pdf_content], prompt)
+    except FileNotFoundError:
+        logger.error(f"PDF not found: {file_path}")
+        return {"success": False, "error": "File not found"}
     except Exception as e:
+        logger.error(f"PDF analysis error: {e}", exc_info=True)
         return {"success": False, "error": str(e)}
 
 
@@ -517,13 +637,14 @@ RULES:
 4. Flag CRITICAL values prominently.
 5. If the image quality makes reliable extraction impossible, return: {"report_type": "Unclear", "summary": "Image quality insufficient for reliable extraction", "health_metrics": {}, "key_findings": [], "risk_level": "Unable to assess", "recommendations": ["Please upload a clearer image or the original PDF"], "limitations": "Specific quality issue description"}"""
         return await _analyze_media_content([img_content], prompt)
+    except FileNotFoundError:
+        logger.error(f"Image not found: {file_path}")
+        return {"success": False, "error": "File not found"}
     except Exception as e:
+        logger.error(f"Image analysis error: {e}", exc_info=True)
         return {"success": False, "error": str(e)}
 
 
-# ============================================
-# 🔄 UNIFIED PROCESSOR
-# ============================================
 async def process_medical_report(file_path: str, content_type: str) -> Dict[str, Any]:
     try:
         if content_type == "application/pdf":
@@ -532,22 +653,22 @@ async def process_medical_report(file_path: str, content_type: str) -> Dict[str,
             return await analyze_image_report(file_path)
         return {"success": False, "error": "Unsupported file"}
     except Exception as e:
-        logger.error(f"Processing error: {e}")
+        logger.error(f"Processing error: {e}", exc_info=True)
         return {"success": False, "error": str(e)}
-
-
-# ============================================
-# 🩺 EXTRAS (Symptom & Drug)
-# ============================================
 
 
 async def gemini_symptom_checker(symptoms_text: str) -> Dict[str, Any]:
     if not gemini_client:
         return {"error": "Unavailable"}
+
+    s_symptoms = _sanitize_user_input(symptoms_text, 3000)
+    if not s_symptoms:
+        return {"error": "No symptoms provided"}
+
     try:
         prompt = f"""You are a clinical triage specialist conducting a structured symptom assessment. Analyze the following symptoms with medical rigor. NEVER minimize or dismiss symptoms.
 
-**Patient-Reported Symptoms:** "{symptoms_text}"
+**Patient-Reported Symptoms:** "{s_symptoms}"
 
 Provide your assessment in the following structure (Markdown):
 
@@ -580,17 +701,26 @@ List specific, measurable criteria for seeking immediate medical attention (e.g.
 ⚕️ This is an AI-generated symptom assessment for informational purposes only. It is NOT a clinical diagnosis. Always consult a qualified healthcare provider for proper evaluation and treatment."""
         response = await call_gemini(prompt)
         return {"analysis": response}
-    except Exception:
+    except asyncio.TimeoutError:
+        return {"error": "Symptom analysis timed out"}
+    except Exception as e:
+        logger.error(f"Symptom checker error: {e}", exc_info=True)
         return {"error": "Failed"}
 
 
 async def gemini_drug_interaction_checker(medications: List[str]) -> str:
     if not gemini_client:
         return "Unavailable"
+
+    s_meds = _sanitize_list(medications, max_items=10, item_max_len=100)
+    if len(s_meds) < 2:
+        return "Need at least 2 valid medications to check interactions."
+
     try:
+        meds_str = ", ".join(s_meds)
         prompt = f"""You are a clinical pharmacist conducting a drug interaction analysis. Provide a thorough, accurate pharmacological assessment. NEVER fabricate interactions — if you are uncertain about a specific interaction, explicitly state: "This interaction requires verification with a pharmacist or drug interaction database (e.g., Lexicomp, Micromedex)."
 
-**Medications to Analyze:** {", ".join(medications)}
+**Medications to Analyze:** {meds_str}
 
 Provide your analysis in the following structure (Markdown):
 
@@ -623,16 +753,24 @@ If NO interactions are found, explicitly state for each pair: "[Drug A] and [Dru
 ---
 ⚕️ This is an AI-generated pharmacological analysis for informational purposes only. It does NOT replace a professional pharmacist consultation or a verified drug interaction database. Always verify interactions with your pharmacist or physician, especially for complex medication regimens."""
         return await call_gemini(prompt)
-    except Exception:
+    except asyncio.TimeoutError:
+        return "Drug interaction check timed out. Please try again."
+    except Exception as e:
+        logger.error(f"Drug interaction checker error: {e}", exc_info=True)
         return "Failed"
 
 
 async def gemini_explain_medical_term(term: str) -> str:
     if not gemini_client:
         return "Unavailable"
+
+    s_term = _sanitize_user_input(term, 200)
+    if not s_term:
+        return "Please provide a medical term."
+
     try:
         return await call_gemini(
-            f"""Explain the medical term '{term}' with clinical accuracy while being accessible to a non-medical audience.
+            f"""Explain the medical term '{s_term}' with clinical accuracy while being accessible to a non-medical audience.
 
 Structure your response as:
 1. **Medical Definition:** The precise clinical definition as it would appear in a medical textbook.
@@ -642,5 +780,8 @@ Structure your response as:
 
 RULES: Do NOT oversimplify to the point of inaccuracy. If the term has multiple meanings in different medical contexts, mention the most common one and note the existence of others."""
         )
-    except Exception:
+    except asyncio.TimeoutError:
+        return "Medical term explanation timed out."
+    except Exception as e:
+        logger.error(f"Term explanation error: {e}", exc_info=True)
         return "Failed"

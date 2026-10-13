@@ -2,8 +2,7 @@
 Helper utility functions
 """
 
-from typing import Dict, Optional, Any, List
-from collections import Counter
+from typing import Any, Dict, Optional
 from datetime import datetime
 from bson import ObjectId
 import json
@@ -26,12 +25,16 @@ def standard_response(
 
 
 def serialize_doc(doc: Optional[Dict]) -> Optional[Dict]:
-    """Convert MongoDB document _id from ObjectId to string for JSON serialization"""
+    """Convert MongoDB document _id from ObjectId to string for JSON serialization.
+
+    Returns a shallow copy so the caller's source document is not mutated.
+    """
     if doc is None:
         return None
-    if "_id" in doc:
-        doc["_id"] = str(doc["_id"])
-    return doc
+    result = doc.copy()
+    if "_id" in result:
+        result["_id"] = str(result["_id"])
+    return result
 
 
 def serialize_mongo_doc(doc: Dict) -> Dict:
@@ -90,10 +93,3 @@ def validate_email(email: str) -> bool:
 def allowed_file(filename: str, allowed_extensions: set) -> bool:
     """Check if file extension is allowed"""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_extensions
-
-
-def mode(arr: List[str]) -> str:
-    """Get most common element in list"""
-    counter = Counter(arr)
-    max_count = max(counter.values())
-    return next(k for k, v in counter.items() if v == max_count)

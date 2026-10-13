@@ -1,30 +1,79 @@
 """
 LiveKit Voice Agent - Virtual Doctor
+
 Runs as a separate process, connects to LiveKit room as an AI participant.
-
-
-To test locally:  python agent.py dev
-To deploy to cloud: lk agent deploy
+Local:  python agent.py dev
+Cloud:  lk agent deploy
 """
 
-import os
+import asyncio
 import json
 import logging
-import asyncio
+import os
+import re
+import sys
+import time
+from typing import Any, List, Optional
+
+import httpx
 from dotenv import load_dotenv
 
-
-from livekit.agents import Agent, AgentSession, JobContext, JobProcess, ChatContext
+from livekit.agents import Agent, AgentSession, ChatContext, JobContext, JobProcess
 from livekit.plugins import google, silero
 from livekit import agents
 
 
-dotenv_path = os.path.join(os.path.dirname(__file__), "..", ".env")
-load_dotenv(dotenv_path)
+_LOCAL_ENV = os.path.join(os.path.dirname(__file__), ".env")
+if os.path.isfile(_LOCAL_ENV):
+    load_dotenv(_LOCAL_ENV)
+else:
+    load_dotenv()
+
+
+_REQUIRED_ENV = ("LIVEKIT_URL", "LIVEKIT_API_KEY", "LIVEKIT_API_SECRET", "GOOGLE_API_KEY")
+_missing_env = [name for name in _REQUIRED_ENV if not os.environ.get(name)]
+if _missing_env:
+    print(
+        f"FATAL: missing required environment variables: {', '.join(_missing_env)}",
+        file=sys.stderr,
+    )
+    sys.exit(1)
 
 
 logger = logging.getLogger("voice-agent")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.WARNING)
+
+
+CTX_CONNECT_TIMEOUT_SECONDS = 15
+PARTICIPANT_WAIT_TIMEOUT_SECONDS = 30
+GREETING_TIMEOUT_SECONDS = 30
+
+
+_CONTROL_CHARS_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+_BIDI_RE = re.compile(r"[\u202a-\u202e\u2066-\u2069]")
+
+
+def _sanitize_str(value: Any, max_len: int = 200) -> str:
+    """Strip control/bidi chars, neutralize markdown fences, cap length.
+
+    Defends the system prompt from injection via untrusted patient metadata.
+    """
+    if value is None:
+        return ""
+    text = str(value)
+    text = _CONTROL_CHARS_RE.sub("", text)
+    text = _BIDI_RE.sub("", text)
+    text = text.replace("```", "''' ").strip()
+    if len(text) > max_len:
+        text = text[:max_len] + "…"
+    return text
+
+
+def _sanitize_list(items: Optional[List[Any]], max_items: int = 10, item_max_len: int = 120) -> List[str]:
+    if not items:
+        return []
+    cleaned = [_sanitize_str(x, item_max_len) for x in list(items)[:max_items]]
+    return [c for c in cleaned if c]
 
 
 DOCTOR_INSTRUCTIONS = """You are Dr. AI, a senior general physician and clinical consultant on the AI Health Care Platform. You have extensive training in internal medicine, family medicine, clinical pharmacology, and evidence-based preventive health. You conduct voice consultations with patients with the same rigor as an in-person clinical encounter.
@@ -109,97 +158,121 @@ If the patient describes ANY of the following, IMMEDIATELY and FIRMLY:
 
 
 def _build_patient_summary(metadata: dict) -> str:
-    """Build a natural clinical summary from patient metadata for chart review context"""
-    parts = []
+    parts: List[str] = []
 
-    patient = metadata.get("patient", {})
-    if patient:
-        name = patient.get("name", "").strip()
-        age = patient.get("age")
-        gender = patient.get("gender", "").strip()
+    patient = metadata.get("patient") or {}
+    if isinstance(patient, dict):
+        name = _sanitize_str(patient.get("name"), 100)
+        age = _sanitize_str(patient.get("age"), 10)
+        gender = _sanitize_str(patient.get("gender"), 30)
 
-        identity = []
-        if name:
-            identity.append(name)
-        if age:
-            identity.append(f"{age} years old")
-        if gender:
-            identity.append(gender)
+        identity = [s for s in (name, f"{age} years old" if age else "", gender) if s]
         if identity:
             parts.append(f"Patient: {', '.join(identity)}")
 
         vitals = []
-        if patient.get("blood_type"):
-            vitals.append(f"Blood Type: {patient['blood_type']}")
-        if patient.get("bmi"):
-            vitals.append(f"BMI: {patient['bmi']}")
-        if patient.get("height"):
-            vitals.append(f"Height: {patient['height']}cm")
-        if patient.get("weight"):
-            vitals.append(f"Weight: {patient['weight']}kg")
-        if patient.get("blood_pressure"):
-            vitals.append(f"BP: {patient['blood_pressure']}")
+        for key, label, unit in (
+            ("blood_type", "Blood Type", ""),
+            ("bmi", "BMI", ""),
+            ("height", "Height", "cm"),
+            ("weight", "Weight", "kg"),
+            ("blood_pressure", "BP", ""),
+        ):
+            v = _sanitize_str(patient.get(key), 40)
+            if v:
+                vitals.append(f"{label}: {v}{unit}")
         if vitals:
             parts.append("Vitals: " + ", ".join(vitals))
 
-        if patient.get("allergies"):
-            parts.append(f"ALLERGIES: {patient['allergies']}")
-        if patient.get("existing_conditions"):
-            parts.append(f"Known Conditions: {patient['existing_conditions']}")
-        if patient.get("current_medications"):
-            parts.append(
-                f"Medications (from profile): {patient['current_medications']}"
+        allergies = _sanitize_str(patient.get("allergies"), 300)
+        if allergies:
+            parts.append(f"ALLERGIES: {allergies}")
+        conditions = _sanitize_str(patient.get("existing_conditions"), 400)
+        if conditions:
+            parts.append(f"Known Conditions: {conditions}")
+        current_meds = _sanitize_str(patient.get("current_medications"), 400)
+        if current_meds:
+            parts.append(f"Medications (from profile): {current_meds}")
+
+    meds = metadata.get("active_medications") or []
+    if isinstance(meds, list) and meds:
+        med_lines = []
+        for m in meds[:15]:
+            if not isinstance(m, dict):
+                continue
+            mname = _sanitize_str(m.get("name"), 80)
+            if not mname:
+                continue
+            mdose = _sanitize_str(m.get("dosage"), 40)
+            mfreq = _sanitize_str(m.get("frequency"), 40)
+            med_lines.append(f"  - {mname} {mdose} ({mfreq})".strip())
+        if med_lines:
+            parts.append("Active Tracked Medications:\n" + "\n".join(med_lines))
+
+    diagnoses = metadata.get("recent_diagnoses") or []
+    if isinstance(diagnoses, list) and diagnoses:
+        diag_lines = []
+        for d in diagnoses[:10]:
+            if not isinstance(d, dict):
+                continue
+            disease = _sanitize_str(d.get("disease"), 100)
+            if not disease:
+                continue
+            symptoms = _sanitize_list(d.get("symptoms"), max_items=10, item_max_len=60)
+            date = _sanitize_str(d.get("date"), 40)
+            diag_lines.append(
+                f"  - {disease} (symptoms: {', '.join(symptoms)}) — {date}"
             )
+        if diag_lines:
+            parts.append("Recent Platform Diagnoses (ML-predicted):\n" + "\n".join(diag_lines))
 
-    meds = metadata.get("active_medications", [])
-    if meds:
-        med_lines = [
-            f"  - {m['name']} {m.get('dosage', '')} ({m.get('frequency', '')})"
-            for m in meds
-        ]
-        parts.append("Active Tracked Medications:\n" + "\n".join(med_lines))
-
-    diagnoses = metadata.get("recent_diagnoses", [])
-    if diagnoses:
-        diag_lines = [
-            f"  - {d['disease']} (symptoms: {', '.join(d.get('symptoms', []))}) — {d.get('date', '')}"
-            for d in diagnoses
-        ]
-        parts.append(
-            "Recent Platform Diagnoses (ML-predicted):\n" + "\n".join(diag_lines)
-        )
-
-    journals = metadata.get("recent_journal", [])
-    if journals:
+    journals = metadata.get("recent_journal") or []
+    if isinstance(journals, list) and journals:
         journal_lines = []
-        for j in journals:
-            line = f"  - {j.get('date', '')}: mood={j.get('mood', 'N/A')}"
+        for j in journals[:10]:
+            if not isinstance(j, dict):
+                continue
+            date = _sanitize_str(j.get("date"), 40)
+            mood = _sanitize_str(j.get("mood"), 30) or "N/A"
+            line = f"  - {date}: mood={mood}"
             if j.get("pain_level") is not None:
-                line += f", pain={j['pain_level']}/10"
-            if j.get("symptoms"):
-                line += f", symptoms: {', '.join(j['symptoms'])}"
-            if j.get("title"):
-                line += f" — {j['title']}"
+                pain = _sanitize_str(j.get("pain_level"), 10)
+                if pain:
+                    line += f", pain={pain}/10"
+            symptoms = _sanitize_list(j.get("symptoms"), max_items=10, item_max_len=60)
+            if symptoms:
+                line += f", symptoms: {', '.join(symptoms)}"
+            title = _sanitize_str(j.get("title"), 100)
+            if title:
+                line += f" — {title}"
             journal_lines.append(line)
-        parts.append("Recent Health Journal Entries:\n" + "\n".join(journal_lines))
+        if journal_lines:
+            parts.append("Recent Health Journal Entries:\n" + "\n".join(journal_lines))
 
-    appointments = metadata.get("recent_appointments", [])
-    if appointments:
-        appt_lines = [
-            f"  - {a.get('doctor', '')} ({a.get('specialization', '')}) — {a.get('date', '')} [{a.get('status', '')}]"
-            for a in appointments
-        ]
-        parts.append("Recent Appointments:\n" + "\n".join(appt_lines))
+    appointments = metadata.get("recent_appointments") or []
+    if isinstance(appointments, list) and appointments:
+        appt_lines = []
+        for a in appointments[:10]:
+            if not isinstance(a, dict):
+                continue
+            doctor = _sanitize_str(a.get("doctor"), 100)
+            spec = _sanitize_str(a.get("specialization"), 80)
+            date = _sanitize_str(a.get("date"), 40)
+            status = _sanitize_str(a.get("status"), 40)
+            appt_lines.append(f"  - {doctor} ({spec}) — {date} [{status}]")
+        if appt_lines:
+            parts.append("Recent Appointments:\n" + "\n".join(appt_lines))
 
-    family = metadata.get("family_history", [])
-    if family:
+    family = metadata.get("family_history") or []
+    if isinstance(family, list) and family:
         fam_lines = []
-        for f in family:
-            conditions = f.get("conditions", [])
+        for f in family[:10]:
+            if not isinstance(f, dict):
+                continue
+            conditions = _sanitize_list(f.get("conditions"), max_items=10, item_max_len=80)
             if conditions:
-                fam_lines.append(
-                    f"  - {f.get('relationship', 'Family member')}: {', '.join(conditions)}"
-                )
+                relationship = _sanitize_str(f.get("relationship"), 60) or "Family member"
+                fam_lines.append(f"  - {relationship}: {', '.join(conditions)}")
         if fam_lines:
             parts.append("Family Medical History:\n" + "\n".join(fam_lines))
 
@@ -210,34 +283,113 @@ def _build_patient_summary(metadata: dict) -> str:
 
 
 class DoctorAgent(Agent):
-    def __init__(self, instructions: str, chat_ctx: ChatContext = None):
-        super().__init__(
-            instructions=instructions,
-            chat_ctx=chat_ctx,
-        )
+    def __init__(self, instructions: str, chat_ctx: Optional[ChatContext] = None):
+        super().__init__(instructions=instructions, chat_ctx=chat_ctx)
 
 
 def prewarm(proc: JobProcess):
-    """Pre-load VAD model for faster startup"""
-    proc.userdata["vad"] = silero.VAD.load()
+    try:
+        proc.userdata["vad"] = silero.VAD.load()
+    except Exception as e:
+        logger.error(f"Failed to load Silero VAD: {e}", exc_info=True)
+        raise
+
+
+def _extract_text(item: Any) -> str:
+    """Normalize a LiveKit ChatMessage payload into a single string.
+    `item.content` can be a string, a list of strings, or contain non-string
+    parts (function calls); we coerce defensively."""
+    content = getattr(item, "content", None)
+    if isinstance(content, list):
+        return " ".join(str(c) for c in content if c).strip()
+    if content is None:
+        return ""
+    return str(content).strip()
+
+
+async def _save_consultation(
+    transcript_lines: List[str],
+    consultation_id: Optional[str],
+    backend_url: Optional[str],
+    user_token: Optional[str],
+    started_at: float,
+) -> None:
+    """Post the captured transcript + duration back to the platform at
+    end-of-call. Registered via ctx.add_shutdown_callback so it runs before
+    the worker exits. Failures are logged but never raised — losing one
+    transcript is better than crashing the cleanup path."""
+    if not (consultation_id and backend_url and user_token):
+        logger.warning("Skipping consultation save: missing context fields")
+        return
+
+    try:
+        transcript = "\n".join(transcript_lines).strip()
+        duration = max(0, int(time.time() - started_at))
+        url = f"{backend_url.rstrip('/')}/consultations/{consultation_id}/summary"
+        headers = {"Authorization": f"Bearer {user_token}"}
+        payload = {"transcript": transcript, "duration_seconds": duration}
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(url, json=payload, headers=headers)
+            response.raise_for_status()
+        logger.warning(
+            "Saved consultation %s (duration=%ds, turns=%d, transcript_chars=%d)",
+            consultation_id,
+            duration,
+            len(transcript_lines),
+            len(transcript),
+        )
+    except Exception as e:
+        logger.error(
+            "Failed to save consultation %s: %s", consultation_id, e, exc_info=True
+        )
+
+
+async def _safe_wait_for_participant(ctx: JobContext) -> None:
+    waiter = getattr(ctx, "wait_for_participant", None)
+    if callable(waiter):
+        try:
+            coro = waiter()
+            if asyncio.iscoroutine(coro):
+                await asyncio.wait_for(coro, timeout=PARTICIPANT_WAIT_TIMEOUT_SECONDS)
+                return
+        except asyncio.TimeoutError:
+            logger.warning("Timed out waiting for participant; greeting anyway")
+            return
+        except Exception as e:
+            logger.warning(f"wait_for_participant failed: {e}; falling back to fixed delay")
+    await asyncio.sleep(1.5)
 
 
 async def entrypoint(ctx: JobContext):
-    """Main agent entrypoint - called when a user joins the room"""
-    logger.info(f"Agent connecting to room: {ctx.room.name}")
+    logger.warning(f"Agent connecting to room: {ctx.room.name}")
+    session_started_at = time.time()
 
     patient_name = "there"
     patient_summary = "No patient records available."
+    metadata: dict = {}
 
     try:
         metadata = json.loads(ctx.job.metadata or "{}")
+        if not isinstance(metadata, dict):
+            metadata = {}
         patient_summary = _build_patient_summary(metadata)
-        patient = metadata.get("patient", {})
-        if patient.get("name"):
-            patient_name = patient["name"].split()[0]
-        logger.info(f"Loaded patient context for: {metadata.get('email', 'unknown')}")
+        patient = metadata.get("patient") or {}
+        if isinstance(patient, dict):
+            raw_name = (patient.get("name") or "").strip()
+            if raw_name:
+                first = _sanitize_str(raw_name.split()[0], 40)
+                if first:
+                    patient_name = first
+        logger.warning("Patient context loaded")
+    except json.JSONDecodeError as e:
+        logger.warning(f"Patient metadata is not valid JSON: {e}")
     except Exception as e:
         logger.warning(f"Failed to parse patient metadata: {e}")
+
+    consultation_id = metadata.get("consultation_id") if isinstance(metadata, dict) else None
+    backend_url = metadata.get("backend_url") if isinstance(metadata, dict) else None
+    user_token = metadata.get("user_token") if isinstance(metadata, dict) else None
 
     full_instructions = f"""{DOCTOR_INSTRUCTIONS}
 
@@ -269,19 +421,80 @@ async def entrypoint(ctx: JobContext):
         vad=ctx.proc.userdata["vad"],
     )
 
-    await session.start(
-        agent=DoctorAgent(instructions=full_instructions, chat_ctx=initial_ctx),
-        room=ctx.room,
-    )
+    transcript_lines: List[str] = []
 
-    await ctx.connect()
+    @session.on("conversation_item_added")
+    def _on_conversation_item(ev):
+        try:
+            item = getattr(ev, "item", None) or ev
+            role = (getattr(item, "role", None) or "unknown").upper()
+            text = _extract_text(item)
+            if text:
+                transcript_lines.append(f"{role}: {text}")
+        except Exception as e:
+            logger.warning("Transcript event handler error: %s", e)
 
-    logger.info("Waiting for browser audio tracks to connect...")
-    await asyncio.sleep(1.5)
+    if consultation_id and backend_url and user_token:
+        register_shutdown = getattr(ctx, "add_shutdown_callback", None)
+        if callable(register_shutdown):
+            register_shutdown(
+                lambda: _save_consultation(
+                    transcript_lines,
+                    consultation_id,
+                    backend_url,
+                    user_token,
+                    session_started_at,
+                )
+            )
+            logger.warning(
+                "Registered consultation-save hook for %s -> %s",
+                consultation_id,
+                backend_url,
+            )
 
-    greeting_prompt = f"""The patient {patient_name} has just joined the call. Greet them warmly by name. Briefly mention that you've reviewed their health records on the platform. Then ask what brings them in today. Keep it to 2-3 sentences — natural, warm, like a family doctor who knows them."""
+    session_started = False
+    try:
+        await session.start(
+            agent=DoctorAgent(instructions=full_instructions, chat_ctx=initial_ctx),
+            room=ctx.room,
+        )
+        session_started = True
 
-    await session.generate_reply(instructions=greeting_prompt)
+        try:
+            await asyncio.wait_for(ctx.connect(), timeout=CTX_CONNECT_TIMEOUT_SECONDS)
+        except asyncio.TimeoutError:
+            logger.error("Timed out connecting to LiveKit room")
+            raise
+
+        await _safe_wait_for_participant(ctx)
+
+        greeting_prompt = (
+            f"The patient {patient_name} has just joined the call. Greet them warmly "
+            "by name. Briefly mention that you've reviewed their health records on the "
+            "platform. Then ask what brings them in today. Keep it to 2-3 sentences — "
+            "natural, warm, like a family doctor who knows them."
+        )
+
+        try:
+            await asyncio.wait_for(
+                session.generate_reply(instructions=greeting_prompt),
+                timeout=GREETING_TIMEOUT_SECONDS,
+            )
+        except asyncio.TimeoutError:
+            logger.warning("Greeting generation timed out; consultation will continue.")
+    except Exception as e:
+        logger.error(f"Session entrypoint failed: {e}", exc_info=True)
+        raise
+    finally:
+        if session_started:
+            close = getattr(session, "aclose", None) or getattr(session, "stop", None)
+            if callable(close):
+                try:
+                    result = close()
+                    if asyncio.iscoroutine(result):
+                        await result
+                except Exception as cleanup_err:
+                    logger.warning(f"Session cleanup error: {cleanup_err}")
 
 
 if __name__ == "__main__":

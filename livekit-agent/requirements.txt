@@ -1,11 +1,17 @@
 # LiveKit Agent SDK
-livekit
-livekit-api
-livekit-agents
+livekit>=0.18.0,<2.0.0
+livekit-api>=0.6.0,<2.0.0
+livekit-agents>=0.10.0,<2.0.0
 
 # LiveKit Plugins
-livekit-plugins-google
-livekit-plugins-silero
+livekit-plugins-google>=0.7.0,<2.0.0
+livekit-plugins-silero>=0.7.0,<2.0.0
+
+# Gemini SDK (used directly by the google plugin and our agent)
+google-genai>=0.3.0,<1.0.0
 
 # Environment
-python-dotenv
+python-dotenv>=1.0.0,<2.0.0
+
+# HTTP client for posting end-of-call consultation summaries back to backend
+httpx>=0.27.0,<1.0.0

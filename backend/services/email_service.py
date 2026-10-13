@@ -1,18 +1,18 @@
 """
-Email Service - Gmail SMTP Integration
-Uses Python's built-in smtplib (no third-party dependencies)
+Email Service - Gmail SMTP Integration (async, non-blocking).
 """
 
-import asyncio
 import logging
-import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
+import aiosmtplib
 
 logger = logging.getLogger(__name__)
 
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
+SMTP_TIMEOUT_SECONDS = 30
 
 
 def _get_credentials():
@@ -22,7 +22,7 @@ def _get_credentials():
 
 
 async def send_email(to_email: str, subject: str, body: str, html: bool = True):
-    """Send email via Gmail SMTP (runs blocking I/O in thread pool)"""
+    """Send email via Gmail SMTP using aiosmtplib (non-blocking)."""
     smtp_email, smtp_password, from_name = _get_credentials()
 
     if not smtp_email or not smtp_password:
@@ -31,44 +31,36 @@ async def send_email(to_email: str, subject: str, body: str, html: bool = True):
         )
         return False
 
+    msg = MIMEMultipart("alternative")
+    msg["From"] = f"{from_name} <{smtp_email}>"
+    msg["To"] = to_email
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "html" if html else "plain"))
+
     try:
-        msg = MIMEMultipart("alternative")
-        msg["From"] = f"{from_name} <{smtp_email}>"
-        msg["To"] = to_email
-        msg["Subject"] = subject
-
-        if html:
-            msg.attach(MIMEText(body, "html"))
-        else:
-            msg.attach(MIMEText(body, "plain"))
-
-        loop = asyncio.get_running_loop()
-        await loop.run_in_executor(
-            None, _smtp_send, smtp_email, smtp_password, to_email, msg
+        await aiosmtplib.send(
+            msg,
+            hostname=SMTP_HOST,
+            port=SMTP_PORT,
+            start_tls=True,
+            username=smtp_email,
+            password=smtp_password,
+            timeout=SMTP_TIMEOUT_SECONDS,
         )
-
         logger.info(f"Email sent to {to_email}")
         return True
-
-    except smtplib.SMTPAuthenticationError:
+    except aiosmtplib.SMTPAuthenticationError:
         logger.error(
             "Gmail SMTP auth failed. Ensure you're using an App Password "
             "(not your regular password). Generate one at https://myaccount.google.com/apppasswords"
         )
         return False
-    except Exception as e:
-        logger.error(f"Email send failed: {e}")
+    except aiosmtplib.SMTPException as e:
+        logger.error(f"SMTP error sending email to {to_email}: {e}")
         return False
-
-
-def _smtp_send(smtp_email: str, smtp_password: str, to_email: str, msg: MIMEMultipart):
-    """Synchronous SMTP send (called via run_in_executor)"""
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=30) as server:
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
-        server.login(smtp_email, smtp_password)
-        server.sendmail(smtp_email, to_email, msg.as_string())
+    except (TimeoutError, OSError) as e:
+        logger.error(f"Network error sending email to {to_email}: {e}")
+        return False
 
 
 async def send_appointment_confirmation(email: str, appointment_data: dict):

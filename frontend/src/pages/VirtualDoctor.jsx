@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FaMicrophone,
@@ -9,6 +10,13 @@ import {
   FaShieldAlt,
   FaClock,
   FaHeartbeat,
+  FaBook,
+  FaPills,
+  FaCalendarPlus,
+  FaTimes,
+  FaExclamationTriangle,
+  FaPhoneAlt,
+  FaCheck,
 } from "react-icons/fa";
 import {
   LiveKitRoom,
@@ -18,7 +26,7 @@ import {
 } from "@livekit/components-react";
 import "@livekit/components-styles";
 import { toast } from "react-toastify";
-import { API_BASE_URL } from "../utils/api";
+import { API_BASE_URL, consultationsAPI, timelineAPI } from "../utils/api";
 
 const formatTime = (seconds) => {
   const m = Math.floor(seconds / 60);
@@ -183,24 +191,301 @@ function VoiceCallUI({ onEnd }) {
   );
 }
 
+function ConsultationActionPanel({
+  summary,
+  consultationId,
+  actions,
+  setActions,
+  navigate,
+}) {
+  const [busyIdx, setBusyIdx] = useState(null);
+
+  const recordAction = async (idx, type, linkedId = null) => {
+    try {
+      const response = await consultationsAPI.markRecommendationAction(
+        consultationId,
+        idx,
+        type,
+        linkedId
+      );
+      const next = response?.data?.actions;
+      if (Array.isArray(next)) setActions(next);
+      else
+        setActions((prev) => [
+          ...prev,
+          { idx, type, linked_id: linkedId, at: new Date().toISOString() },
+        ]);
+    } catch (err) {
+      console.error("Failed to record action", err);
+    }
+  };
+
+  const handleJournal = async (idx, text) => {
+    if (busyIdx !== null) return;
+    setBusyIdx(idx);
+    try {
+      const res = await timelineAPI.createJournal({
+        title: "From AI consultation",
+        content: text,
+        mood: "neutral",
+        tags: ["consultation"],
+      });
+      const newId =
+        res?.data?.id || res?.data?._id || res?.data?.entry?._id || null;
+      await recordAction(idx, "journaled", newId);
+      toast.success("Saved to your health journal");
+    } catch (err) {
+      toast.error(err.message || "Could not save to journal");
+    } finally {
+      setBusyIdx(null);
+    }
+  };
+
+  const handleMedication = async (idx, text) => {
+    if (busyIdx !== null) return;
+    setBusyIdx(idx);
+    await recordAction(idx, "medication");
+    setBusyIdx(null);
+    navigate("/medications", {
+      state: { prefillName: text, fromConsultation: consultationId },
+    });
+  };
+
+  const handleAppointment = async (idx, text) => {
+    if (busyIdx !== null) return;
+    setBusyIdx(idx);
+    await recordAction(idx, "appointment");
+    setBusyIdx(null);
+    navigate("/book", {
+      state: { prefillNote: text, fromConsultation: consultationId },
+    });
+  };
+
+  const handleDismiss = async (idx) => {
+    if (busyIdx !== null) return;
+    setBusyIdx(idx);
+    await recordAction(idx, "dismissed");
+    setBusyIdx(null);
+  };
+
+  if (!consultationId) return null;
+
+  if (!summary) {
+    return (
+      <div className="my-8 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-sm">
+        <span className="text-green-600 dark:text-green-400">✓</span>
+        <span className="text-gray-700 dark:text-gray-300">
+          Consultation saved — Dr. AI is writing the summary…
+        </span>
+      </div>
+    );
+  }
+
+  if (summary.error) {
+    return (
+      <div className="my-8 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-sm">
+        <span className="text-amber-600 dark:text-amber-400">!</span>
+        <span className="text-gray-700 dark:text-gray-300">
+          Summary unavailable. Full transcript still saved to your{" "}
+          <a href="/timeline" className="font-semibold text-btn2 hover:underline">
+            timeline
+          </a>
+          .
+        </span>
+      </div>
+    );
+  }
+
+  const redFlags = Array.isArray(summary.red_flags) ? summary.red_flags : [];
+  const recommendations = Array.isArray(summary.recommendations)
+    ? summary.recommendations
+    : [];
+  const actionByIdx = new Map(actions.map((a) => [a.idx, a]));
+
+  const labelForType = (type) =>
+    ({
+      journaled: "Saved to journal",
+      medication: "Sent to medications",
+      appointment: "Booking opened",
+      dismissed: "Dismissed",
+    }[type] || "Done");
+
+  return (
+    <div className="text-left space-y-4 mt-6 mb-6">
+      {redFlags.length > 0 && (
+        <div className="rounded-xl border-2 border-red-400 dark:border-red-700 bg-red-50 dark:bg-red-900/20 p-4">
+          <div className="flex items-start gap-3 mb-3">
+            <FaExclamationTriangle className="text-red-600 dark:text-red-400 text-xl mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-bold text-red-700 dark:text-red-300 mb-1">
+                Red flags detected
+              </h3>
+              <ul className="list-disc list-inside text-sm text-red-700 dark:text-red-200 space-y-1">
+                {redFlags.map((f, i) => (
+                  <li key={i}>{f}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <a
+            href="tel:112"
+            className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors"
+          >
+            <FaPhoneAlt /> Call Emergency (112)
+          </a>
+        </div>
+      )}
+
+      {summary.chief_complaint && (
+        <div className="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
+          <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+            Chief complaint
+          </p>
+          <p className="text-sm text-gray-800 dark:text-gray-100">
+            {summary.chief_complaint}
+          </p>
+        </div>
+      )}
+
+      {recommendations.length > 0 && (
+        <div className="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
+          <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">
+            Suggested next steps
+          </h3>
+          <div className="space-y-3">
+            {recommendations.map((rec, idx) => {
+              const taken = actionByIdx.get(idx);
+              const isBusy = busyIdx === idx;
+              return (
+                <div
+                  key={idx}
+                  className={`p-3 rounded-lg border ${
+                    taken
+                      ? "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 opacity-70"
+                      : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                  }`}
+                >
+                  <p className="text-sm text-gray-700 dark:text-gray-200 mb-2">
+                    {rec}
+                  </p>
+                  {taken ? (
+                    <div className="inline-flex items-center gap-2 text-xs font-medium text-green-600 dark:text-green-400">
+                      <FaCheck /> {labelForType(taken.type)}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() => handleJournal(idx, rec)}
+                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-btn2/10 hover:bg-btn2/20 text-btn2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <FaBook /> Save to journal
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() => handleMedication(idx, rec)}
+                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <FaPills /> Add medication
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() => handleAppointment(idx, rec)}
+                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <FaCalendarPlus /> Book follow-up
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() => handleDismiss(idx)}
+                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <FaTimes /> Dismiss
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {summary.follow_up_advised && (
+        <div className="rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4">
+          <p className="text-xs uppercase tracking-wide text-blue-700 dark:text-blue-300 mb-1">
+            Follow-up advised
+          </p>
+          <p className="text-sm text-gray-800 dark:text-gray-100">
+            {summary.follow_up_advised}
+          </p>
+        </div>
+      )}
+
+      <p className="text-center text-xs text-gray-500 dark:text-gray-400">
+        Full transcript saved to your{" "}
+        <a href="/timeline" className="font-semibold text-btn2 hover:underline">
+          health timeline
+        </a>
+        .
+      </p>
+    </div>
+  );
+}
+
 function VirtualDoctor() {
+  const navigate = useNavigate();
   const [sessionState, setSessionState] = useState("pre-call");
   const [roomToken, setRoomToken] = useState(null);
   const [livekitUrl, setLivekitUrl] = useState(null);
   const [finalDuration, setFinalDuration] = useState(0);
+  const [consultationId, setConsultationId] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [actions, setActions] = useState([]);
+  const [pollAttempts, setPollAttempts] = useState(0);
 
   const startConsultation = async () => {
     setSessionState("connecting");
+    setSummary(null);
+    setActions([]);
+    setPollAttempts(0);
     try {
-      const { token, livekit_url } = await getToken();
+      const { token, livekit_url, consultation_id } = await getToken();
       setRoomToken(token);
       setLivekitUrl(livekit_url);
+      setConsultationId(consultation_id || null);
       setSessionState("in-call");
     } catch (err) {
       toast.error(err.message || "Failed to start consultation");
       setSessionState("pre-call");
     }
   };
+
+  useEffect(() => {
+    if (sessionState !== "post-call" || !consultationId) return;
+    if (summary?.chief_complaint || summary?.error) return;
+    if (pollAttempts >= 8) return;
+    const timer = setTimeout(async () => {
+      try {
+        const resp = await consultationsAPI.get(consultationId);
+        const fetched = resp?.data?.summary;
+        if (fetched && (fetched.chief_complaint || fetched.error)) {
+          setSummary(fetched);
+          setActions(resp?.data?.actions || []);
+        } else {
+          setPollAttempts((n) => n + 1);
+        }
+      } catch (err) {
+        console.error("Polling consultation failed", err);
+        setPollAttempts((n) => n + 1);
+      }
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [sessionState, consultationId, summary, pollAttempts]);
 
   const handleDisconnect = useCallback(
     (duration) => {
@@ -342,19 +627,35 @@ function VirtualDoctor() {
                 Consultation Ended
               </h2>
               <p className="text-gray-500 dark:text-gray-400 mb-1">Session Duration</p>
-              <p className="text-3xl font-mono font-bold text-btn2 mb-8">
+              <p className="text-3xl font-mono font-bold text-btn2 mb-4">
                 {formatTime(finalDuration)}
               </p>
 
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                whileHover={{ scale: 1.03 }}
-                onClick={() => setSessionState("pre-call")}
-                className="inline-flex items-center gap-3 bg-gradient-to-r from-btn2 to-btn1 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:shadow-btn2/25 transition-all cursor-pointer"
-              >
-                <FaPhone />
-                Start New Consultation
-              </motion.button>
+              <ConsultationActionPanel
+                summary={summary}
+                consultationId={consultationId}
+                actions={actions}
+                setActions={setActions}
+                navigate={navigate}
+              />
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.03 }}
+                  onClick={() => {
+                    setConsultationId(null);
+                    setSummary(null);
+                    setActions([]);
+                    setPollAttempts(0);
+                    setSessionState("pre-call");
+                  }}
+                  className="inline-flex items-center gap-3 bg-gradient-to-r from-btn2 to-btn1 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:shadow-btn2/25 transition-all cursor-pointer"
+                >
+                  <FaPhone />
+                  Start New Consultation
+                </motion.button>
+              </div>
 
               <p className="mt-6 text-xs text-gray-400 dark:text-gray-500 max-w-md mx-auto">
                 For serious concerns, please consult a real healthcare

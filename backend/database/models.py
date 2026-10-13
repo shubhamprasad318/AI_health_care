@@ -86,7 +86,10 @@ class DrugInteractionRequest(BaseModel):
 
 
 class SymptomPredictionRequest(BaseModel):
-    symptoms: Dict[str, Any]
+    evidences: List[str] = Field(default_factory=list, max_items=50)
+    age: Optional[int] = Field(None, ge=0, le=120)
+    sex: Optional[str] = Field(None, pattern="^[MFmf]$")
+    top_k: int = Field(5, ge=1, le=10)
 
 
 class SymptomAnalysisRequest(BaseModel):
@@ -181,6 +184,20 @@ class FamilyProfileCreate(BaseModel):
     conditions: Optional[List[str]] = None
     medications: Optional[List[str]] = None
     notes: Optional[str] = Field(None, max_length=1000)
+
+
+class ConsultationSummaryRequest(BaseModel):
+    transcript: Optional[str] = Field(None, max_length=50000)
+    duration_seconds: Optional[int] = Field(None, ge=0)
+
+
+class RecommendationActionRequest(BaseModel):
+    recommendation_idx: int = Field(..., ge=0, le=50)
+    action_type: str = Field(
+        ...,
+        pattern="^(journaled|medication|appointment|dismissed)$",
+    )
+    linked_id: Optional[str] = Field(None, max_length=64)
 
 
 class FamilyProfileUpdate(BaseModel):

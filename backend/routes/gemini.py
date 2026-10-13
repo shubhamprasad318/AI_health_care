@@ -26,43 +26,39 @@ router = APIRouter(prefix="/gemini", tags=["Gemini AI"])
 
 @router.post("/chat")
 async def health_chatbot(chat: ChatRequest, request: Request):
-    """Interactive health chatbot"""
+    """Interactive health chatbot (auth required)."""
     if not is_gemini_available():
         raise HTTPException(status_code=503, detail="Gemini unavailable")
 
+    email = await require_auth(request)
+
     try:
         context = chat.context or {}
-        email = await get_current_user(request)
 
-        # Add user context
-        if email:
-            user_data = await db.store.find_one({"email": email})
-            if user_data:
-                context["user_age"] = user_data.get("age")
-                context["user_gender"] = user_data.get("gender")
+        user_data = await db.store.find_one({"email": email})
+        if user_data:
+            context["user_age"] = user_data.get("age")
+            context["user_gender"] = user_data.get("gender")
 
-            # Get recent prediction
-            recent = await db.predictions.find_one(
-                {"email": email}, sort=[("created_at", -1)]
-            )
-            if recent:
-                context["recent_prediction"] = recent.get("ml_prediction")
+        recent = await db.predictions.find_one(
+            {"email": email}, sort=[("created_at", -1)]
+        )
+        if recent:
+            context["recent_prediction"] = recent.get("ml_prediction")
 
         response_text = await gemini_health_chat(chat.message, context)
 
-        # Store chat history
-        if email:
-            try:
-                await db.chat_history.insert_one(
-                    {
-                        "email": email,
-                        "message": chat.message,
-                        "response": response_text,
-                        "created_at": datetime.utcnow(),
-                    }
-                )
-            except:
-                pass
+        try:
+            await db.chat_history.insert_one(
+                {
+                    "email": email,
+                    "message": chat.message,
+                    "response": response_text,
+                    "created_at": datetime.utcnow(),
+                }
+            )
+        except Exception as e:
+            logger.warning(f"Chat history save failed for {email}: {e}")
 
         return standard_response(
             message="Chat response generated",
@@ -79,18 +75,18 @@ async def health_chatbot(chat: ChatRequest, request: Request):
 
 @router.post("/chat/stream")
 async def health_chatbot_stream(chat: ChatRequest, request: Request):
-    """Streaming chatbot - NEW 2026 SDK feature"""
+    """Streaming chatbot (auth required)."""
     if not is_gemini_available():
         raise HTTPException(status_code=503, detail="Gemini unavailable")
 
+    email = await require_auth(request)
+
     try:
         context = chat.context or {}
-        email = await get_current_user(request)
 
-        if email:
-            user_data = await db.store.find_one({"email": email})
-            if user_data:
-                context["user_age"] = user_data.get("age")
+        user_data = await db.store.find_one({"email": email})
+        if user_data:
+            context["user_age"] = user_data.get("age")
 
         async def generate():
             async for chunk in gemini_chat_stream(chat.message, context):
@@ -219,8 +215,8 @@ async def generate_health_plan(request: Request):
                 "created_at": datetime.utcnow(),
             }
         )
-    except:
-        pass
+    except Exception as e:
+        logger.warning(f"Health plan save failed for {email}: {e}")
 
     return standard_response(message="Hybrid Health Plan Generated", data=health_plan)
 
