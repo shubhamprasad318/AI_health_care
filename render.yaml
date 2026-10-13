@@ -1,0 +1,64 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Deploys the FastAPI backend and the React frontend on Render's free tier.
+# Setup steps and the values to fill in are in DEPLOY.md.
+#
+# Variables marked `sync: false` are secrets: Render asks for them when you
+# create the Blueprint, and they are never stored in this file.
+
+services:
+  # ── Backend API ─────────────────────────────────────────────────────────
+  - type: web
+    name: ai-healthengine-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: MONGO_URI
+        sync: false
+      - key: MONGO_DBNAME
+        value: helloai
+      - key: GEMINI_API_KEY
+        sync: false
+      # Your frontend URL, e.g. https://ai-healthengine.onrender.com
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      # Free web services block SMTP, so email goes through Resend (HTTPS)
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM
+        sync: false
+      - key: LIVEKIT_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+
+  # ── Frontend (static site) ──────────────────────────────────────────────
+  - type: web
+    name: ai-healthengine
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    # Send every path to the SPA so refreshing /dashboard etc. doesn't 404
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      # Your backend URL, e.g. https://ai-healthengine-api.onrender.com
+      # (baked in at build time: redeploy the frontend after changing it)
+      - key: VITE_API_URL
+        sync: false

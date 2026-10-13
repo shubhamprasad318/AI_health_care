@@ -4,7 +4,7 @@ The disease prediction service (`backend/services/ml_service.py`) loads these fi
 
 | File | In git? | Notes |
 |---|---|---|
-| `lgbm_model.pkl.gz` | Yes | Trained model, gzipped to ~50 MB to fit GitHub's 100 MB limit |
+| `lgbm_model.pkl.gz` | Yes | Trained model, gzipped (~20 MB) |
 | `feature_map.pkl` | Yes | Feature name → column index |
 | `label_map.pkl` | Yes | Condition code → class index |
 | `release_evidences.json` | Yes | Symptom questions shown in the UI |

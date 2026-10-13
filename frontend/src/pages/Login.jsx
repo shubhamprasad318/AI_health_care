@@ -71,7 +71,7 @@ function Login() {
 
       const data = await authAPI.verify2FA(twoFAEmail, code, useRecovery);
       if (data.success) {
-        login(data.data.user || data.data);
+        login(data.data.user || data.data, data.data.access_token);
         toast.success("Login successful!");
         setTimeout(() => navigate("/dashboard"), 1000);
       } else {

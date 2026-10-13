@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { FaFileExport, FaFileCsv, FaFileCode, FaDatabase, FaDownload, FaChartBar } from "react-icons/fa6";
 import { API_BASE_URL } from "../utils/api";
+import { authHeaders } from "../utils/authToken";
 
 const DATA_TYPES = [
   { key: "predictions", label: "Predictions", icon: "🔮", color: "from-purple-500 to-indigo-500" },
@@ -34,7 +35,7 @@ export default function ExportData() {
   const fetchSummary = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE_URL}/export/summary?days=${days}`, { credentials: "include" });
+      const res = await fetch(`${API_BASE_URL}/export/summary?days=${days}`, { credentials: "include", headers: authHeaders() });
       const data = await res.json();
       if (data.success) setSummary(data.data);
     } catch {
@@ -60,7 +61,7 @@ export default function ExportData() {
   const downloadCSV = async (dataType) => {
     try {
       setExporting(`csv-${dataType}`);
-      const res = await fetch(`${API_BASE_URL}/export/csv/${dataType}?days=${days}`, { credentials: "include" });
+      const res = await fetch(`${API_BASE_URL}/export/csv/${dataType}?days=${days}`, { credentials: "include", headers: authHeaders() });
       if (!res.ok) throw new Error("Export failed");
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
@@ -82,7 +83,7 @@ export default function ExportData() {
   const downloadFHIR = async () => {
     try {
       setExporting("fhir");
-      const res = await fetch(`${API_BASE_URL}/export/fhir?days=${days}`, { credentials: "include" });
+      const res = await fetch(`${API_BASE_URL}/export/fhir?days=${days}`, { credentials: "include", headers: authHeaders() });
       if (!res.ok) throw new Error("Export failed");
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);

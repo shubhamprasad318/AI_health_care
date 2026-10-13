@@ -1,6 +1,7 @@
 // context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { authAPI } from "../utils/api";  
+import { authAPI } from "../utils/api";
+import { clearAuthToken, setAuthToken } from "../utils/authToken";
 
 
 const AuthContext = createContext();
@@ -34,7 +35,8 @@ export default function AuthProvider({ children }) {
     }
   };
 
-  const login = (userData) => {
+  const login = (userData, token) => {
+    setAuthToken(token);
     const userEmail = userData?.email || userData;
     setEmail(userEmail);
     setUser(userData);
@@ -52,6 +54,7 @@ export default function AuthProvider({ children }) {
   };
 
   const clearAuth = () => {
+    clearAuthToken();
     setEmail("");
     setUser(null);
     setLoggedIn(false);

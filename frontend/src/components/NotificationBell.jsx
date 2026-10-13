@@ -3,6 +3,7 @@ import { useNotifications } from "../context/NotificationContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { IoNotifications } from "react-icons/io5";
 import { API_BASE_URL } from "../utils/api";
+import { authHeaders } from "../utils/authToken";
 
 const TYPE_ICONS = {
   info: "ℹ️",
@@ -35,6 +36,7 @@ export default function NotificationBell() {
     try {
       const res = await fetch(`${API_BASE_URL}/notifications?limit=30`, {
         credentials: "include",
+        headers: authHeaders(),
       });
       if (res.ok) {
         const data = await res.json();

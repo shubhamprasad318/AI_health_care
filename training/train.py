@@ -84,7 +84,6 @@ LGBM_PARAMS = dict(
     random_state=RANDOM_STATE,
     verbosity=-1,
 )
-CALIBRATION_CV_FOLDS = 3
 SUBSAMPLE_FOR_CALIBRATION = 200_000
 
 
@@ -222,14 +221,21 @@ def train_lightgbm(X_train, y_train, num_classes: int):
 
 
 def calibrate(base, X_cal, y_cal):
-    log.info(
-        "Calibrating with %d-fold CV on %d samples for usable probabilities...",
-        CALIBRATION_CV_FOLDS,
-        len(X_cal),
-    )
-    calibrated = CalibratedClassifierCV(
-        base, method="isotonic", cv=CALIBRATION_CV_FOLDS, n_jobs=-1
-    )
+    """Calibrate the already-trained model on the held-out calibration split.
+
+    The base model is frozen, so the calibrated classifier holds a single
+    LightGBM copy (trained on the full train split) plus small isotonic
+    regressors. Cross-validated calibration (cv=N) would instead refit N
+    fresh models on the much smaller calibration split, discarding the main
+    model and multiplying memory use (~3x), which no longer fits a 512 MB host.
+    """
+    log.info("Calibrating the trained model on %d held-out samples...", len(X_cal))
+    try:
+        from sklearn.frozen import FrozenEstimator  # scikit-learn >= 1.6
+
+        calibrated = CalibratedClassifierCV(FrozenEstimator(base), method="isotonic")
+    except ImportError:
+        calibrated = CalibratedClassifierCV(base, method="isotonic", cv="prefit")
     calibrated.fit(X_cal, y_cal)
     return calibrated
 
@@ -263,7 +269,7 @@ def save_artifacts(
 ) -> None:
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Gzipped so the ~150 MB model fits under GitHub's 100 MB file limit (~50 MB)
+    # Gzipped (~53 MB -> ~20 MB) to keep the repo small
     log.info("Writing lgbm_model.pkl.gz (calibrated LightGBM, gzipped)")
     with gzip.open(MODELS_DIR / "lgbm_model.pkl.gz", "wb", compresslevel=9) as f:
         pickle.dump(model, f)

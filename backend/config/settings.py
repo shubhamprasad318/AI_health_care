@@ -57,8 +57,15 @@ if not ADMIN_EMAIL and IS_PRODUCTION:
 SMTP_EMAIL = os.environ.get("SMTP_EMAIL", "")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
 SMTP_FROM_NAME = os.environ.get("SMTP_FROM_NAME", "AI Health Care Platform")
-if (not SMTP_EMAIL or not SMTP_PASSWORD) and IS_PRODUCTION:
-    _log.warning("SMTP credentials not fully set — outbound email will be disabled.")
+
+# Optional HTTPS email provider (https://resend.com). Hosts like Render's free
+# tier block outbound SMTP; when RESEND_API_KEY is set, email goes over HTTPS.
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+# Sender must be on a domain verified in Resend; onboarding@resend.dev only
+# delivers to the Resend account owner's own address (fine for testing)
+RESEND_FROM = os.environ.get("RESEND_FROM", "")
+if (not SMTP_EMAIL or not SMTP_PASSWORD) and not RESEND_API_KEY and IS_PRODUCTION:
+    _log.warning("No email provider configured (RESEND_API_KEY or SMTP credentials) — outbound email is disabled.")
 
 # --- CORS CONFIGURATION FIX ---
 # 1. Get the string from .env

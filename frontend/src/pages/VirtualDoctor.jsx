@@ -27,6 +27,7 @@ import {
 import "@livekit/components-styles";
 import { toast } from "react-toastify";
 import { API_BASE_URL, consultationsAPI, timelineAPI } from "../utils/api";
+import { authHeaders } from "../utils/authToken";
 
 const formatTime = (seconds) => {
   const m = Math.floor(seconds / 60);
@@ -39,6 +40,7 @@ const getToken = async () => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders(),
     },
     credentials: "include",
   });

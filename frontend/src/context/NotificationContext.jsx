@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "./AuthContext";
+import { authHeaders, getAuthToken } from "../utils/authToken";
 
 const NotificationContext = createContext();
 
@@ -20,7 +21,11 @@ export default function NotificationProvider({ children }) {
     if (!loggedIn || wsRef.current?.readyState === WebSocket.OPEN) return;
 
     try {
-      const ws = new WebSocket(`${WS_BASE}/ws/notifications`);
+      // Browsers can't set headers on a WebSocket, so the token goes in the query string
+      const token = getAuthToken();
+      const ws = new WebSocket(
+        `${WS_BASE}/ws/notifications${token ? `?token=${encodeURIComponent(token)}` : ""}`
+      );
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -97,6 +102,7 @@ export default function NotificationProvider({ children }) {
       const response = await fetch(`${API_BASE}/notifications/read-all`, {
         method: "PATCH",
         credentials: "include",
+        headers: authHeaders(),
       });
       if (!response.ok) {
         throw new Error(`mark-all-read failed: HTTP ${response.status}`);

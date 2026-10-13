@@ -4,6 +4,8 @@
  * UPDATED: All endpoints match backend routes with proper error handling + JWT Auth
  */
 
+import { authHeaders } from './authToken';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const DEFAULT_TIMEOUT_MS = 30000;
 
@@ -36,7 +38,7 @@ async function apiRequest(endpoint, options = {}) {
     if (!isFormData && method !== "GET") {
       headers["Content-Type"] = "application/json";
     }
-    Object.assign(headers, callerHeaders);
+    Object.assign(headers, authHeaders(), callerHeaders);
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...fetchOptions,
@@ -297,7 +299,8 @@ export const fileAPI = {
 
   viewFile: async (fileId) => {
     const response = await fetch(`${API_BASE_URL}/files/${fileId}`, {
-      credentials: 'include'
+      credentials: 'include',
+      headers: authHeaders(),
     });
 
     if (!response.ok) {
@@ -474,6 +477,7 @@ export const reportAPI = {
   downloadReport: async (days = 90) => {
     const response = await fetch(`${API_BASE_URL}/reports/generate?days=${days}`, {
       credentials: "include",
+      headers: authHeaders(),
     });
     if (!response.ok) throw new Error("Failed to generate report");
     const blob = await response.blob();
@@ -681,6 +685,7 @@ export const downloadFile = async (fileId, filename) => {
   try {
     const response = await fetch(`${API_BASE_URL}/files/${fileId}`, {
       credentials: "include",
+      headers: authHeaders(),
     });
     if (!response.ok) throw new Error("Download failed");
 

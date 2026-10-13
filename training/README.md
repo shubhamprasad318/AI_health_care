@@ -62,7 +62,7 @@ All files go to `backend/models/`:
 
 | File | Size | In git? | Purpose |
 |---|---|---|---|
-| `lgbm_model.pkl.gz` | ~50 MB | Yes | The trained, calibrated LightGBM classifier, gzipped (~150 MB uncompressed, over GitHub's 100 MB limit) |
+| `lgbm_model.pkl.gz` | ~20 MB | Yes | The trained, calibrated LightGBM classifier, gzipped |
 | `feature_map.pkl` | ~7 KB | Yes | Maps each feature (symptom, age, sex) to a column index |
 | `label_map.pkl` | ~1 KB | Yes | Maps each of the 49 conditions to a class index |
 | `release_evidences.json` | ~150 KB | Yes | The symptom questions shown in the UI |
@@ -81,8 +81,10 @@ together.
    sex into a fixed-length feature vector (517 features).
 3. **Split:** 80% train, 10% calibration, 10% held-out test, stratified by condition.
 4. **Train:** fits a multiclass `LGBMClassifier`.
-5. **Calibrate:** wraps it in `CalibratedClassifierCV` so the probabilities shown to users
-   are meaningful, not just a ranking.
+5. **Calibrate:** freezes the trained model and fits isotonic calibration on the calibration
+   split, so the probabilities shown to users are meaningful, not just a ranking. Only one
+   LightGBM copy is kept, which keeps the backend at ~350 MB of RAM (it must fit 512 MB on
+   Render's free tier; see [`DEPLOY.md`](../DEPLOY.md)).
 6. **Evaluate:** prints Top-1, Top-3 and Top-5 accuracy on the test set
    (expect about 99.7% Top-1).
 7. **Save:** writes the files listed above.

@@ -1,8 +1,15 @@
 """
-Email Service - Gmail SMTP Integration (async, non-blocking).
+Email Service (async, non-blocking).
+
+Sends through Resend's HTTPS API when RESEND_API_KEY is set, otherwise through
+Gmail SMTP. Use Resend on hosts that block outbound SMTP (e.g. Render free tier).
 """
 
+import asyncio
+import json
 import logging
+import urllib.error
+import urllib.request
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -13,6 +20,7 @@ logger = logging.getLogger(__name__)
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_TIMEOUT_SECONDS = 30
+RESEND_API_URL = "https://api.resend.com/emails"
 
 
 def _get_credentials():
@@ -21,9 +29,40 @@ def _get_credentials():
     return SMTP_EMAIL, SMTP_PASSWORD, SMTP_FROM_NAME
 
 
+def _post_resend(api_key: str, payload: dict) -> int:
+    req = urllib.request.Request(
+        RESEND_API_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=SMTP_TIMEOUT_SECONDS) as resp:
+        return resp.status
+
+
+async def _send_via_resend(api_key: str, sender: str, to_email: str, subject: str, body: str, html: bool):
+    payload = {"from": sender, "to": [to_email], "subject": subject, "html" if html else "text": body}
+    try:
+        await asyncio.to_thread(_post_resend, api_key, payload)
+        logger.info(f"Email sent to {to_email} via Resend")
+        return True
+    except urllib.error.HTTPError as e:
+        logger.error(f"Resend rejected email to {to_email}: HTTP {e.code} {e.read()[:300]!r}")
+        return False
+    except Exception as e:
+        logger.error(f"Resend error sending email to {to_email}: {e}")
+        return False
+
+
 async def send_email(to_email: str, subject: str, body: str, html: bool = True):
-    """Send email via Gmail SMTP using aiosmtplib (non-blocking)."""
+    """Send an email via Resend (if configured) or Gmail SMTP."""
+    from config.settings import RESEND_API_KEY, RESEND_FROM
+
     smtp_email, smtp_password, from_name = _get_credentials()
+
+    if RESEND_API_KEY:
+        sender = RESEND_FROM or f"{from_name} <onboarding@resend.dev>"
+        return await _send_via_resend(RESEND_API_KEY, sender, to_email, subject, body, html)
 
     if not smtp_email or not smtp_password:
         logger.warning(

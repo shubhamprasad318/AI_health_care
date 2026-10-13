@@ -16,6 +16,7 @@ A comprehensive AI-driven health platform that combines a **calibrated LightGBM 
 - [Project Structure](#project-structure)
 - [Installation](#installation)
 - [Environment Variables](#environment-variables)
+- [Deployment](#deployment)
 - [Usage Guide](#usage-guide)
 - [Citation & Attribution](#citation--attribution)
 
@@ -32,7 +33,7 @@ The platform offers 20+ feature modules across four runtime processes:
 | **LiveKit Voice Agent** (Python) | Standalone process running the Dr. AI voice consultation |
 | **Training** (Python, optional) | Reproducible LightGBM training pipeline on DDXPlus |
 
-Disease prediction is backed by a calibrated LightGBM classifier trained on the **DDXPlus dataset** (~1.16M synthetic patient records, 49 pathologies, ~223 evidences with binary + categorical + multi-choice types), achieving **99.71% top-1 / 100% top-3 accuracy** on a 116K held-out test set with **~1ms inference**. See the [model design notes](#disease-prediction-model--why-this-choice) for the rationale.
+Disease prediction is backed by a calibrated LightGBM classifier trained on the **DDXPlus dataset** (~1.16M synthetic patient records, 49 pathologies, ~223 evidences with binary + categorical + multi-choice types), achieving **99.75% top-1 / 100% top-3 accuracy** on a 116K held-out test set with **~1ms inference**. See the [model design notes](#disease-prediction-model--why-this-choice) for the rationale.
 
 ---
 
@@ -223,12 +224,12 @@ This section documents the rationale for the ML pipeline. The repo previously us
 - **GBDT beats deep learning on tabular medical data.** Comprehensive 2024 benchmarks (Yıldız & Kalayci, *Gradient Boosting Decision Trees on Medical Diagnosis over Tabular Data*; Shmuel et al., *A Comprehensive Benchmark of Machine and Deep Learning Across Diverse Tabular Datasets*) confirm XGBoost / LightGBM / CatBoost outperform tabular deep-learning architectures (TabNet, TabTransformer, FT-Transformer, SAINT) **with ~100× less compute** on tabular medical classification.
 - **One model beats the old 3-model ensemble.** A single tuned GBDT consistently matches or beats hand-built RF + NB + SVM hard-voting ensembles in every benchmark we reviewed, at ~50× faster inference and with one artifact to ship.
 - **`GaussianNB` was the wrong family.** The previous `nb_model.pkl` assumed Gaussian-distributed features but symptoms are binary (Bernoulli). LightGBM subsumes the role correctly; we removed the Naive Bayes component instead of "fixing" it.
-- **Calibrated probabilities.** Wrapped in `CalibratedClassifierCV(method="isotonic", cv=3)` so `predict_proba` reflects actual posterior likelihood. This is what lets the UI honestly say "94% confidence" and produces a meaningful top-K differential whose probabilities sum to ~1.0.
-- **Operational simplicity.** One `lgbm_model.pkl.gz` (~150 MB uncompressed, ~50 MB gzipped) + small JSON/PKL metadata replaces five inter-dependent files (RF + NB + SVM + data_dict + Doctor_Specialist). Easier to deploy, monitor, and retrain.
+- **Calibrated probabilities.** The trained model is frozen and wrapped in `CalibratedClassifierCV(method="isotonic")`, fitted on a held-out calibration split, so `predict_proba` reflects actual posterior likelihood. This is what lets the UI honestly say "94% confidence" and produces a meaningful top-K differential whose probabilities sum to ~1.0.
+- **Operational simplicity.** One `lgbm_model.pkl.gz` (~20 MB) + small JSON/PKL metadata replaces five inter-dependent files (RF + NB + SVM + data_dict + Doctor_Specialist). Easier to deploy, monitor, and retrain.
 
 ### Measured Results
 
-- **99.71% Top-1 accuracy** on a 116K held-out test set (stratified split from DDXPlus).
+- **99.75% Top-1 accuracy** on a 116K held-out test set (stratified split from DDXPlus).
 - **100.00% Top-3 accuracy** — the correct pathology is always in the top 3 candidates.
 - **~1 ms inference** per request on a single CPU core, no GPU required.
 
@@ -378,7 +379,7 @@ python main.py                       # API at http://localhost:8000
 
 ### Training the Disease Prediction Model (optional)
 
-The repo ships a trained model as `backend/models/lgbm_model.pkl.gz` (gzipped to ~50 MB to fit GitHub's file limit), so prediction works right after cloning. To retrain from scratch:
+The repo ships a trained model as `backend/models/lgbm_model.pkl.gz` (~20 MB gzipped), so prediction works right after cloning. To retrain from scratch:
 
 ```bash
 bash training/setup_model.sh --force
@@ -445,6 +446,10 @@ SMTP_EMAIL=your_gmail@gmail.com
 SMTP_PASSWORD=your_gmail_app_password
 SMTP_FROM_NAME=AI Health Care
 
+# Email over HTTPS (use instead of SMTP on hosts that block it, e.g. Render free tier)
+RESEND_API_KEY=
+RESEND_FROM=AI HealthEngine <noreply@yourdomain.com>
+
 # Admin RBAC
 ADMIN_EMAIL=your_admin_email@example.com
 
@@ -474,6 +479,12 @@ VITE_API_URL=http://localhost:8000
 ```
 
 > ⚠️ Use `http://localhost:8000`, not `http://0.0.0.0:8000` — Chrome treats `0.0.0.0` as a separate origin and will refuse to send cookies or open WebSockets to it.
+
+---
+
+## Deployment
+
+The repo includes a Render Blueprint (`render.yaml`) that deploys the backend and frontend on Render's free tier, with MongoDB Atlas for the database. See **[DEPLOY.md](DEPLOY.md)** for step-by-step setup, the environment variables to fill in, free-tier limits and troubleshooting.
 
 ---
 
