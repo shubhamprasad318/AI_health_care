@@ -19,6 +19,9 @@ env/
 
 # ML model artifacts
 *.pkl
+# Small lookup maps the backend needs; the large model is built by training/train.py
+!backend/models/feature_map.pkl
+!backend/models/label_map.pkl
 *.joblib
 *.h5
 
