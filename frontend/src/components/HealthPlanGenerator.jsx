@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { FaFileMedical, FaTimes, FaCheckCircle } from "react-icons/fa";
 import { geminiAPI } from "../utils/api";
 import { toast } from "react-toastify";
@@ -11,6 +11,36 @@ const HealthPlanGenerator = () => {
   const [plan, setPlan] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const { email, loggedIn } = useAuth();
+  const planRef = useRef(null);
+
+  // Print only the plan, not the whole profile page behind the modal
+  const printPlan = () => {
+    const content = planRef.current?.innerHTML;
+    if (!content) return;
+    const win = window.open("", "_blank", "width=900,height=1000");
+    if (!win) {
+      toast.error("Allow pop-ups for this site to print the plan.");
+      return;
+    }
+    win.document.write(`<!doctype html><html><head><meta charset="utf-8">
+      <title>Personalized Health Plan</title>
+      <style>
+        body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; color: #111; line-height: 1.55; max-width: 780px; margin: 32px auto; padding: 0 24px; }
+        h1, h2, h3 { color: #166534; } h1 { border-bottom: 2px solid #86efac; padding-bottom: 6px; }
+        table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14px; }
+        th, td { border: 1px solid #bbf7d0; padding: 6px 8px; text-align: left; vertical-align: top; }
+        th { background: #dcfce7; }
+        .meta { color: #555; font-size: 13px; margin-bottom: 24px; }
+      </style></head><body>
+      <h1>Personalized Health Plan</h1>
+      <p class="meta">${plan?.condition ? `Condition: ${plan.condition} · ` : ""}Generated ${new Date().toLocaleDateString()} by AI HealthEngine</p>
+      ${content}
+      </body></html>`);
+    win.document.close();
+    win.focus();
+    // Give the new window a moment to lay out before opening the print dialog
+    setTimeout(() => win.print(), 300);
+  };
 
   const handleGenerate = async () => {
     if (!loggedIn || !email) {
@@ -21,7 +51,7 @@ const HealthPlanGenerator = () => {
     setIsLoading(true);
     try {
       const response = await geminiAPI.generateHealthPlan();
-      if (response.success && response.data) {
+      if (response.success && response.data?.plan) {
         setPlan(response.data);
         toast.success("Health plan generated successfully!");
       } else {
@@ -148,11 +178,13 @@ const HealthPlanGenerator = () => {
                         prose-ul:my-4 prose-ul:space-y-2
                         prose-ol:my-4 prose-ol:space-y-2
                         ">
+                        <div ref={planRef}>
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {typeof plan.plan === "string"
                             ? plan.plan
                             : plan.plan.plan || JSON.stringify(plan.plan, null, 2)}
                         </ReactMarkdown>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -176,7 +208,7 @@ const HealthPlanGenerator = () => {
                   {/* Action Buttons */}
                   <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button
-                      onClick={() => window.print()}
+                      onClick={printPlan}
                       className="flex-1 bg-blue-500 text-white px-6 py-3 rounded-xl hover:bg-blue-600 transition shadow-md hover:shadow-lg font-semibold"
                     >
                       📄 Print Plan

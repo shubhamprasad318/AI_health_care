@@ -50,7 +50,7 @@ Disease prediction is backed by a calibrated LightGBM classifier trained on the 
 - **Medical Term Explainer** — Plain-language explanations of clinical terminology with medical accuracy preserved.
 - **Personalized Health Plans** — 4-week hybrid plans synthesizing ML prediction + uploaded report data + user profile.
 - **Voice-to-Text Symptom Search** — Hands-free symptom search via the Web Speech API; spoken phrases populate the live filter over the evidence catalog (`GET /predict/evidences`).
-- **Multi-Model Fallback** — Gemini service auto-falls-back across `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-2.0-flash-lite` per request.
+- **Multi-Model Fallback** — Gemini service auto-falls-back from `gemini-3-flash-preview` to `gemini-2.5-flash` per request.
 
 ### Virtual Doctor (Voice AI)
 

@@ -56,7 +56,9 @@ async function apiRequest(endpoint, options = {}) {
     }
 
     if (!response.ok) {
-      throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      // FastAPI errors carry the reason in `detail`
+      const detail = typeof data.detail === "string" ? data.detail : null;
+      throw new Error(data.message || detail || `HTTP error! status: ${response.status}`);
     }
     return data;
   } catch (error) {

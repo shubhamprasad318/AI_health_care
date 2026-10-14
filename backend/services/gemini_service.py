@@ -15,10 +15,10 @@ logger = logging.getLogger(__name__)
 
 gemini_client = None
 
+# Tried in order. gemini-2.0-flash and -lite were retired by Google (404).
 GEMINI_MODELS = [
+    "gemini-3-flash-preview",
     "gemini-2.5-flash",
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
 ]
 
 GEMINI_TIMEOUT_SECONDS = 60
@@ -136,7 +136,9 @@ async def call_gemini(prompt: str, config: Optional[Any] = None) -> str:
         temperature=0.7,
         top_p=0.95,
         top_k=40,
-        max_output_tokens=4000,
+        # 2.5-flash spends part of this budget on hidden "thinking"; 4000 cut
+        # long answers such as the 4-week health plan off mid-way
+        max_output_tokens=8192,
     )
 
     last_error: Optional[BaseException] = None

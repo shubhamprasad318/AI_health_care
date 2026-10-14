@@ -209,7 +209,7 @@ async def home():
         "data": {
             "version": APP_VERSION,
             "sdk": "google-genai (2026)",
-            "model": "gemini-2.0-flash",
+            "model": "gemini-3-flash-preview",
             "status": "running",
             "endpoints": {
                 "docs": "/docs",

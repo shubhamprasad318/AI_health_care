@@ -204,6 +204,13 @@ async def generate_health_plan(request: Request):
         report_analysis=report_data,  # Passing the PDF data here!
     )
 
+    if not health_plan.get("plan"):
+        logger.error(f"Health plan generation failed: {health_plan.get('error')}")
+        raise HTTPException(
+            status_code=502,
+            detail="Couldn't generate your health plan right now. Please try again in a minute.",
+        )
+
     # Save the plan
     try:
         await db.health_plans.insert_one(
@@ -229,7 +236,7 @@ async def gemini_status():
         data={
             "enabled": is_gemini_available(),
             "sdk_version": "2026 (google-genai)",
-            "model": "gemini-2.0-flash",
+            "model": "gemini-3-flash-preview",
             "features": {
                 "chat": is_gemini_available(),
                 "streaming": is_gemini_available(),
