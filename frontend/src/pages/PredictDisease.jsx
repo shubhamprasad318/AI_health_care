@@ -13,12 +13,71 @@ import {
   FaUserMd,
   FaSearch,
   FaTrash,
+  FaExclamationTriangle,
+  FaPhoneAlt,
 } from "react-icons/fa";
 import { BsArrowDown } from "react-icons/bs";
 import VoiceInput from "../components/VoiceInput";
 import { predictionAPI } from "../utils/api";
 
 const MAX_EVIDENCES = 30;
+
+// Shown above the result when the backend flags warning signs
+// (backend/services/red_flags.py), whatever condition the model predicts
+function UrgentCareBanner({ redFlags }) {
+  const emergency = redFlags.level === "emergency";
+  return (
+    <div
+      role="alert"
+      className={`mb-6 mt-6 p-5 rounded-2xl border-2 ${
+        emergency
+          ? "bg-red-50 border-red-400 dark:bg-red-950/40 dark:border-red-700"
+          : "bg-amber-50 border-amber-400 dark:bg-amber-950/30 dark:border-amber-700"
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <FaExclamationTriangle
+          className={`mt-1 shrink-0 text-2xl ${
+            emergency ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"
+          }`}
+        />
+        <div className="flex-1">
+          <h3 className="text-lg font-extrabold text-gray-900 dark:text-white">
+            {emergency ? "Seek emergency care now" : "See a doctor today"}
+          </h3>
+          <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">{redFlags.message}</p>
+          {redFlags.reasons?.length > 0 && (
+            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm font-semibold text-gray-800 dark:text-gray-200">
+              {redFlags.reasons.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-4 flex flex-wrap gap-3">
+            <a
+              href="tel:112"
+              className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 font-bold shadow ${
+                emergency
+                  ? "bg-red-600 text-white hover:bg-red-700"
+                  : "border-2 border-red-600 text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+              }`}
+            >
+              <FaPhoneAlt /> Call 112
+            </a>
+            {!emergency && (
+              <a
+                href="/book"
+                className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-5 py-2.5 font-bold text-white shadow hover:bg-amber-700"
+              >
+                <FaUserMd /> Book a doctor today
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const LAYPERSON_NAMES = {
   "Acute COPD exacerbation / infection": "flare-up of long-term lung disease (COPD)",
@@ -553,6 +612,8 @@ function PredictDisease() {
               ×
             </button>
 
+            {result.red_flags && <UrgentCareBanner redFlags={result.red_flags} />}
+
             <div className="mb-6 text-center">
               <div className="inline-block bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-1 rounded-full text-xs font-bold shadow mb-3">
                 PREDICTION COMPLETE
@@ -580,6 +641,9 @@ function PredictDisease() {
               <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
                 <FaUserMd className="text-btn2" /> Differential Diagnosis
               </h3>
+              <p className="-mt-2 mb-3 text-xs text-gray-500 dark:text-gray-400">
+                Very unlikely conditions are not shown.
+              </p>
               <div className="space-y-2">
                 {(result.differential_diagnosis || []).map((item) => (
                   <div

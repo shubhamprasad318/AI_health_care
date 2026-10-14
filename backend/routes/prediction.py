@@ -13,6 +13,7 @@ from services.ml_service import (
     get_evidence_label,
     predict_disease,
 )
+from services.red_flags import assess_red_flags
 from utils.helpers import standard_response
 from utils.security import require_auth
 
@@ -84,6 +85,14 @@ async def predict_disease_endpoint(
 
         primary = differential[0]
         human_evidences = [get_evidence_label(t) for t in payload.evidences if t]
+        # Warning signs (rule-based) and likely life-threatening conditions
+        red_flags = assess_red_flags(payload.evidences, differential)
+        if red_flags:
+            logger.info(
+                "[TRIAGE] level=%s, reasons=%d",
+                red_flags["level"],
+                len(red_flags["reasons"]),
+            )
 
         use_gemini = request.url.path.endswith("/enhanced")
         if use_gemini:
@@ -93,6 +102,7 @@ async def predict_disease_endpoint(
                 specialize="Physician",
                 user_age=age,
                 user_gender="Female" if sex == "F" else "Male" if sex == "M" else None,
+                red_flags=red_flags,
             )
         else:
             enhanced_result = {"enhanced": False, "gemini_analysis": ""}
@@ -109,6 +119,7 @@ async def predict_disease_endpoint(
                     "ml_probability": primary["probability"],
                     "ml_icd10": primary.get("icd10"),
                     "differential": differential,
+                    "red_flags": red_flags,
                     "enhanced": enhanced_result.get("enhanced", False),
                     "created_at": datetime.now(timezone.utc),
                 }
@@ -123,6 +134,7 @@ async def predict_disease_endpoint(
                 "ml_probability": primary["probability"],
                 "ml_icd10": primary.get("icd10"),
                 "differential_diagnosis": differential,
+                "red_flags": red_flags,
                 "evidences_analyzed": human_evidences,
                 "gemini_enhanced": enhanced_result.get("enhanced", False),
                 "gemini_analysis": gemini_analysis,

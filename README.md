@@ -41,7 +41,8 @@ Disease prediction is backed by a calibrated LightGBM classifier trained on the 
 
 ### AI & Machine Learning
 
-- **Differential Disease Prediction** — Calibrated LightGBM returns a ranked **top-5 differential diagnosis** with calibrated probabilities and ICD-10 codes. Inputs: any number of symptoms and antecedents (binary, categorical, multi-choice) plus optional age and sex. Frontend renders the top prediction with a confidence bar, every diagnosis with a layperson-explanation tooltip, and the full differential.
+- **Differential Disease Prediction** — Calibrated LightGBM returns a ranked differential diagnosis (up to 5 conditions; anything under 2% is hidden) with calibrated probabilities and ICD-10 codes. Inputs: any number of symptoms and antecedents (binary, categorical, multi-choice) plus optional age and sex. Frontend renders the top prediction with a confidence bar, every diagnosis with a layperson-explanation tooltip, and the full differential.
+- **Urgent-Care Warnings** — Independent of the model, warning signs such as chest pain at rest, significant breathlessness, fainting, stroke signs or vomiting blood show a "seek emergency care" or "see a doctor today" banner with a one-tap call to 112 (`backend/services/red_flags.py`). The banner also appears when the model rates a life-threatening condition (heart attack, anaphylaxis, acute pulmonary oedema, laryngospasm, Ebola) at 20% or more. Ebola is only considered when travel to West Africa is reported, as in every Ebola case in DDXPlus.
 - **AI-Enhanced Clinical Assessment** — Toggle-gated Gemini analysis adds pathophysiology, differential diagnoses to consider, red flags, expected clinical course, recommended workup, and questions to ask a physician.
 - **AI Health Chat** — Streaming and non-streaming Gemini chatbot widget available on every page.
 - **Symptom Analyzer** — Triage classification (Emergency / Urgent / Routine / Self-care) with structured clinical assessment.
@@ -492,7 +493,7 @@ The repo includes a Render Blueprint (`render.yaml`) that deploys the backend an
 ## Usage Guide
 
 1. **Sign up / log in.** Optionally enable 2FA from `/security`.
-2. **Predict.** Open `/predict` → search the evidence catalog (symptoms + medical history) → optionally enter age/sex (auto-filled from profile if blank) → check **Enhanced AI Analysis** for Gemini's clinical write-up → submit. View ranked top-5 differential with confidence bars, ICD-10 codes, and plain-language tooltips on each clinical name.
+2. **Predict.** Open `/predict` → search the evidence catalog (symptoms + medical history) → optionally enter age/sex (auto-filled from profile if blank) → check **Enhanced AI Analysis** for Gemini's clinical write-up → submit. View the ranked differential with confidence bars, ICD-10 codes, and plain-language tooltips on each clinical name.
 3. **AI Health Chat.** Use the floating chatbot widget on every page for real-time consultations.
 4. **Health Tools.** Symptom Analyzer (triage), Drug Interaction Checker (with PDF export), Health Plan Generator (4-week plans).
 5. **Medical Reports.** Upload from `/profile` → Gemini auto-analyzes → see risk level, key findings, abnormal values, recommendations.

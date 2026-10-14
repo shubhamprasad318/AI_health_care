@@ -41,6 +41,20 @@ _INDEX_TO_LABEL: Dict[int, str] = {}
 _EVIDENCES_META: Dict[str, Any] = {}
 _CONDITIONS_META: Dict[str, Any] = {}
 
+# Conditions below this probability are noise to a patient (unrelated
+# conditions at a fraction of a percent), so they are left out of the
+# differential that is returned, shown and stored. The top one is always kept.
+MIN_DIFFERENTIAL_PROBABILITY = 0.02
+
+# Conditions that need a specific exposure. Every Ebola patient in DDXPlus had
+# travelled to West Africa, but users rarely answer the travel question, and
+# without it the model gives Ebola a few percent even for a cold. These are
+# ruled out unless the exposure is reported, and the remaining probabilities
+# are rescaled accordingly.
+_EXPOSURE_REQUIRED = {
+    "Ebola": "E_204_@_V_1",  # travelled to West Africa in the last 4 weeks
+}
+
 _FEATURE_AGE = "__AGE__"
 _FEATURE_SEX_F = "__SEX_F__"
 
@@ -127,7 +141,16 @@ async def predict_disease(
         raise RuntimeError("ML model not loaded - prediction service unavailable")
 
     x = _vectorize(evidences, age, sex)
-    probs = _MODEL.predict_proba(x)[0]
+    probs = _MODEL.predict_proba(x)[0].copy()
+
+    reported = set(evidences)
+    for pathology, exposure in _EXPOSURE_REQUIRED.items():
+        idx = _LABEL_MAP.get(pathology)
+        if idx is not None and exposure not in reported:
+            probs[idx] = 0.0
+    remaining = probs.sum()
+    if remaining > 1e-9:
+        probs = probs / remaining
     top_k = max(1, min(top_k, len(probs)))
     top_indices = np.argsort(probs)[::-1][:top_k]
 
@@ -145,14 +168,19 @@ async def predict_disease(
             }
         )
 
+    shown = [
+        d for d in differential if d["probability"] >= MIN_DIFFERENTIAL_PROBABILITY
+    ] or differential[:1]
+
     logger.info(
-        "[PREDICT] top-1=%s (%.4f), evidences=%d, top-5 sum=%.4f",
+        "[PREDICT] top-1=%s (%.4f), evidences=%d, shown %d of top-%d",
         differential[0]["pathology"],
         differential[0]["probability"],
         len(evidences),
-        sum(d["probability"] for d in differential),
+        len(shown),
+        len(differential),
     )
-    return differential
+    return shown
 
 
 def get_evidence_label(token: str, language: str = "en") -> str:

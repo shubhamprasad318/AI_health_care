@@ -168,12 +168,31 @@ async def call_gemini(prompt: str, config: Optional[Any] = None) -> str:
     return ""
 
 
+def _red_flags_note(red_flags: Optional[Dict[str, Any]]) -> str:
+    """Prompt line for warning signs found by services/red_flags.py, so the
+    analysis reinforces the app's urgent-care advice instead of contradicting it."""
+    if not red_flags or not red_flags.get("reasons"):
+        return ""
+    signs = ", ".join(_sanitize_list(red_flags["reasons"], max_items=10, item_max_len=80))
+    advice = (
+        "call emergency services (112) or go to an emergency department now"
+        if red_flags.get("level") == "emergency"
+        else "see a doctor today, and call 112 if symptoms get worse"
+    )
+    return (
+        f"**WARNING SIGNS REPORTED:** {signs}. The app has already told the patient to "
+        f"{advice}. Your assessment must reinforce this advice and must never suggest "
+        f"waiting, or managing these symptoms at home alone.\n"
+    )
+
+
 async def get_gemini_enhanced_prediction(
     prediction: str,
     symptoms: List[str],
     specialize: str = "Physician",
     user_age: Optional[int] = None,
     user_gender: Optional[str] = None,
+    red_flags: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     if not gemini_client:
         return {"enhanced": False, "ml_prediction": prediction}
@@ -200,7 +219,7 @@ async def get_gemini_enhanced_prediction(
 **PATIENT DEMOGRAPHICS:** {context_str}
 **PRESENTING SYMPTOMS:** {symptoms_str}
 **ML MODEL PREDICTION:** {s_prediction}
-
+{_red_flags_note(red_flags)}
 Provide your assessment in the following structure (Markdown format):
 
 ### Clinical Assessment of {s_prediction}
