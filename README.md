@@ -4,6 +4,10 @@ A comprehensive AI-driven health platform that combines a **calibrated LightGBM 
 
 > ⚕️ **Medical disclaimer.** This platform is for educational and informational purposes only. It is not a diagnosis, treatment plan, or substitute for in-person medical evaluation. Always consult a qualified healthcare provider for medical decisions. For emergencies, call your local emergency number (112 / 911).
 
+<p align="center">
+  <img src="docs/flow.svg" alt="Animated flow: symptom check (React → FastAPI → LightGBM → red-flag rules → Gemini) and voice doctor (FastAPI → LiveKit Cloud → Dr. AI agent → call summary)" width="100%">
+</p>
+
 ---
 
 ## Table of Contents
