@@ -8,7 +8,7 @@ from typing import Optional
 from database.models import DoctorCreate, DoctorReviewCreate
 from database.connection import db, get_user_by_email
 from utils.security import require_auth
-from utils.helpers import standard_response, serialize_doc
+from utils.helpers import standard_response, serialize_mongo_doc
 from bson import ObjectId
 from bson.errors import InvalidId
 from datetime import datetime
@@ -81,8 +81,8 @@ async def list_doctors(
 
         total = await db.doctors.count_documents(query)
 
-        for doc in doctors:
-            serialize_doc(doc)
+        # serialize_* return copies, so the results must be kept
+        doctors = [serialize_mongo_doc(doc) for doc in doctors]
 
         return standard_response(
             message="Doctors retrieved successfully",
@@ -139,7 +139,7 @@ async def get_doctor(doctor_id: str):
         if not doctor:
             raise HTTPException(status_code=404, detail="Doctor not found")
 
-        serialize_doc(doctor)
+        doctor = serialize_mongo_doc(doctor)
 
         # Get reviews for this doctor
         review_cursor = (
@@ -148,8 +148,7 @@ async def get_doctor(doctor_id: str):
             .limit(50)
         )
         reviews = await review_cursor.to_list(length=50)
-        for review in reviews:
-            serialize_doc(review)
+        reviews = [serialize_mongo_doc(r) for r in reviews]
 
         doctor["reviews"] = reviews
 
