@@ -44,10 +44,11 @@ import gzip
 import json
 import logging
 import pickle
+import re
 import sys
 from collections import Counter
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -72,11 +73,14 @@ DATASET_FILES = (
 RANDOM_STATE = 42
 TEST_SIZE = 0.1
 VAL_SIZE = 0.1
+# Small trees, more boosting rounds: with short-symptom training data, 127-leaf
+# trees all grow to the cap (2.4M leaves, ~880 MB of RAM). 31 leaves x 300
+# rounds keeps ~450K leaves (~340 MB) with the same few-symptom accuracy.
 LGBM_PARAMS = dict(
-    n_estimators=400,
-    learning_rate=0.05,
+    n_estimators=300,
+    learning_rate=0.10,
     max_depth=-1,
-    num_leaves=127,
+    num_leaves=31,
     min_child_samples=20,
     reg_lambda=1.0,
     n_jobs=-1,
@@ -85,6 +89,19 @@ LGBM_PARAMS = dict(
     verbosity=-1,
 )
 SUBSAMPLE_FOR_CALIBRATION = 200_000
+
+# The backend must fit in 512 MB (Render free tier). Memory grows with the
+# total number of tree leaves: ~460K leaves -> ~340 MB, ~2.4M -> ~880 MB.
+MAX_TOTAL_LEAVES = 600_000
+
+# Real users enter only a few symptoms, but each DDXPlus patient has ~20.
+# Training on extra copies of patients reduced to a random 2-8 evidences
+# teaches the model to rank sensibly from short inputs (top-3 accuracy with
+# 3 symptoms: ~57% without this, ~97% with it) without hurting full inputs.
+MASKED_FRACTION = 0.5
+MASK_MIN_EVIDENCES = 2
+MASK_MAX_EVIDENCES = 8
+EVAL_EVIDENCE_COUNTS = (2, 3, 4, 8)
 
 
 def load_dataset() -> Tuple[pd.DataFrame, Dict[str, Any], Dict[str, Any]]:
@@ -217,6 +234,17 @@ def train_lightgbm(X_train, y_train, num_classes: int):
     )
     base = LGBMClassifier(**params)
     base.fit(X_train, y_train)
+
+    total_leaves = sum(
+        int(n) for n in re.findall(r"^num_leaves=(\d+)", base.booster_.model_to_string(), re.M)
+    )
+    log.info("Model size: %d trees, %d leaves in total", base.booster_.num_trees(), total_leaves)
+    if total_leaves > MAX_TOTAL_LEAVES:
+        log.warning(
+            "Model has %d leaves (budget %d): the backend may exceed 512 MB of RAM. "
+            "Lower num_leaves or n_estimators in LGBM_PARAMS.",
+            total_leaves, MAX_TOTAL_LEAVES,
+        )
     return base
 
 
@@ -240,7 +268,25 @@ def calibrate(base, X_cal, y_cal):
     return calibrated
 
 
-def evaluate(model, X_test, y_test, label_map: Dict[str, int]) -> None:
+def mask_evidences(X: np.ndarray, feature_map: Dict[str, int], rng: np.random.Generator,
+                   k_min: int, k_max: int) -> np.ndarray:
+    """Copy of X where each row keeps only k random evidence columns
+    (k drawn from [k_min, k_max]); age and sex are always kept."""
+    keep_cols = {feature_map["__AGE__"], feature_map["__SEX_F__"]}
+    evidence_mask = np.ones(X.shape[1], dtype=bool)
+    evidence_mask[list(keep_cols)] = False
+    out = X.copy()
+    for i in range(out.shape[0]):
+        present = np.flatnonzero(out[i] * evidence_mask)
+        k = int(rng.integers(k_min, k_max + 1))
+        if len(present) > k:
+            drop = rng.choice(present, len(present) - k, replace=False)
+            out[i, drop] = 0.0
+    return out
+
+
+def evaluate(model, X_test, y_test, label_map: Dict[str, int],
+             feature_map: Optional[Dict[str, int]] = None) -> None:
     probs = model.predict_proba(X_test)
     preds = probs.argmax(axis=1)
     classes = np.arange(len(label_map))
@@ -257,6 +303,19 @@ def evaluate(model, X_test, y_test, label_map: Dict[str, int]) -> None:
     print(f"{'Top-3 accuracy':<24} {top3:.4f}")
     print(f"{'Top-5 accuracy':<24} {top5:.4f}")
     print("=" * 64)
+
+    if feature_map is not None:
+        # How the model does when a user enters only a few symptoms
+        rng = np.random.default_rng(RANDOM_STATE + 1)
+        print(f"{'Symptoms entered':<24} {'Top-1':<10} {'Top-3':<10}")
+        print("-" * 64)
+        for k in EVAL_EVIDENCE_COUNTS:
+            Xk = mask_evidences(X_test, feature_map, rng, k, k)
+            pk = model.predict_proba(Xk)
+            t1 = accuracy_score(y_test, pk.argmax(axis=1))
+            t3 = top_k_accuracy_score(y_test, pk, k=3, labels=classes)
+            print(f"{k:<24} {t1:<10.4f} {t3:<10.4f}")
+        print("=" * 64)
     print()
 
 
@@ -307,6 +366,7 @@ def main() -> None:
     )
     X = vectorize(df, feature_map)
     y, label_map = build_labels(df)
+    del df
 
     X_train_full, X_test, y_train_full, y_test = train_test_split(
         X, y,
@@ -314,12 +374,14 @@ def main() -> None:
         random_state=RANDOM_STATE,
         stratify=y,
     )
+    del X
     X_train, X_cal, y_train, y_cal = train_test_split(
         X_train_full, y_train_full,
         test_size=VAL_SIZE,
         random_state=RANDOM_STATE,
         stratify=y_train_full,
     )
+    del X_train_full, y_train_full
     log.info(
         "Splits: train=%d, calibration=%d, test=%d",
         X_train.shape[0],
@@ -327,10 +389,22 @@ def main() -> None:
         X_test.shape[0],
     )
 
+    rng = np.random.default_rng(RANDOM_STATE)
+    n_masked = int(len(X_train) * MASKED_FRACTION)
+    log.info(
+        "Adding %d copies of training patients reduced to %d-%d evidences...",
+        n_masked, MASK_MIN_EVIDENCES, MASK_MAX_EVIDENCES,
+    )
+    pick = rng.choice(len(X_train), n_masked, replace=False)
+    X_masked = mask_evidences(X_train[pick], feature_map, rng, MASK_MIN_EVIDENCES, MASK_MAX_EVIDENCES)
+    X_train = np.vstack([X_train, X_masked])
+    y_train = np.concatenate([y_train, y_train[pick]])
+    del X_masked
+
     base = train_lightgbm(X_train, y_train, num_classes=len(label_map))
+    del X_train, y_train
 
     if len(X_cal) > SUBSAMPLE_FOR_CALIBRATION:
-        rng = np.random.default_rng(RANDOM_STATE)
         idx = rng.choice(len(X_cal), SUBSAMPLE_FOR_CALIBRATION, replace=False)
         X_cal_sub, y_cal_sub = X_cal[idx], y_cal[idx]
         log.info(
@@ -340,8 +414,13 @@ def main() -> None:
     else:
         X_cal_sub, y_cal_sub = X_cal, y_cal
 
+    # Calibrate on the same full/short mix the model was trained for
+    half = rng.choice(len(X_cal_sub), len(X_cal_sub) // 2, replace=False)
+    X_cal_sub = X_cal_sub.copy()
+    X_cal_sub[half] = mask_evidences(X_cal_sub[half], feature_map, rng, MASK_MIN_EVIDENCES, MASK_MAX_EVIDENCES)
+
     model = calibrate(base, X_cal_sub, y_cal_sub)
-    evaluate(model, X_test, y_test, label_map)
+    evaluate(model, X_test, y_test, label_map, feature_map)
     save_artifacts(model, feature_map, label_map, evidences_meta, conditions_meta)
 
     log.info(

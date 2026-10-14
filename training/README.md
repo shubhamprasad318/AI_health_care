@@ -80,13 +80,25 @@ together.
 2. **Vectorise:** turns each patient's evidences (symptoms and medical history), age and
    sex into a fixed-length feature vector (517 features).
 3. **Split:** 80% train, 10% calibration, 10% held-out test, stratified by condition.
-4. **Train:** fits a multiclass `LGBMClassifier`.
+4. **Train:** fits a multiclass `LGBMClassifier` on the training split plus extra copies of
+   half the patients reduced to a random 2-8 symptoms. Real users enter only a few
+   symptoms, while each DDXPlus patient has about 20; without these copies the model
+   guesses badly from short inputs. Small trees (31 leaves x 300 rounds) keep the model
+   within the memory budget: training warns if it grows past `MAX_TOTAL_LEAVES`.
 5. **Calibrate:** freezes the trained model and fits isotonic calibration on the calibration
    split, so the probabilities shown to users are meaningful, not just a ranking. Only one
    LightGBM copy is kept, which keeps the backend at ~350 MB of RAM (it must fit 512 MB on
    Render's free tier; see [`DEPLOY.md`](../DEPLOY.md)).
-6. **Evaluate:** prints Top-1, Top-3 and Top-5 accuracy on the test set
-   (expect about 99.7% Top-1).
+6. **Evaluate:** prints Top-1, Top-3 and Top-5 accuracy on the test set, then accuracy when
+   only 2, 3, 4 or 8 symptoms are entered. Expected results:
+
+   | Symptoms entered | Top-1 | Top-3 |
+   |---|---|---|
+   | 2 | ~67% | ~89% |
+   | 3 | ~83% | ~97% |
+   | 4 | ~90% | ~99% |
+   | 8 | ~97% | ~100% |
+   | All (~20) | ~99.7% | 100% |
 7. **Save:** writes the files listed above.
 
 The hyperparameters (`LGBM_PARAMS`), split sizes and random seed are constants at the

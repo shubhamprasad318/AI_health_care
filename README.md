@@ -33,7 +33,7 @@ The platform offers 20+ feature modules across four runtime processes:
 | **LiveKit Voice Agent** (Python) | Standalone process running the Dr. AI voice consultation |
 | **Training** (Python, optional) | Reproducible LightGBM training pipeline on DDXPlus |
 
-Disease prediction is backed by a calibrated LightGBM classifier trained on the **DDXPlus dataset** (~1.16M synthetic patient records, 49 pathologies, ~223 evidences with binary + categorical + multi-choice types), achieving **99.75% top-1 / 100% top-3 accuracy** on a 116K held-out test set with **~1ms inference**. See the [model design notes](#disease-prediction-model--why-this-choice) for the rationale.
+Disease prediction is backed by a calibrated LightGBM classifier trained on the **DDXPlus dataset** (~1.16M synthetic patient records, 49 pathologies, ~223 evidences with binary + categorical + multi-choice types), achieving **99.74% top-1 / 100% top-3 accuracy** (~97% top-3 from just 3 symptoms) on a 116K held-out test set in **a few milliseconds**. See the [model design notes](#disease-prediction-model--why-this-choice) for the rationale.
 
 ---
 
@@ -229,9 +229,10 @@ This section documents the rationale for the ML pipeline. The repo previously us
 
 ### Measured Results
 
-- **99.75% Top-1 accuracy** on a 116K held-out test set (stratified split from DDXPlus).
+- **99.74% Top-1 accuracy** on a 116K held-out test set (stratified split from DDXPlus) with full symptom answers.
+- **Works from a few symptoms:** with only 3 symptoms entered, the right condition is in the top 3 for ~97% of test patients (top-1 ~83%). The model is trained on extra copies of patients reduced to 2-8 symptoms, because real users rarely answer 20 questions.
 - **100.00% Top-3 accuracy** — the correct pathology is always in the top 3 candidates.
-- **~1 ms inference** per request on a single CPU core, no GPU required.
+- **A few milliseconds per prediction** on a single CPU core, no GPU required.
 
 ### Considered but Rejected
 
