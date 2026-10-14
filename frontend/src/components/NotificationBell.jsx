@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNotifications } from "../context/NotificationContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { IoNotifications } from "react-icons/io5";
 import { API_BASE_URL } from "../utils/api";
 import { authHeaders } from "../utils/authToken";
@@ -18,6 +19,7 @@ const TYPE_ICONS = {
 export default function NotificationBell() {
   const { notifications, unreadCount, markRead, markAllRead, setNotifications, setUnreadCount } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
   const [loaded, setLoaded] = useState(false);
   const panelRef = useRef(null);
 
@@ -117,6 +119,10 @@ export default function NotificationBell() {
                     key={n._id}
                     onClick={() => {
                       if (!n.read) markRead(n._id);
+                      if (n.link) {
+                        setIsOpen(false);
+                        navigate(n.link);
+                      }
                     }}
                     className={`px-4 py-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition-colors ${
                       !n.read ? "bg-blue-50/50" : ""

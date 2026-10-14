@@ -87,31 +87,35 @@
 <text x="861.0" y="590" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Dashboard</text>
 <text x="861.0" y="610" text-anchor="middle" font-size="11.5" fill="#64748b">health trends</text>
 <text x="24" y="769" font-size="14" font-weight="700" fill="#0d9488">4 · Records and appointments</text>
-<path class="flow" d="M160.0 820 H179.2"/>
-<path class="flow" d="M315.2 820 H334.4"/>
-<path class="flow" d="M470.4 820 H489.59999999999997"/>
-<path class="flow" d="M625.5999999999999 820 H644.8"/>
-<path class="flow" d="M780.8 820 H800.0"/>
-<path class="flow" d="M868.0 855 V900 H92.0 V855"/>
-<circle r="7" fill="#0d9488" stroke="#ffffff" stroke-width="2"><animateMotion dur="9s" repeatCount="indefinite" path="M92.0 820 H868.0 V900 H92.0 Z"/></circle>
-<rect x="213.89999999999998" y="888" width="532.2" height="24" rx="12" fill="#f0fdfa" stroke="#99f6e4"/>
-<text x="480.0" y="904.5" text-anchor="middle" font-size="12.5" fill="#0f172a">Medicine adherence  ·  health timeline  ·  appointment emails  ·  data export</text>
-<rect x="24.0" y="785" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.07;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="3;1.5;1.5" keyTimes="0;0.07;1" dur="9s" repeatCount="indefinite"/></rect>
-<text x="92.0" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Patient</text>
-<text x="92.0" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">meds, journal, family</text>
-<rect x="179.2" y="785" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.071;0.101;0.171;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.071;0.101;0.171;1" dur="9s" repeatCount="indefinite"/></rect>
-<text x="247.2" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">FastAPI</text>
-<text x="247.2" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">REST API</text>
-<rect x="334.4" y="785" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.161;0.191;0.261;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.161;0.191;0.261;1" dur="9s" repeatCount="indefinite"/></rect>
-<text x="402.4" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">MongoDB</text>
-<text x="402.4" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">health timeline</text>
-<rect x="489.59999999999997" y="785" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.252;0.282;0.352;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.252;0.282;0.352;1" dur="9s" repeatCount="indefinite"/></rect>
-<text x="557.5999999999999" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Doctors</text>
-<text x="557.5999999999999" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">book appointments</text>
-<rect x="644.8" y="785" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.343;0.373;0.443;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.343;0.373;0.443;1" dur="9s" repeatCount="indefinite"/></rect>
-<text x="712.8" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Email</text>
-<text x="712.8" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">confirmations</text>
-<rect x="800.0" y="785" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.433;0.463;0.533;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.433;0.463;0.533;1" dur="9s" repeatCount="indefinite"/></rect>
-<text x="868.0" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Export</text>
-<text x="868.0" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">PDF · CSV · FHIR</text>
+<path class="flow" d="M142.0 820 H156.33333333333334"/>
+<path class="flow" d="M274.33333333333337 820 H288.6666666666667"/>
+<path class="flow" d="M406.6666666666667 820 H421.0"/>
+<path class="flow" d="M539.0 820 H553.3333333333334"/>
+<path class="flow" d="M671.3333333333334 820 H685.6666666666667"/>
+<path class="flow" d="M803.6666666666667 820 H818.0"/>
+<path class="flow" d="M877.0 855 V900 H83.0 V855"/>
+<circle r="7" fill="#0d9488" stroke="#ffffff" stroke-width="2"><animateMotion dur="9s" repeatCount="indefinite" path="M83.0 820 H877.0 V900 H83.0 Z"/></circle>
+<rect x="217.20000000000005" y="888" width="525.5999999999999" height="24" rx="12" fill="#f0fdfa" stroke="#99f6e4"/>
+<text x="480.0" y="904.5" text-anchor="middle" font-size="12.5" fill="#0f172a">Instant alerts  ·  medicine adherence  ·  appointment emails  ·  data export</text>
+<rect x="24.0" y="785" width="118" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.07;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="3;1.5;1.5" keyTimes="0;0.07;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="83.0" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Patient</text>
+<text x="83.0" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">meds, journal, family</text>
+<rect x="156.33333333333334" y="785" width="118" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.056;0.086;0.156;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.056;0.086;0.156;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="215.33333333333334" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">FastAPI</text>
+<text x="215.33333333333334" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">REST API</text>
+<rect x="288.6666666666667" y="785" width="118" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.131;0.161;0.231;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.131;0.161;0.231;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="347.6666666666667" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">MongoDB</text>
+<text x="347.6666666666667" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">health timeline</text>
+<rect x="421.0" y="785" width="118" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.207;0.237;0.307;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.207;0.237;0.307;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="480.0" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Doctors</text>
+<text x="480.0" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">book appointments</text>
+<rect x="553.3333333333334" y="785" width="118" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.283;0.313;0.383;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.283;0.313;0.383;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="612.3333333333334" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Live alerts</text>
+<text x="612.3333333333334" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">WebSocket</text>
+<rect x="685.6666666666667" y="785" width="118" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.359;0.389;0.459;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.359;0.389;0.459;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="744.6666666666667" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Email</text>
+<text x="744.6666666666667" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">confirmations</text>
+<rect x="818.0" y="785" width="118" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.434;0.464;0.534;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.434;0.464;0.534;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="877.0" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Export</text>
+<text x="877.0" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">PDF · CSV · FHIR</text>
 </svg>

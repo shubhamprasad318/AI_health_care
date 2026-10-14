@@ -175,6 +175,21 @@ async def notify_user(
     return notification
 
 
+async def notify_safely(
+    email: str,
+    title: str,
+    message: str,
+    ntype: str = "info",
+    link: Optional[str] = None,
+):
+    """notify_user that never raises: a failed notification must not fail the
+    booking, upload or call it is about."""
+    try:
+        await notify_user(email, title, message, ntype, link)
+    except Exception as e:
+        logger.warning(f"Notification failed for {email}: {e}")
+
+
 # ── REST Endpoints ──
 @router.get("/notifications", tags=["Notifications"])
 async def get_notifications(

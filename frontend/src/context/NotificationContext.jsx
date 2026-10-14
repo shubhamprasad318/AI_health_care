@@ -95,6 +95,9 @@ export default function NotificationProvider({ children }) {
     setNotifications((prev) =>
       prev.map((n) => (n._id === notificationId ? { ...n, read: true } : n))
     );
+    // Callers only mark unread items. The server's unread_update corrects this
+    // when the socket is up; this keeps the badge right when it's down.
+    setUnreadCount((count) => Math.max(0, count - 1));
   }, []);
 
   const markAllRead = useCallback(async () => {

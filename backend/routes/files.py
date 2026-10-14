@@ -11,6 +11,7 @@ from bson.errors import InvalidId
 from utils.helpers import standard_response, allowed_file
 from config.settings import UPLOAD_FOLDER, ALLOWED_EXTENSIONS, MAX_FILE_SIZE
 from services.gemini_service import process_medical_report  # ✅ ADD THIS
+from routes.notifications import notify_safely
 from datetime import datetime
 import logging
 import aiofiles
@@ -98,8 +99,23 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
                         },
                     )
                     logger.info(f"✅ Analysis complete: {file.filename}")
+                    await notify_safely(
+                        email,
+                        "Report analysed",
+                        f"Your report {file.filename} is ready to read.",
+                        "success",
+                        "/profile",
+                    )
                 else:
                     logger.warning(f"⚠️ Analysis failed: {analysis.get('error')}")
+                    await notify_safely(
+                        email,
+                        "Report couldn't be analysed",
+                        f"{file.filename} was saved, but we couldn't read it. "
+                        "Try a clearer scan or a PDF.",
+                        "warning",
+                        "/profile",
+                    )
             except Exception as e:
                 logger.error(f"❌ Analysis error: {e}")
 

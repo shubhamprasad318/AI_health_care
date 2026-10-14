@@ -17,6 +17,7 @@ An AI health platform that predicts likely conditions from a few symptoms, warns
 - **Voice AI doctor:** real-time voice calls (LiveKit + Gemini Live). The doctor reads the patient's past visits, lab reports and medicines, and every call is summarised and saved.
 - **Gemini tools:** lab report analysis, 4-week health plans, symptom triage, drug interaction checks and a chat assistant.
 - **Health records:** medication tracker, health timeline and journal, family profiles, doctor directory with appointments, and PDF / CSV / FHIR export.
+- **Live alerts:** WebSocket notifications when an appointment is booked or cancelled, a lab report is analysed, a call summary is ready, or a symptom check finds warning signs.
 - **Security:** JWT login with 2FA (TOTP), rate limiting, security headers and prompt-injection filtering.
 
 ## Model results

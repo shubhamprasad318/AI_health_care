@@ -13,6 +13,7 @@ from utils.helpers import standard_response
 
 # ✅ FIX: Import email service safely
 from services.email_service import send_appointment_confirmation, send_email
+from routes.notifications import notify_safely
 from bson import ObjectId
 from bson.errors import InvalidId
 from datetime import datetime
@@ -57,6 +58,14 @@ async def book_appointment(
             logger.warning(
                 f"Email failed to queue (ignoring to keep booking valid): {e}"
             )
+
+        await notify_safely(
+            current_user["email"],
+            "Appointment booked",
+            f"With {doctor_name} on {appointment.date} at {appointment.time}.",
+            "appointment",
+            "/calendar",
+        )
 
         return standard_response(
             message="Appointment booked successfully!",
@@ -131,6 +140,15 @@ async def cancel_appointment(
             logger.info(f"📧 Cancellation email queued for {current_user['email']}")
         except Exception:
             pass  # Ignore email errors on cancel
+
+        await notify_safely(
+            current_user["email"],
+            "Appointment cancelled",
+            f"With {appointment.get('doctor_name', 'your doctor')} on "
+            f"{appointment.get('date', '')} at {appointment.get('time', '')}.",
+            "appointment",
+            "/calendar",
+        )
 
         return standard_response(message="Appointment cancelled successfully.")
 

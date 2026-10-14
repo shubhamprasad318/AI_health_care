@@ -13,6 +13,7 @@ from services.ml_service import (
     get_evidence_label,
     predict_disease,
 )
+from routes.notifications import notify_safely
 from services.red_flags import assess_red_flags
 from utils.helpers import standard_response
 from utils.security import require_auth
@@ -126,6 +127,17 @@ async def predict_disease_endpoint(
             )
         except Exception as e:
             logger.warning("Failed to store prediction: %s", e)
+
+        if red_flags:
+            await notify_safely(
+                email,
+                "Get medical help now"
+                if red_flags["level"] == "emergency"
+                else "See a doctor today",
+                red_flags["message"],
+                "warning",
+                "/history",
+            )
 
         return standard_response(
             message="Disease prediction completed",

@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 
 from database.connection import db
 from database.models import ConsultationSummaryRequest, RecommendationActionRequest
+from routes.notifications import notify_safely
 from services.consultation_service import summarize_consultation
 from utils.helpers import serialize_mongo_doc, standard_response
 from utils.security import require_auth
@@ -122,6 +123,15 @@ async def post_summary(
         email,
         payload.duration_seconds,
         len(payload.transcript or ""),
+    )
+    await notify_safely(
+        email,
+        "Call summary ready",
+        "Your summary from Dr. AI is ready, with next steps."
+        if summary
+        else "Your call with Dr. AI was saved.",
+        "success",
+        "/virtual-doctor",
     )
     return standard_response(
         message="Consultation summary saved",
