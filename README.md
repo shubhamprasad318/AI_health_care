@@ -7,7 +7,7 @@ An AI health platform that predicts likely conditions from a few symptoms, warns
 > ⚕️ For education only. Not a diagnosis or a substitute for a doctor. In an emergency, call 112 / 911.
 
 <p align="center">
-  <img src="docs/flow.svg" alt="Animated flow: symptom check (React → FastAPI → LightGBM → red-flag rules → Gemini → MongoDB) and voice doctor (FastAPI → MongoDB → LiveKit Cloud → Dr. AI agent → call summary)" width="100%">
+  <img src="docs/flow.svg" alt="Animated flow of the four main features: symptom check, voice doctor, lab reports and AI tools, records and appointments" width="100%">
 </p>
 
 ## Highlights

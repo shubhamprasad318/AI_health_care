@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" font-family="-apple-system, Segoe UI, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 940" width="960" height="940" font-family="-apple-system, Segoe UI, Helvetica, Arial, sans-serif">
 <style>.flow{stroke:#0d9488;stroke-width:2;fill:none;stroke-dasharray:6 6;animation:dash 1s linear infinite}@keyframes dash{to{stroke-dashoffset:-12}}</style>
-<rect x="1" y="1" width="958" height="558" rx="18" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+<rect x="1" y="1" width="958" height="938" rx="18" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
 <text x="480.0" y="44" text-anchor="middle" font-size="22" font-weight="700" fill="#0f172a">How AI HealthEngine works</text>
 <text x="24" y="94" font-size="14" font-weight="700" fill="#0d9488">1 · Symptom check</text>
 <path class="flow" d="M142.0 145 H156.33333333333334"/>
@@ -34,32 +34,84 @@
 <rect x="818.0" y="110" width="118" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.434;0.464;0.534;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.434;0.464;0.534;1" dur="9s" repeatCount="indefinite"/></rect>
 <text x="877.0" y="140" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">MongoDB</text>
 <text x="877.0" y="160" text-anchor="middle" font-size="11.5" fill="#64748b">saved to history</text>
-<text x="24" y="344" font-size="14" font-weight="700" fill="#0d9488">2 · Voice doctor</text>
-<path class="flow" d="M160.0 395 H179.2"/>
-<path class="flow" d="M315.2 395 H334.4"/>
-<path class="flow" d="M470.4 395 H489.59999999999997"/>
-<path class="flow" d="M625.5999999999999 395 H644.8"/>
-<path class="flow" d="M780.8 395 H800.0"/>
-<path class="flow" d="M868.0 430 V475 H92.0 V430"/>
-<circle r="7" fill="#0d9488" stroke="#ffffff" stroke-width="2"><animateMotion dur="9s" repeatCount="indefinite" path="M92.0 395 H868.0 V475 H92.0 Z"/></circle>
-<rect x="207.3" y="463" width="545.4" height="24" rx="12" fill="#f0fdfa" stroke="#99f6e4"/>
-<text x="480.0" y="479.5" text-anchor="middle" font-size="12.5" fill="#0f172a">Two-way voice  ·  replies in ~3 s  ·  remembers past visits, labs and medicines</text>
-<rect x="24.0" y="360" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.07;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="3;1.5;1.5" keyTimes="0;0.07;1" dur="9s" repeatCount="indefinite"/></rect>
-<text x="92.0" y="390" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Patient</text>
-<text x="92.0" y="410" text-anchor="middle" font-size="11.5" fill="#64748b">taps “Call doctor”</text>
-<rect x="179.2" y="360" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.071;0.101;0.171;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.071;0.101;0.171;1" dur="9s" repeatCount="indefinite"/></rect>
-<text x="247.2" y="390" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">FastAPI</text>
-<text x="247.2" y="410" text-anchor="middle" font-size="11.5" fill="#64748b">auth + room token</text>
-<rect x="334.4" y="360" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.161;0.191;0.261;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.161;0.191;0.261;1" dur="9s" repeatCount="indefinite"/></rect>
-<text x="402.4" y="390" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">MongoDB</text>
-<text x="402.4" y="410" text-anchor="middle" font-size="11.5" fill="#64748b">visits, labs, meds</text>
-<rect x="489.59999999999997" y="360" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.252;0.282;0.352;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.252;0.282;0.352;1" dur="9s" repeatCount="indefinite"/></rect>
-<text x="557.5999999999999" y="390" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">LiveKit Cloud</text>
-<text x="557.5999999999999" y="410" text-anchor="middle" font-size="11.5" fill="#64748b">real-time voice</text>
-<rect x="644.8" y="360" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.343;0.373;0.443;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.343;0.373;0.443;1" dur="9s" repeatCount="indefinite"/></rect>
-<text x="712.8" y="390" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Dr. AI agent</text>
-<text x="712.8" y="410" text-anchor="middle" font-size="11.5" fill="#64748b">Gemini Live</text>
-<rect x="800.0" y="360" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.433;0.463;0.533;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.433;0.463;0.533;1" dur="9s" repeatCount="indefinite"/></rect>
-<text x="868.0" y="390" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Call summary</text>
-<text x="868.0" y="410" text-anchor="middle" font-size="11.5" fill="#64748b">saved to MongoDB</text>
+<text x="24" y="319" font-size="14" font-weight="700" fill="#0d9488">2 · Voice doctor</text>
+<path class="flow" d="M160.0 370 H179.2"/>
+<path class="flow" d="M315.2 370 H334.4"/>
+<path class="flow" d="M470.4 370 H489.59999999999997"/>
+<path class="flow" d="M625.5999999999999 370 H644.8"/>
+<path class="flow" d="M780.8 370 H800.0"/>
+<path class="flow" d="M868.0 405 V450 H92.0 V405"/>
+<circle r="7" fill="#0d9488" stroke="#ffffff" stroke-width="2"><animateMotion dur="9s" repeatCount="indefinite" path="M92.0 370 H868.0 V450 H92.0 Z"/></circle>
+<rect x="207.3" y="438" width="545.4" height="24" rx="12" fill="#f0fdfa" stroke="#99f6e4"/>
+<text x="480.0" y="454.5" text-anchor="middle" font-size="12.5" fill="#0f172a">Two-way voice  ·  replies in ~3 s  ·  remembers past visits, labs and medicines</text>
+<rect x="24.0" y="335" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.07;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="3;1.5;1.5" keyTimes="0;0.07;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="92.0" y="365" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Patient</text>
+<text x="92.0" y="385" text-anchor="middle" font-size="11.5" fill="#64748b">taps “Call doctor”</text>
+<rect x="179.2" y="335" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.071;0.101;0.171;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.071;0.101;0.171;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="247.2" y="365" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">FastAPI</text>
+<text x="247.2" y="385" text-anchor="middle" font-size="11.5" fill="#64748b">auth + room token</text>
+<rect x="334.4" y="335" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.161;0.191;0.261;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.161;0.191;0.261;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="402.4" y="365" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">MongoDB</text>
+<text x="402.4" y="385" text-anchor="middle" font-size="11.5" fill="#64748b">visits, labs, meds</text>
+<rect x="489.59999999999997" y="335" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.252;0.282;0.352;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.252;0.282;0.352;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="557.5999999999999" y="365" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">LiveKit Cloud</text>
+<text x="557.5999999999999" y="385" text-anchor="middle" font-size="11.5" fill="#64748b">real-time voice</text>
+<rect x="644.8" y="335" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.343;0.373;0.443;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.343;0.373;0.443;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="712.8" y="365" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Dr. AI agent</text>
+<text x="712.8" y="385" text-anchor="middle" font-size="11.5" fill="#64748b">Gemini Live</text>
+<rect x="800.0" y="335" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.433;0.463;0.533;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.433;0.463;0.533;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="868.0" y="365" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Call summary</text>
+<text x="868.0" y="385" text-anchor="middle" font-size="11.5" fill="#64748b">saved to MongoDB</text>
+<text x="24" y="544" font-size="14" font-weight="700" fill="#0d9488">3 · Lab reports and AI tools</text>
+<path class="flow" d="M174.0 595 H214.5"/>
+<path class="flow" d="M364.5 595 H405.0"/>
+<path class="flow" d="M555.0 595 H595.5"/>
+<path class="flow" d="M745.5 595 H786.0"/>
+<path class="flow" d="M861.0 630 V675 H99.0 V630"/>
+<circle r="7" fill="#0d9488" stroke="#ffffff" stroke-width="2"><animateMotion dur="9s" repeatCount="indefinite" path="M99.0 595 H861.0 V675 H99.0 Z"/></circle>
+<rect x="213.89999999999998" y="663" width="532.2" height="24" rx="12" fill="#f0fdfa" stroke="#99f6e4"/>
+<text x="480.0" y="679.5" text-anchor="middle" font-size="12.5" fill="#0f172a">Report summary  ·  4-week health plan  ·  drug interaction checks  ·  AI chat</text>
+<rect x="24.0" y="560" width="150" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.07;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="3;1.5;1.5" keyTimes="0;0.07;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="99.0" y="590" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Patient</text>
+<text x="99.0" y="610" text-anchor="middle" font-size="11.5" fill="#64748b">uploads a lab report</text>
+<rect x="214.5" y="560" width="150" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.093;0.123;0.193;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.093;0.123;0.193;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="289.5" y="590" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">FastAPI</text>
+<text x="289.5" y="610" text-anchor="middle" font-size="11.5" fill="#64748b">stores the file</text>
+<rect x="405.0" y="560" width="150" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.206;0.236;0.306;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.206;0.236;0.306;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="480.0" y="590" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Gemini</text>
+<text x="480.0" y="610" text-anchor="middle" font-size="11.5" fill="#64748b">reads the report</text>
+<rect x="595.5" y="560" width="150" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.319;0.349;0.419;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.319;0.349;0.419;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="670.5" y="590" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">MongoDB</text>
+<text x="670.5" y="610" text-anchor="middle" font-size="11.5" fill="#64748b">values over time</text>
+<rect x="786.0" y="560" width="150" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.432;0.462;0.532;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.432;0.462;0.532;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="861.0" y="590" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Dashboard</text>
+<text x="861.0" y="610" text-anchor="middle" font-size="11.5" fill="#64748b">health trends</text>
+<text x="24" y="769" font-size="14" font-weight="700" fill="#0d9488">4 · Records and appointments</text>
+<path class="flow" d="M160.0 820 H179.2"/>
+<path class="flow" d="M315.2 820 H334.4"/>
+<path class="flow" d="M470.4 820 H489.59999999999997"/>
+<path class="flow" d="M625.5999999999999 820 H644.8"/>
+<path class="flow" d="M780.8 820 H800.0"/>
+<path class="flow" d="M868.0 855 V900 H92.0 V855"/>
+<circle r="7" fill="#0d9488" stroke="#ffffff" stroke-width="2"><animateMotion dur="9s" repeatCount="indefinite" path="M92.0 820 H868.0 V900 H92.0 Z"/></circle>
+<rect x="213.89999999999998" y="888" width="532.2" height="24" rx="12" fill="#f0fdfa" stroke="#99f6e4"/>
+<text x="480.0" y="904.5" text-anchor="middle" font-size="12.5" fill="#0f172a">Medicine adherence  ·  health timeline  ·  appointment emails  ·  data export</text>
+<rect x="24.0" y="785" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.07;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="3;1.5;1.5" keyTimes="0;0.07;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="92.0" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Patient</text>
+<text x="92.0" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">meds, journal, family</text>
+<rect x="179.2" y="785" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.071;0.101;0.171;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.071;0.101;0.171;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="247.2" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">FastAPI</text>
+<text x="247.2" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">REST API</text>
+<rect x="334.4" y="785" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.161;0.191;0.261;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.161;0.191;0.261;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="402.4" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">MongoDB</text>
+<text x="402.4" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">health timeline</text>
+<rect x="489.59999999999997" y="785" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.252;0.282;0.352;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.252;0.282;0.352;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="557.5999999999999" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Doctors</text>
+<text x="557.5999999999999" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">book appointments</text>
+<rect x="644.8" y="785" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.343;0.373;0.443;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.343;0.373;0.443;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="712.8" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Email</text>
+<text x="712.8" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">confirmations</text>
+<rect x="800.0" y="785" width="136" height="70" rx="12" fill="#ffffff" stroke="#0d9488" stroke-width="1.5"><animate attributeName="fill" values="#ffffff;#ffffff;#ccfbf1;#ffffff;#ffffff" keyTimes="0;0.433;0.463;0.533;1" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1.5;1.5;3;1.5;1.5" keyTimes="0;0.433;0.463;0.533;1" dur="9s" repeatCount="indefinite"/></rect>
+<text x="868.0" y="815" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f172a">Export</text>
+<text x="868.0" y="835" text-anchor="middle" font-size="11.5" fill="#64748b">PDF · CSV · FHIR</text>
 </svg>
