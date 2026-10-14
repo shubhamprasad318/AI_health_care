@@ -44,6 +44,8 @@ logger = logging.getLogger("voice-agent")
 logger.setLevel(logging.WARNING)
 
 
+# Gemini Live voice model; override with the GEMINI_LIVE_MODEL secret
+GEMINI_LIVE_MODEL = os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live")
 CTX_CONNECT_TIMEOUT_SECONDS = 15
 PARTICIPANT_WAIT_TIMEOUT_SECONDS = 30
 GREETING_TIMEOUT_SECONDS = 30
@@ -519,14 +521,9 @@ async def entrypoint(ctx: JobContext):
 {_build_session_notes(metadata, patient_name)}
 """
 
-    initial_ctx = ChatContext()
-    initial_ctx.add_message(
-        role="assistant",
-        content=f"Patient chart loaded. Patient name: {patient_name}. Medical history has been reviewed. Ready to begin consultation.",
-    )
-
     session = AgentSession(
         llm=google.realtime.RealtimeModel(
+            model=GEMINI_LIVE_MODEL,
             voice="Aoede",
             temperature=0.6,
             instructions=full_instructions,
@@ -569,7 +566,7 @@ async def entrypoint(ctx: JobContext):
     session_started = False
     try:
         await session.start(
-            agent=DoctorAgent(instructions=full_instructions, chat_ctx=initial_ctx),
+            agent=DoctorAgent(instructions=full_instructions),
             room=ctx.room,
         )
         session_started = True
@@ -596,19 +593,17 @@ async def entrypoint(ctx: JobContext):
             )
         except asyncio.TimeoutError:
             logger.warning("Greeting generation timed out; consultation will continue.")
+        # Returning keeps the session running: the job ends, and the session
+        # closes, when the patient leaves the room. Closing it here would end
+        # the conversation right after the greeting.
     except Exception as e:
         logger.error(f"Session entrypoint failed: {e}", exc_info=True)
-        raise
-    finally:
         if session_started:
-            close = getattr(session, "aclose", None) or getattr(session, "stop", None)
-            if callable(close):
-                try:
-                    result = close()
-                    if asyncio.iscoroutine(result):
-                        await result
-                except Exception as cleanup_err:
-                    logger.warning(f"Session cleanup error: {cleanup_err}")
+            try:
+                await session.aclose()
+            except Exception as cleanup_err:
+                logger.warning(f"Session cleanup error: {cleanup_err}")
+        raise
 
 
 if __name__ == "__main__":
